@@ -1,19 +1,5 @@
-#include <Arduino.h>
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <WebServer.h>
-#include <ESPmDNS.h>
-#include <Update.h>
-#include <Adafruit_NeoPixel.h>
-//#include <AsyncTask.h>
-
-#define PIN        2 // On Trinket or Gemma, suggest changing this to 1
-#define NUMPIXELS 150 // Popular NeoPixel ring size
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
-
-const char* host = "obraz";
-const char* ssid = "Siedziba_PIS";
-const char* password = "niepowiemci";
+#include <constAndDef.h>
+#include <functs.h>
 
 uint8_t mode = 0;
 bool changeMode = false;
@@ -23,69 +9,17 @@ uint8_t ajaxCurrR = 0;
 uint8_t ajaxCurrG = 0;
 uint8_t ajaxCurrB = 0;
 
-int galaxyMasterDelay = 100;
+int galaxyMasterDelay = 10;
 int galaxyCurrMasterDelay = 0;
-int galaxyDelayMin = 5000;
-int galaxyDelayMax = 500000;
-int galaxyLedWorkers = 15;
+int galaxyDelayMin = 50;
+int galaxyDelayMax = 500;
+int galaxyLedWorkers = 30;
 int* galaxyCurrDelay = new int[galaxyLedWorkers];
 
 int galaxyDimMinus = 1;
 
-struct pixels_struct{
-  uint8_t R;
-  uint8_t G;
-  uint8_t B;
-};
+
 pixels_struct PIXELS[NUMPIXELS];
-
-
-WebServer server(80);
-
-//AsyncTask asyncGalaxy(galaxyMode);
-
-/*
- * update Index Page
- */
-
-const char* updateIndex =
-"<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>"
-"<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
-   "<input type='file' name='update'>"
-        "<input type='submit' value='Update'>"
-    "</form>"
- "<div id='prg'>progress: 0%</div>"
- "<br><br><br><br><a href='./'> Get back to main page</a>"
- "<script>"
-  "$('form').submit(function(e){"
-  "e.preventDefault();"
-  "var form = $('#upload_form')[0];"
-  "var data = new FormData(form);"
-  " $.ajax({"
-  "url: '/update',"
-  "type: 'POST',"
-  "data: data,"
-  "contentType: false,"
-  "processData:false,"
-  "xhr: function() {"
-  "var xhr = new window.XMLHttpRequest();"
-  "xhr.upload.addEventListener('progress', function(evt) {"
-  "if (evt.lengthComputable) {"
-  "var per = evt.loaded / evt.total;"
-  "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-  "}"
-  "}, false);"
-  "return xhr;"
-  "},"
-  "success:function(d, s) {"
-  "console.log('success!')"
- "},"
- "error: function (a, b, c) {"
- "}"
- "});"
- "});"
- "</script>";
-
 
 
 String getModeName(uint8_t mode){
@@ -102,52 +36,62 @@ String getModeName(uint8_t mode){
     return "Current mode: Selective<br>"
             "settings for selective"
             "<br><br>"
-            "Pixel: <input type='number' id='currPixel' min='0' max='" + String(NUMPIXELS) + "' step='1' value='0'><br><br>"
-            "<input type='color' id='colorpicker' value='#333333'><br><br>"
-            "<input type='button' onclick='getColor()' value='get color'> <input type='button' onclick='setColor()' value='set color'>"
+            "Pixel: <input type='number' id='currPixel' min='0' max='150' step='1' value='0'><br><br>"
+            "<input type='color' id='colorpicker' value='#000000'><br>"
+			"R: <div id='Red'>0</div><br>"
+			"G: <div id='Green'>0</div><br>"
+			"B: <div id='Blue'>0</div><br>"
+			"<br>"
+            "<input type='button' onclick='getColor()' value='get color'>"
+			"<input type='button' onclick='setColor()' value='set color'>"
             "<script>"
               "function getColor() {"
-                "var rval = 0;"
-                "var gval = 0;"
-                "var bval = 0;"
-                "fetch('/ajax?getPixel')"
+				
+                "var currPixel = document.getElementById('currPixel').value;"
+				"var rDiv = document.getElementById('Red');"
+				"var gDiv = document.getElementById('Green');"
+				"var bDiv = document.getElementById('Blue');"
+				"var rval = 0;"
+				"var gval = 0;"
+				"var bval = 0;"
+                "fetch('/ajaxSet?i=' + currPixel, { method: 'POST' })"
+                  ".then(response => response.text());"
+                "fetch('/ajaxGet?v=r')"
                   ".then(response => response.text())"
                   ".then(data => {"
-                    "document.getElementById('currPixel').value = data;"
+                    "rval = parseInt(data);"
+					"rDiv.textContent = parseInt(data);"
                   "});"
-                "fetch('/ajax?getCurrR')"
+                "fetch('/ajaxGet?v=g')"
                   ".then(response => response.text())"
                   ".then(data => {"
-                    "rval = data;"
+                    "gval = parseInt(data);"
+					"gDiv.textContent = parseInt(data);"
                   "});"
-                "fetch('/ajax?getCurrG')"
+                "fetch('/ajaxGet?v=b')"
                   ".then(response => response.text())"
                   ".then(data => {"
-                    "gval = data;"
-                  "});"
-                "fetch('/ajax?getCurrB')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "bval = data;"
+                    "bval = parseInt(data);"
+					"bDiv.textContent = parseInt(data);"
                   "});"
                 "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
-                "document.getElementById('currPixel').value = RGBval;"
+                "document.getElementById('colorpicker').value = RGBval;"
               "}"
               "function setColor() {"
-                "const newValue = document.getElementById('currPixel').value;"
-                "fetch('/ajax?setPixel=' + newValue, { method: 'POST' })"
+                "var currPixel = document.getElementById('currPixel').value;"
+                "fetch('/ajaxSet?i=' + currPixel, { method: 'POST' })"
                   ".then(response => response.text());"
                 "var RGB = document.getElementById('colorpicker').value;"
                 "var r = parseInt(RGB.slice(1, 3), 16);"
                 "var g = parseInt(RGB.slice(3, 5), 16);"
                 "var b = parseInt(RGB.slice(5, 7), 16);"
-                "fetch('/ajax?setCurrR=' + r, { method: 'POST' })"
+                "fetch('/ajaxSet?r=' + r, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajax?setCurrG=' + g, { method: 'POST' })"
+                "fetch('/ajaxSet?g=' + g, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajax?setCurrB=' + b, { method: 'POST' })"
+                "fetch('/ajaxSet?b=' + b, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajax?sendPixel', { method: 'POST' })"
+                "fetch('/ajaxSet?send=0', { method: 'POST' })"
                   ".then(response => response.text());"
               "}"
             "</script>";
@@ -160,6 +104,7 @@ String getModeName(uint8_t mode){
 
  void sendPixelColor(uint16_t led){
   pixels.setPixelColor(led, pixels.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
+  pixels.show();
 }
 
 void setLedColor(uint16_t led, uint8_t R, uint8_t G, uint8_t B){
@@ -180,10 +125,10 @@ void handleSetValue() {
       PIXELS[i].G = 0;
       PIXELS[i].B = 0;
     }
-    //pixels.clear(); 
     switch(mode){
       case 0: //off
         pixels.clear();
+        pixels.show();
         break;
       case 1: //galaxy
         for(int i = 0; i < galaxyLedWorkers; i++){
@@ -200,7 +145,7 @@ void handleSetValue() {
 }
 
 void handleAjax() {
-  if (server.method() == HTTP_GET) {
+  if (server.method() == HTTP_POST) {
     String paramName = server.argName(0); // Get the name of the parameter
     String paramValue = server.arg(0); // Get the value of the parameter
 
@@ -295,6 +240,12 @@ void galaxyMode(){
 
 }
 
+void handleClear(){
+  pixels.clear();
+  pixels.show();
+   server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
+  
+}
 
 
 /*
@@ -331,7 +282,7 @@ void setup(void) {
     server.sendHeader("Connection", "close");
     //v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
     server.send(200, "text/html", "<center><font size=16>"
-            "<b>Inteligentny obraz<br>v0.0.1</b>"
+            "<b>Inteligentny obraz<br>v0.0.2</b>"
             "<br>"
             "<a href='/setvalue?mode=0'>Off</a><br>"
             "<a href='/setvalue?mode=1'>Galaxy mode</a><br>"
@@ -339,12 +290,57 @@ void setup(void) {
             "<br>"
             + String(getModeName(mode)) +
             "<br>"
+            "<a href='/clear'>Clear strip</a><br>"
+            "<br>"
             "<a href='/updateIndex'>Aktualizacja</a>"
     "</font><br><br><br>"
     "Kompilacja " + String(__DATE__) + " " + String(__TIME__) +
     "</center>");
   });
-  server.on("/ajax", handleAjax);
+  server.on("/clear", handleClear);
+  server.on("/ajaxSet", HTTP_POST, [](){
+    String paramName = server.argName(0); // Get the name of the parameter
+    String paramValue = server.arg(0); // Get the value of the parameter
+    if(paramName == "i"){
+      ajaxCurrPixel = paramValue.toInt(); // Convert the parameter value to an integer
+      // Set the variable value dynamically
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "r"){
+      PIXELS[ajaxCurrPixel].R = paramValue.toInt(); // Convert the parameter value to an integer
+      // Set the variable value dynamically
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "g"){
+      PIXELS[ajaxCurrPixel].G = paramValue.toInt(); // Convert the parameter value to an integer
+      // Set the variable value dynamically
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "b"){
+      PIXELS[ajaxCurrPixel].B = paramValue.toInt(); // Convert the parameter value to an integer
+      // Set the variable value dynamically
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "send"){
+      sendPixelColor(ajaxCurrPixel);
+      server.send(200, "text/plain", "OK");
+    }
+  });
+    server.on("/ajaxGet", HTTP_GET, [](){
+      String paramName = server.arg("v");
+      if(paramName == "i") {
+        server.send(200, "text/plain", String(ajaxCurrPixel));
+      }
+      else if(paramName == "r"){
+        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].R));
+      }
+      else if(paramName == "g"){
+        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].G));
+      }
+      else if(paramName == "b"){
+        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].B));
+      }
+  });
   server.on("/setvalue", handleSetValue);
   server.on("/updateIndex", HTTP_GET, []() {
     server.sendHeader("Connection", "close");
@@ -380,7 +376,7 @@ void setup(void) {
   pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
   randomSeed(analogRead(0));
   pixels.clear();
-
+  pixels.show();
 
 }
 
@@ -390,7 +386,7 @@ void loop(void) {
   switch(mode){
     case 0:
     if(changeMode == true){
-      pixels.clear(); 
+      // do something
       changeMode = false;
     }
       break;
