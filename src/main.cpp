@@ -21,6 +21,19 @@ int galaxyDimMinus = 1;
 
 pixels_struct PIXELS[NUMPIXELS];
 
+int* resizeArray(int* oldArray, int oldSize, int newSize) {
+  int* newArray = new int[newSize]; // Allocate a new array with the new size
+  int minSize = (oldSize < newSize) ? oldSize : newSize; // Get the smaller size
+  
+  // Copy the elements from the old array to the new array
+  for (int i = 0; i < minSize; i++) {
+    newArray[i] = oldArray[i];
+  }
+  
+  delete[] oldArray; // Free the memory of the old array
+  return newArray; // Return the new array
+}
+
 
 String getModeName(uint8_t mode){
   switch (mode) {
@@ -30,17 +43,42 @@ String getModeName(uint8_t mode){
   case 1:
     return "Current mode: Galaxy<br>"
             "settings for galaxy"
-            "<br><br>";
+            "<br><br>"
+            "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(galaxyMasterDelay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
+            "Minimum delay: <input type='number' id='minDel' min='0' step='1' value='" + String(galaxyDelayMin) + "' style='display: inline-block;'> <input type='button' onclick='setMinDel()' value='set'> <br>"
+            "Maximum delay: <input type='number' id='maxDel' min='0' step='1' value='" + String(galaxyDelayMax) + "' style='display: inline-block;'> <input type='button' onclick='setMaxDel()' value='set'> <br>"
+            "LED workers: <input type='number' id='workers' min='0' max='150' step='1' value='" + String(galaxyLedWorkers) + "' style='display: inline-block;'> <input type='button' onclick='setWorkers()' value='set'> <br>"
+            "<script>"
+              "function setMasterDel() {"
+                "var newval = parseInt(document.getElementById('masterDel').value);"
+                "fetch('/galaxySet?masterDel=' + newval, { method: 'POST' })"
+                  ".then(response => response.text());"
+              "}"
+	            "function setMinDel() {"
+                "var newval = parseInt(document.getElementById('minDel').value);"
+                "fetch('/galaxySet?minDel=' + newval, { method: 'POST' })"
+                ".then(response => response.text());"
+              "}"
+	            "function setMaxDel() {"
+                "var newval = parseInt(document.getElementById('maxDel').value);"
+                "fetch('/galaxySet?maxDel=' + newval, { method: 'POST' })"
+                  ".then(response => response.text());"
+              "}"
+	            "function setWorkers() {"
+                "var newval = parseInt(document.getElementById('workers').value);"
+                "fetch('/galaxySet?workers=' + newval, { method: 'POST' })"
+                  ".then(response => response.text());"
+              "}"
+            "</script>";
     break;
   case 2:
     return "Current mode: Selective<br>"
-            "settings for selective"
             "<br><br>"
-            "Pixel: <input type='number' id='currPixel' min='0' max='150' step='1' value='0'><br><br>"
+            "Pixel: <input type='number' id='currPixel' min='0' max='" + String(NUMPIXELS) + "' step='1' value='0' style='display: inline-block;'><br><br>"
             "<input type='color' id='colorpicker' value='#000000'><br>"
-			"R: <div id='Red'>0</div><br>"
-			"G: <div id='Green'>0</div><br>"
-			"B: <div id='Blue'>0</div><br>"
+			"R: <div id='Red' style='display: inline-block;'>0</div><br>"
+			"G: <div id='Green' style='display: inline-block;'>0</div><br>"
+			"B: <div id='Blue' style='display: inline-block;'>0</div><br>"
 			"<br>"
             "<input type='button' onclick='getColor()' value='get color'>"
 			"<input type='button' onclick='setColor()' value='set color'>"
@@ -54,21 +92,21 @@ String getModeName(uint8_t mode){
 				"var rval = 0;"
 				"var gval = 0;"
 				"var bval = 0;"
-                "fetch('/ajaxSet?i=' + currPixel, { method: 'POST' })"
+                "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajaxGet?v=r')"
+                "fetch('/selectiveGet?v=r')"
                   ".then(response => response.text())"
                   ".then(data => {"
                     "rval = parseInt(data);"
 					"rDiv.textContent = parseInt(data);"
                   "});"
-                "fetch('/ajaxGet?v=g')"
+                "fetch('/selectiveGet?v=g')"
                   ".then(response => response.text())"
                   ".then(data => {"
                     "gval = parseInt(data);"
 					"gDiv.textContent = parseInt(data);"
                   "});"
-                "fetch('/ajaxGet?v=b')"
+                "fetch('/selectiveGet?v=b')"
                   ".then(response => response.text())"
                   ".then(data => {"
                     "bval = parseInt(data);"
@@ -79,19 +117,19 @@ String getModeName(uint8_t mode){
               "}"
               "function setColor() {"
                 "var currPixel = document.getElementById('currPixel').value;"
-                "fetch('/ajaxSet?i=' + currPixel, { method: 'POST' })"
+                "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' })"
                   ".then(response => response.text());"
                 "var RGB = document.getElementById('colorpicker').value;"
                 "var r = parseInt(RGB.slice(1, 3), 16);"
                 "var g = parseInt(RGB.slice(3, 5), 16);"
                 "var b = parseInt(RGB.slice(5, 7), 16);"
-                "fetch('/ajaxSet?r=' + r, { method: 'POST' })"
+                "fetch('/selectiveSet?r=' + r, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajaxSet?g=' + g, { method: 'POST' })"
+                "fetch('/selectiveSet?g=' + g, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajaxSet?b=' + b, { method: 'POST' })"
+                "fetch('/selectiveSet?b=' + b, { method: 'POST' })"
                   ".then(response => response.text());"
-                "fetch('/ajaxSet?send=0', { method: 'POST' })"
+                "fetch('/selectiveSet?send=0', { method: 'POST' })"
                   ".then(response => response.text());"
               "}"
             "</script>";
@@ -120,15 +158,14 @@ void handleSetValue() {
     mode = server.arg("mode").toInt(); // update variable value
     changeMode = true;
     for (int i = 0; i < NUMPIXELS; i++) {
-      //Serial.println("-------- [" + String(i) + "] ---------");
       PIXELS[i].R = 0;
       PIXELS[i].G = 0;
       PIXELS[i].B = 0;
     }
+    pixels.clear();
+    pixels.show();
     switch(mode){
       case 0: //off
-        pixels.clear();
-        pixels.show();
         break;
       case 1: //galaxy
         for(int i = 0; i < galaxyLedWorkers; i++){
@@ -137,59 +174,14 @@ void handleSetValue() {
           setLedColor(int(random(0, NUMPIXELS)), int(random(0, 255 + 1)), int(random(0, 255 + 1)), int(random(0, 255 + 1)));
         }
         break;
+      case 2: // selective
+        break;
       default:
         break;
     }
     server.send(200, "text/html", "Mode changed to: " + String(getModeName(mode)) + "<br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
   }
 }
-
-void handleAjax() {
-  if (server.method() == HTTP_POST) {
-    String paramName = server.argName(0); // Get the name of the parameter
-    String paramValue = server.arg(0); // Get the value of the parameter
-
-      if(paramName == "getPixel") {
-        server.send(200, "text/plain", String(ajaxCurrPixel));
-      }
-      else if(paramName == "setPixel"){
-        ajaxCurrPixel = paramValue.toInt(); // Convert the parameter value to an integer
-        // Set the variable value dynamically
-        server.send(200, "text/plain", "OK");
-        }
-      else if(paramName == "getCurrR"){
-        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].R));
-      }
-      else if(paramName == "setCurrR"){
-        PIXELS[ajaxCurrPixel].R = paramValue.toInt(); // Convert the parameter value to an integer
-        // Set the variable value dynamically
-        server.send(200, "text/plain", "OK");
-      }
-      else if(paramName == "getCurrG"){
-        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].G));
-      }
-      else if(paramName == "setCurrG"){
-        PIXELS[ajaxCurrPixel].G = paramValue.toInt(); // Convert the parameter value to an integer
-        // Set the variable value dynamically
-        server.send(200, "text/plain", "OK");
-      }
-      else if(paramName == "getCurrB"){
-        server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].B));
-      }
-      else if(paramName == "setCurrB"){
-        PIXELS[ajaxCurrPixel].B = paramValue.toInt(); // Convert the parameter value to an integer
-        // Set the variable value dynamically
-        server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "sendPixel"){
-      sendPixelColor(ajaxCurrPixel);
-      server.send(200, "text/plain", "OK");
-    }
-  }
-}
-
-
-
 
 
 void galaxyMode(){
@@ -297,28 +289,25 @@ void setup(void) {
     "Kompilacja " + String(__DATE__) + " " + String(__TIME__) +
     "</center>");
   });
-  server.on("/clear", handleClear);
-  server.on("/ajaxSet", HTTP_POST, [](){
+  server.on("/clear", handleClear); // clear strip
+  // SELECTIVE MODE START
+  server.on("/selectiveSet", HTTP_POST, [](){
     String paramName = server.argName(0); // Get the name of the parameter
     String paramValue = server.arg(0); // Get the value of the parameter
     if(paramName == "i"){
-      ajaxCurrPixel = paramValue.toInt(); // Convert the parameter value to an integer
-      // Set the variable value dynamically
+      ajaxCurrPixel = paramValue.toInt(); 
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "r"){
-      PIXELS[ajaxCurrPixel].R = paramValue.toInt(); // Convert the parameter value to an integer
-      // Set the variable value dynamically
+      PIXELS[ajaxCurrPixel].R = paramValue.toInt();
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "g"){
-      PIXELS[ajaxCurrPixel].G = paramValue.toInt(); // Convert the parameter value to an integer
-      // Set the variable value dynamically
+      PIXELS[ajaxCurrPixel].G = paramValue.toInt();
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "b"){
-      PIXELS[ajaxCurrPixel].B = paramValue.toInt(); // Convert the parameter value to an integer
-      // Set the variable value dynamically
+      PIXELS[ajaxCurrPixel].B = paramValue.toInt();
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "send"){
@@ -326,7 +315,7 @@ void setup(void) {
       server.send(200, "text/plain", "OK");
     }
   });
-    server.on("/ajaxGet", HTTP_GET, [](){
+    server.on("/selectiveGet", HTTP_GET, [](){
       String paramName = server.arg("v");
       if(paramName == "i") {
         server.send(200, "text/plain", String(ajaxCurrPixel));
@@ -341,6 +330,46 @@ void setup(void) {
         server.send(200, "text/plain", String(PIXELS[ajaxCurrPixel].B));
       }
   });
+  // SELECTIVE MODE END
+  // GALAXY MODE START
+  server.on("/galaxySet", HTTP_POST, [](){
+    String paramName = server.argName(0); // Get the name of the parameter
+    String paramValue = server.arg(0); // Get the value of the parameter
+    if(paramName == "masterDel"){
+      galaxyMasterDelay = paramValue.toInt(); 
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "minDel"){
+      galaxyDelayMin= paramValue.toInt(); 
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "maxDel"){
+      galaxyDelayMax = paramValue.toInt(); 
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "workers"){
+      int newsize = paramValue.toInt(); 
+      galaxyCurrDelay = resizeArray(galaxyCurrDelay,galaxyLedWorkers,newsize);
+      galaxyLedWorkers = newsize;
+      server.send(200, "text/plain", "OK");
+    }
+  });
+    server.on("/galaxyGet", HTTP_GET, [](){
+      String paramName = server.arg("v");
+      if(paramName == "masterDel") {
+        server.send(200, "text/plain", String(galaxyMasterDelay));
+      }
+      else if(paramName == "minDel"){
+        server.send(200, "text/plain", String(galaxyDelayMin));
+      }
+      else if(paramName == "maxDel"){
+        server.send(200, "text/plain", String(galaxyDelayMax));
+      }
+      else if(paramName == "workers"){
+        server.send(200, "text/plain", String(galaxyLedWorkers));
+      }
+  });
+  // GALAXY MODE END
   server.on("/setvalue", handleSetValue);
   server.on("/updateIndex", HTTP_GET, []() {
     server.sendHeader("Connection", "close");
