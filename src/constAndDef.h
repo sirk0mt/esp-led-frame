@@ -7,7 +7,9 @@
 #include <Adafruit_NeoPixel.h>
 
 #define PIN        2 // On Trinket or Gemma, suggest changing this to 1
-#define NUMPIXELS 150 // Popular NeoPixel ring size
+int pixelsInRow = 15;
+int pixelsRows = 10; 
+int NUMPIXELS = pixelsInRow*pixelsRows;
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 const char* host = "obraz";
@@ -22,6 +24,7 @@ struct pixels_struct{
   uint8_t B;
 };
 
+const char* autoBack = "<script>window.history.back();</script>"; //string to add in HTML to automatic redirect to previours page
 
 // STATIC SITES START
 

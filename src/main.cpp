@@ -19,7 +19,16 @@ int* galaxyCurrDelay = new int[galaxyLedWorkers];
 int galaxyDimMinus = 1;
 
 
-pixels_struct PIXELS[NUMPIXELS];
+pixels_struct* PIXELS = new pixels_struct[1];
+
+void resizePixelStruct(int newSize) {
+    // create a new array with the new size
+    pixels_struct* newArray = new pixels_struct[newSize];
+    // delete the old array
+    delete[] PIXELS;
+    // update the global pointer and size variables
+    PIXELS = newArray;
+}
 
 int* resizeArray(int* oldArray, int oldSize, int newSize) {
   int* newArray = new int[newSize]; // Allocate a new array with the new size
@@ -35,7 +44,7 @@ int* resizeArray(int* oldArray, int oldSize, int newSize) {
 }
 
 
-String getModeName(uint8_t mode){
+String getModeSettings(uint8_t mode){
   switch (mode) {
   case 0:
     return "Off";
@@ -179,7 +188,7 @@ void handleSetValue() {
       default:
         break;
     }
-    server.send(200, "text/html", "Mode changed to: " + String(getModeName(mode)) + "<br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
+    server.send(200, "text/html", "Mode changed <br><br><a href='./'> Get back to main page</a>" + String(autoBack)); // send plain text response with new variable value
   }
 }
 
@@ -235,7 +244,7 @@ void galaxyMode(){
 void handleClear(){
   pixels.clear();
   pixels.show();
-   server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
+   server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>" + String(autoBack)); // send plain text response with new variable value
   
 }
 
@@ -245,6 +254,8 @@ void handleClear(){
  */
 void setup(void) {
   Serial.begin(115200);
+
+  resizePixelStruct(NUMPIXELS);
 
   // Connect to WiFi network
   WiFi.begin(ssid, password);
@@ -274,13 +285,13 @@ void setup(void) {
     server.sendHeader("Connection", "close");
     //v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
     server.send(200, "text/html", "<center><font size=16>"
-            "<b>Inteligentny obraz<br>v0.0.2</b>"
+            "<b>Inteligentny obraz<br>v0.0.3</b>"
             "<br>"
             "<a href='/setvalue?mode=0'>Off</a><br>"
             "<a href='/setvalue?mode=1'>Galaxy mode</a><br>"
             "<a href='/setvalue?mode=2'>Selective mode</a><br>"
             "<br>"
-            + String(getModeName(mode)) +
+            + String(getModeSettings(mode)) +
             "<br>"
             "<a href='/clear'>Clear strip</a><br>"
             "<br>"
