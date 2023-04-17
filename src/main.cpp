@@ -315,16 +315,11 @@ void setup(void) {
   galaxyParams.begin("galaxyParams", false);
 
   // Initialize default values (do it only once)  -->
-  // devSettings.putUShort("pixelsInRow",15);
-  // devSettings.putUShort("pixelsRows",10);
-  // devSettings.putString("host","obraz");
-  // devSettings.putString("ssid", "Siedziba_PIS"); 
-  // devSettings.putString("password", "niepowiemci");
-  // mainSettings.putUShort("currentMode", 1);
-  // galaxyMasterDelay = galaxyParams.putUShort("MasterDel",30);
-  // galaxyMinDel = galaxyParams.putUShort("MinDel",50);
-  // galaxyMaxDel = galaxyParams.putUShort("MaxDel",2000);
-  // galaxyLedWorkers = galaxyParams.putUShort("LedWorkers",600);
+  // devSettings.putUShort("pixelsInRow",pixelsInRow);
+  // devSettings.putUShort("pixelsRows",pixelsRows);
+  // devSettings.putString("host",host);
+  // devSettings.putString("ssid", ssid); 
+  // devSettings.putString("password", password);
   // <-- End of initialize with default values
 
   // Getting data from memory -->
