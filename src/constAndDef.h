@@ -5,26 +5,36 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <Adafruit_NeoPixel.h>
+#include <Preferences.h>
 
-#define PIN        2 // On Trinket or Gemma, suggest changing this to 1
-int pixelsInRow = 15;
-int pixelsRows = 10; 
-int NUMPIXELS = pixelsInRow*pixelsRows;
-Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+#define PIN        2 // pin connected to LED strip
 
-const char* host = "obraz";
-const char* ssid = "Siedziba_PIS";
-const char* password = "niepowiemci";
+#define DEBUG
+
+Preferences devSettings; //device settings
+
+//v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
+const char* ver = "v0.0.5";
+
+uint16_t pixelsInRow;
+uint16_t pixelsRows; 
+
+uint16_t NUMPIXELS;
+Adafruit_NeoPixel strip(1, PIN, NEO_GRB + NEO_KHZ800); //create instance for neopixel strip
+
+String host;
+String ssid;
+String password;
 
 WebServer server(80);
 
-struct pixels_struct{
+struct pixels_struct{ //create structure of pixel colors value
   uint8_t R;
   uint8_t G;
   uint8_t B;
 };
 
-const char* autoBack = "<script>window.history.back();</script>"; //string to add in HTML to automatic redirect to previours page
+const char* autoBack = "<script>window.location.href = window.location.origin;</script>"; //string to add in HTML to automatic redirect to previours page
 
 // STATIC SITES START
 

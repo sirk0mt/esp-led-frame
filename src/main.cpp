@@ -1,7 +1,8 @@
 #include <constAndDef.h>
 #include <functs.h>
 
-uint8_t mode = 0;
+
+int mode = 0;
 bool changeMode = false;
 
 uint16_t ajaxCurrPixel = 0;
@@ -16,21 +17,38 @@ int galaxyDelayMax = 500;
 int galaxyLedWorkers = 30;
 int* galaxyCurrDelay = new int[galaxyLedWorkers];
 
-int galaxyDimMinus = 1;
+uint16_t galaxyDimMinus = 1;
 
 
-pixels_struct* PIXELS = new pixels_struct[1];
+pixels_struct* PIXELS = new pixels_struct[1]; //initialize array of pixel color structs
 
-void resizePixelStruct(int newSize) {
+void resizePixelStruct(uint16_t newSize) {
+    int newSize1 = 150;
+    #ifdef DEBUG
+      Serial.println("--- resizePixelStruct("+String(newSize1)+") START---");
+      Serial.println("Change PIXEL array size from " + String(sizeof(PIXELS)));
+    #endif
+
     // create a new array with the new size
-    pixels_struct* newArray = new pixels_struct[newSize];
+    pixels_struct* newArray = new pixels_struct[newSize1];
+    #ifdef DEBUG
+      Serial.println("Generated new array with size: "+ String(sizeof(PIXELS)));
+    #endif
     // delete the old array
     delete[] PIXELS;
     // update the global pointer and size variables
     PIXELS = newArray;
+
+    #ifdef DEBUG
+      Serial.println("Success changed to new size: "+ String(sizeof(PIXELS)));
+      Serial.println("--- resizePixelStruct END---");
+    #endif
 }
 
-int* resizeArray(int* oldArray, int oldSize, int newSize) {
+int* resizeArray(int* oldArray, int oldSize, int newSize) { //function to resize array
+  #ifdef DEBUG
+    Serial.println("--- resizeArray(oldArray, oldSize:"+String(oldSize)+", newSize: "+String(newSize)+") START---");
+  #endif
   int* newArray = new int[newSize]; // Allocate a new array with the new size
   int minSize = (oldSize < newSize) ? oldSize : newSize; // Get the smaller size
   
@@ -44,7 +62,10 @@ int* resizeArray(int* oldArray, int oldSize, int newSize) {
 }
 
 
-String getModeSettings(uint8_t mode){
+String getModeSettings(int mode){
+  #ifdef DEBUG
+    Serial.println("--- getModeSettings("+String(mode)+") START---");
+  #endif
   switch (mode) {
   case 0:
     return "Off";
@@ -150,31 +171,64 @@ String getModeSettings(uint8_t mode){
 } 
 
  void sendPixelColor(uint16_t led){
-  pixels.setPixelColor(led, pixels.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
-  pixels.show();
+  #ifdef DEBUG
+    Serial.println("--- sendPixelColor("+String(led)+" START---");
+  #endif
+  strip.setPixelColor(led, strip.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
+  strip.show();
 }
 
 void setLedColor(uint16_t led, uint8_t R, uint8_t G, uint8_t B){
-        PIXELS[led].R = R;
-        PIXELS[led].G = G;
-        PIXELS[led].B = B;
-        pixels.setPixelColor(led, pixels.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
-        //Serial.println("set [" + String(led) + "] to -> R: " + String(PIXELS[led].R) + " G: " + String(PIXELS[led].G) + " B: " + String(PIXELS[led].B));
+  #ifdef DEBUG
+    Serial.println("--- setLedColor( LED: "+String(led)+" R: "+String(R)+" G: "+String(G)+" B: "+String(B)+") START---");
+  #endif
+  PIXELS[led].R = R;
+  PIXELS[led].G = G;
+  PIXELS[led].B = B;
+  strip.setPixelColor(led, strip.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
+  //Serial.println("set [" + String(led) + "] to -> R: " + String(PIXELS[led].R) + " G: " + String(PIXELS[led].G) + " B: " + String(PIXELS[led].B));
 }
 
 void handleSetValue() {
+  #ifdef DEBUG
+    Serial.println("--- handleSetValue START---");
+  #endif
   if (server.hasArg("mode")) { // check if value parameter is present
     mode = server.arg("mode").toInt(); // update variable value
+    #ifdef DEBUG
+    Serial.println("Change mode to: "+String(mode));
+  #endif
     changeMode = true;
     for (int i = 0; i < NUMPIXELS; i++) {
       PIXELS[i].R = 0;
       PIXELS[i].G = 0;
       PIXELS[i].B = 0;
+      #ifdef DEBUG
+        Serial.println("PIXELS["+String(i)+"] set to 0");
+      #endif
     }
-    pixels.clear();
-    pixels.show();
+    #ifdef DEBUG
+      Serial.println("PIXELS array is cleared");
+    #endif
+    strip.clear();
+    #ifdef DEBUG
+      Serial.println("strip cleared");
+    #endif
+    delay(500);
+    #ifdef DEBUG
+      Serial.println("after delay");
+    #endif
+    
+  strip.show();
+  
+    #ifdef DEBUG
+      Serial.println("LED strip cleared");
+    #endif
     switch(mode){
       case 0: //off
+        #ifdef DEBUG
+          Serial.println("--- handleSetValue END - set to 0 - OFF ---");
+        #endif
         break;
       case 1: //galaxy
         for(int i = 0; i < galaxyLedWorkers; i++){
@@ -182,8 +236,14 @@ void handleSetValue() {
           //Serial.println("set delay[" + String(i) + "]=" + String(currDelay[i]));
           setLedColor(int(random(0, NUMPIXELS)), int(random(0, 255 + 1)), int(random(0, 255 + 1)), int(random(0, 255 + 1)));
         }
+        #ifdef DEBUG
+          Serial.println("--- handleSetValue END - set to 1 - GALAXY ---");
+        #endif
         break;
       case 2: // selective
+        #ifdef DEBUG
+          Serial.println("--- handleSetValue END - set to 2 - SELECTIVE ---");
+        #endif
         break;
       default:
         break;
@@ -195,7 +255,7 @@ void handleSetValue() {
 
 void galaxyMode(){
   if(galaxyCurrMasterDelay == 0){
-    for (int i = 0; i < NUMPIXELS; i++) {
+    for (uint16_t i = 0; i < NUMPIXELS; i++) {
       //Serial.println("-------- [" + String(i) + "] ---------");
       if(PIXELS[i].R >= galaxyDimMinus){
         PIXELS[i].R = PIXELS[i].R - galaxyDimMinus;
@@ -218,7 +278,7 @@ void galaxyMode(){
         PIXELS[i].B = 0;
       }
       //Serial.println("dimmer to -> R: " + String(PIXELS[i].R) + " G: " + String(PIXELS[i].G) + " B: " + String(PIXELS[i].B));
-      pixels.setPixelColor(i, pixels.Color(PIXELS[i].G, PIXELS[i].R, PIXELS[i].B));
+      strip.setPixelColor(i, strip.Color(PIXELS[i].G, PIXELS[i].R, PIXELS[i].B));
     }
 
     for(int i = 0; i < galaxyLedWorkers; i++){
@@ -232,7 +292,7 @@ void galaxyMode(){
     
     //Serial.println("-------- WAIT " + String(currDelay) + " iterations ---------");
 
-    pixels.show();
+    strip.show();
     galaxyCurrMasterDelay = galaxyMasterDelay;
   }
   else{
@@ -242,8 +302,8 @@ void galaxyMode(){
 }
 
 void handleClear(){
-  pixels.clear();
-  pixels.show();
+  strip.clear();
+  strip.show();
    server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>" + String(autoBack)); // send plain text response with new variable value
   
 }
@@ -253,39 +313,82 @@ void handleClear(){
  * setup function
  */
 void setup(void) {
-  Serial.begin(115200);
+  #ifdef DEBUG
+    Serial.begin(115200);
+  #endif
 
+  devSettings.begin("mainSettings", false);
+  // Initialize default values (do it only once)  -->
+  // devSettings.putUShort("pixelsInRow",pixelsInRow);
+  // devSettings.putUShort("pixelsRows",pixelsRows);
+  // devSettings.putString("host",host);
+  // devSettings.putString("ssid", ssid); 
+  // devSettings.putString("password", password);
+  // <-- End of initialize with default values
+
+  // Getting data from memory -->
+  pixelsInRow = devSettings.getUShort("pixelsInRow");
+  pixelsRows = devSettings.getUShort("pixelsRows");
+  host = devSettings.getString("host");
+  ssid = devSettings.getString("ssid"); 
+  password = devSettings.getString("password");
+
+  #ifdef DEBUG
+    Serial.println("Value of pixelsInRow downloaded from memory: " + String(pixelsInRow));
+    Serial.println("Value of pixelsRows downloaded from memory: " + String(pixelsRows));
+    Serial.println("Value of host downloaded from memory: " + String(host));
+    Serial.println("Value of ssid downloaded from memory: " + String(ssid));
+    Serial.println("Value of password downloaded from memory: " + String(password));
+  #endif
+
+  // <-- End of getting data from memory
+  NUMPIXELS = pixelsInRow*pixelsRows;
+  #ifdef DEBUG
+    Serial.println("Number of pixels calculated to: " + String(NUMPIXELS));
+  #endif
   resizePixelStruct(NUMPIXELS);
 
   // Connect to WiFi network
-  WiFi.begin(ssid, password);
-  Serial.println("");
+  WiFi.begin(ssid.c_str(), password.c_str());
+
+  #ifdef DEBUG
+    Serial.println("");
+  #endif
 
   // Wait for connection
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
-    Serial.print(".");
+    #ifdef DEBUG
+      Serial.print(".");
+    #endif
   }
-  Serial.println("");
-  Serial.print("Connected to ");
-  Serial.println(ssid);
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
+
+  #ifdef DEBUG
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  #endif
 
   /*use mdns for host name resolution*/
-  if (!MDNS.begin(host)) { //http://obraz.local
-    Serial.println("Error setting up MDNS responder!");
+  if (!MDNS.begin(host.c_str())) { //http://obraz.local
+    #ifdef DEBUG
+      Serial.println("Error setting up MDNS responder!");
+    #endif
     while (1) {
       delay(1000);
     }
   }
-  Serial.println("mDNS responder started");
+  #ifdef DEBUG
+    Serial.println("mDNS responder started");
+  #endif
+
   /*return index page which is stored in serverIndex */
   server.on("/", HTTP_GET, []() {
     server.sendHeader("Connection", "close");
-    //v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
     server.send(200, "text/html", "<center><font size=16>"
-            "<b>Inteligentny obraz<br>v0.0.3</b>"
+            "<b>Inteligentny obraz<br>" + String(ver) + "</b>"
             "<br>"
             "<a href='/setvalue?mode=0'>Off</a><br>"
             "<a href='/setvalue?mode=1'>Galaxy mode</a><br>"
@@ -394,32 +497,51 @@ void setup(void) {
   }, []() {
     HTTPUpload& upload = server.upload();
     if (upload.status == UPLOAD_FILE_START) {
-      Serial.printf("Update: %s\n", upload.filename.c_str());
+      #ifdef DEBUG
+        Serial.printf("Update: %s\n", upload.filename.c_str());
+      #endif
       if (!Update.begin(UPDATE_SIZE_UNKNOWN)) { //start with max available size
-        Update.printError(Serial);
+        #ifdef DEBUG
+          Update.printError(Serial);
+        #endif
       }
     } else if (upload.status == UPLOAD_FILE_WRITE) {
       /* flashing firmware to ESP*/
       if (Update.write(upload.buf, upload.currentSize) != upload.currentSize) {
-        Update.printError(Serial);
+        #ifdef DEBUG
+          Update.printError(Serial);
+        #endif
       }
     } else if (upload.status == UPLOAD_FILE_END) {
-      if (Update.end(true)) { //true to set the size to the current progress
-        Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
-      } else {
-        Update.printError(Serial);
-      }
+      #ifdef DEBUG
+        if (Update.end(true)) { //true to set the size to the current progress
+          Serial.printf("Update Success: %u\nRebooting...\n", upload.totalSize);
+        } else {
+          Update.printError(Serial);
+        }
+      #endif
     }
   });
   server.begin();
 
-  pixels.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-  randomSeed(analogRead(0));
-  pixels.clear();
-  pixels.show();
+  randomSeed(analogRead(34));
 
+  strip.updateLength(NUMPIXELS);
+  #ifdef DEBUG
+    Serial.println("Initialize LED strip with " + String(NUMPIXELS) + " pixels");
+  #endif
+  strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+  strip.clear();
+  strip.show();
+
+  #ifdef DEBUG
+    Serial.println("End of setup()");
+  #endif
 }
 
+/* Main loop 
+    START
+*/
 void loop(void) {
   server.handleClient();
 
@@ -438,5 +560,7 @@ void loop(void) {
   }
   delay(1);
 }
-
+/* Main loop 
+    END
+*/
 
