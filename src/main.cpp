@@ -2,7 +2,6 @@
 #include <functs.h>
 
 
-int mode = 0;
 bool changeMode = false;
 
 uint16_t ajaxCurrPixel = 0;
@@ -10,12 +9,8 @@ uint8_t ajaxCurrR = 0;
 uint8_t ajaxCurrG = 0;
 uint8_t ajaxCurrB = 0;
 
-int galaxyMasterDelay = 10;
-int galaxyCurrMasterDelay = 0;
-int galaxyDelayMin = 50;
-int galaxyDelayMax = 500;
-int galaxyLedWorkers = 30;
-int* galaxyCurrDelay = new int[galaxyLedWorkers];
+uint16_t galaxyCurrMasterDelay = 0;
+uint16_t* galaxyCurrDelay = new uint16_t[galaxyLedWorkers];
 
 uint16_t galaxyDimMinus = 1;
 
@@ -45,12 +40,12 @@ void resizePixelStruct(uint16_t newSize) {
     #endif
 }
 
-int* resizeArray(int* oldArray, int oldSize, int newSize) { //function to resize array
+uint16_t* resizeArray(uint16_t* oldArray, uint16_t oldSize, uint16_t newSize) { //function to resize array
   #ifdef DEBUG
     Serial.println("--- resizeArray(oldArray, oldSize:"+String(oldSize)+", newSize: "+String(newSize)+") START---");
   #endif
-  int* newArray = new int[newSize]; // Allocate a new array with the new size
-  int minSize = (oldSize < newSize) ? oldSize : newSize; // Get the smaller size
+  uint16_t* newArray = new uint16_t[newSize]; // Allocate a new array with the new size
+  uint16_t minSize = (oldSize < newSize) ? oldSize : newSize; // Get the smaller size
   
   // Copy the elements from the old array to the new array
   for (int i = 0; i < minSize; i++) {
@@ -75,8 +70,8 @@ String getModeSettings(int mode){
             "settings for galaxy"
             "<br><br>"
             "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(galaxyMasterDelay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
-            "Minimum delay: <input type='number' id='minDel' min='0' step='1' value='" + String(galaxyDelayMin) + "' style='display: inline-block;'> <input type='button' onclick='setMinDel()' value='set'> <br>"
-            "Maximum delay: <input type='number' id='maxDel' min='0' step='1' value='" + String(galaxyDelayMax) + "' style='display: inline-block;'> <input type='button' onclick='setMaxDel()' value='set'> <br>"
+            "Minimum delay: <input type='number' id='minDel' min='0' step='1' value='" + String(galaxyMinDel) + "' style='display: inline-block;'> <input type='button' onclick='setMinDel()' value='set'> <br>"
+            "Maximum delay: <input type='number' id='maxDel' min='0' step='1' value='" + String(galaxyMaxDel) + "' style='display: inline-block;'> <input type='button' onclick='setMaxDel()' value='set'> <br>"
             "LED workers: <input type='number' id='workers' min='0' max='150' step='1' value='" + String(galaxyLedWorkers) + "' style='display: inline-block;'> <input type='button' onclick='setWorkers()' value='set'> <br>"
             "<script>"
               "function setMasterDel() {"
@@ -194,43 +189,35 @@ void handleSetValue() {
     Serial.println("--- handleSetValue START---");
   #endif
   if (server.hasArg("mode")) { // check if value parameter is present
-    mode = server.arg("mode").toInt(); // update variable value
+    currentMode = server.arg("mode").toInt(); // update variable value
     #ifdef DEBUG
-    Serial.println("Change mode to: "+String(mode));
-  #endif
+    Serial.println("Change mode to: "+String(currentMode));
+    #endif
     changeMode = true;
     for (int i = 0; i < NUMPIXELS; i++) {
       PIXELS[i].R = 0;
       PIXELS[i].G = 0;
       PIXELS[i].B = 0;
-      #ifdef DEBUG
-        Serial.println("PIXELS["+String(i)+"] set to 0");
-      #endif
     }
     #ifdef DEBUG
       Serial.println("PIXELS array is cleared");
     #endif
     strip.clear();
-    #ifdef DEBUG
-      Serial.println("strip cleared");
-    #endif
-    delay(500);
-    #ifdef DEBUG
-      Serial.println("after delay");
-    #endif
-    
-  strip.show();
-  
+    strip.show(); 
     #ifdef DEBUG
       Serial.println("LED strip cleared");
     #endif
-    switch(mode){
+
+    switch(currentMode){
       case 0: //off
+        mainSettings.putUShort("currentMode", 0);
         #ifdef DEBUG
+          Serial.println("Updated currentMode value: "+ String(mainSettings.getUShort("currentMode")));
           Serial.println("--- handleSetValue END - set to 0 - OFF ---");
         #endif
         break;
       case 1: //galaxy
+        mainSettings.putUShort("currentMode", 1);
         for(int i = 0; i < galaxyLedWorkers; i++){
           galaxyCurrDelay[i] = i*random(0, 50);
           //Serial.println("set delay[" + String(i) + "]=" + String(currDelay[i]));
@@ -241,6 +228,7 @@ void handleSetValue() {
         #endif
         break;
       case 2: // selective
+        mainSettings.putUShort("currentMode", 2);
         #ifdef DEBUG
           Serial.println("--- handleSetValue END - set to 2 - SELECTIVE ---");
         #endif
@@ -255,7 +243,7 @@ void handleSetValue() {
 
 void galaxyMode(){
   if(galaxyCurrMasterDelay == 0){
-    for (uint16_t i = 0; i < NUMPIXELS; i++) {
+    for (int i = 0; i < NUMPIXELS; i++) {
       //Serial.println("-------- [" + String(i) + "] ---------");
       if(PIXELS[i].R >= galaxyDimMinus){
         PIXELS[i].R = PIXELS[i].R - galaxyDimMinus;
@@ -284,13 +272,11 @@ void galaxyMode(){
     for(int i = 0; i < galaxyLedWorkers; i++){
       galaxyCurrDelay[i]--;
       if(galaxyCurrDelay[i] <= 0){
-        galaxyCurrDelay[i] = random(galaxyDelayMin, galaxyDelayMax + 1);
+        galaxyCurrDelay[i] = random(galaxyMinDel, galaxyMaxDel + 1);
         //Serial.println("new delay[" + String(i) + "]=" + String(currDelay[i]));
         setLedColor(uint16_t(random(0, NUMPIXELS)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)));
       }
     }
-    
-    //Serial.println("-------- WAIT " + String(currDelay) + " iterations ---------");
 
     strip.show();
     galaxyCurrMasterDelay = galaxyMasterDelay;
@@ -304,8 +290,11 @@ void galaxyMode(){
 void handleClear(){
   strip.clear();
   strip.show();
-   server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>" + String(autoBack)); // send plain text response with new variable value
-  
+  server.send(200, "text/html", "Cleared<br><br><a href='./'> Get back to main page</a>" + String(autoBack)); // send plain text response with new variable value
+}
+
+void handleRestart(){
+  ESP.restart();
 }
 
 
@@ -317,13 +306,22 @@ void setup(void) {
     Serial.begin(115200);
   #endif
 
-  devSettings.begin("mainSettings", false);
+  //to format settings
+  // nvs_flash_erase(); // erase the NVS partition and...
+  // nvs_flash_init(); // initialize the NVS partition.
+
+  devSettings.begin("devSettings", false);
+  mainSettings.begin("mainSettings", false);
+  galaxyParams.begin("galaxyParams", false);
+
   // Initialize default values (do it only once)  -->
-  // devSettings.putUShort("pixelsInRow",pixelsInRow);
-  // devSettings.putUShort("pixelsRows",pixelsRows);
-  // devSettings.putString("host",host);
-  // devSettings.putString("ssid", ssid); 
-  // devSettings.putString("password", password);
+  // devSettings.putUShort("pixelsInRow",15);
+  // devSettings.putUShort("pixelsRows",10);
+  // devSettings.putString("host","obraz");
+  // devSettings.putString("ssid", "Siedziba_PIS"); 
+  // devSettings.putString("password", "niepowiemci");
+
+  // mainSettings.putUShort("currentMode", 1);
   // <-- End of initialize with default values
 
   // Getting data from memory -->
@@ -333,12 +331,30 @@ void setup(void) {
   ssid = devSettings.getString("ssid"); 
   password = devSettings.getString("password");
 
+  currentMode = mainSettings.getUShort("currentMode");
+
+  galaxyMasterDelay = galaxyParams.getUShort("MasterDel");
+  galaxyMinDel = galaxyParams.getUShort("MinDel");
+  galaxyMaxDel = galaxyParams.getUShort("MaxDel");
+  galaxyLedWorkers = galaxyParams.getUShort("LedWorkers");
+  galaxyCurrDelay = resizeArray(galaxyCurrDelay,1,galaxyLedWorkers);
+  
+
   #ifdef DEBUG
-    Serial.println("Value of pixelsInRow downloaded from memory: " + String(pixelsInRow));
-    Serial.println("Value of pixelsRows downloaded from memory: " + String(pixelsRows));
-    Serial.println("Value of host downloaded from memory: " + String(host));
-    Serial.println("Value of ssid downloaded from memory: " + String(ssid));
-    Serial.println("Value of password downloaded from memory: " + String(password));
+    Serial.println("--- devSettings ---");
+    Serial.println("pixelsInRow: " + String(pixelsInRow));
+    Serial.println("pixelsRows: " + String(pixelsRows));
+    Serial.println("host: " + String(host));
+    Serial.println("ssid: " + String(ssid));
+    Serial.println("password: " + String(password));
+    Serial.println("--- mainSettings ---");
+    Serial.println("currentMode: " + String(currentMode));
+    Serial.println("--- galaxyParams ---");
+    Serial.println("galaxyMasterDelay: " + String(galaxyMasterDelay));
+    Serial.println("galaxyMinDel: " + String(galaxyMinDel));
+    Serial.println("galaxyMaxDel: " + String(galaxyMaxDel));
+    Serial.println("galaxyLedWorkers: " + String(galaxyLedWorkers));
+
   #endif
 
   // <-- End of getting data from memory
@@ -394,16 +410,19 @@ void setup(void) {
             "<a href='/setvalue?mode=1'>Galaxy mode</a><br>"
             "<a href='/setvalue?mode=2'>Selective mode</a><br>"
             "<br>"
-            + String(getModeSettings(mode)) +
+            + String(getModeSettings(currentMode)) +
             "<br>"
             "<a href='/clear'>Clear strip</a><br>"
             "<br>"
             "<a href='/updateIndex'>Aktualizacja</a>"
+            "<br>"
+            "<a href='/restart'>Restart</a>"
     "</font><br><br><br>"
     "Kompilacja " + String(__DATE__) + " " + String(__TIME__) +
     "</center>");
   });
   server.on("/clear", handleClear); // clear strip
+  server.on("/restart", handleRestart);
   // SELECTIVE MODE START
   server.on("/selectiveSet", HTTP_POST, [](){
     String paramName = server.argName(0); // Get the name of the parameter
@@ -451,20 +470,24 @@ void setup(void) {
     String paramValue = server.arg(0); // Get the value of the parameter
     if(paramName == "masterDel"){
       galaxyMasterDelay = paramValue.toInt(); 
+      galaxyParams.putUShort("MasterDel", galaxyMasterDelay);
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "minDel"){
-      galaxyDelayMin= paramValue.toInt(); 
+      galaxyMinDel= paramValue.toInt(); 
+      galaxyParams.putUShort("MinDel", galaxyMinDel);
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "maxDel"){
-      galaxyDelayMax = paramValue.toInt(); 
+      galaxyMaxDel = paramValue.toInt(); 
+      galaxyParams.putUShort("MaxDel", galaxyMaxDel);
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "workers"){
       int newsize = paramValue.toInt(); 
       galaxyCurrDelay = resizeArray(galaxyCurrDelay,galaxyLedWorkers,newsize);
       galaxyLedWorkers = newsize;
+      galaxyParams.putUShort("LedWorkers", galaxyLedWorkers);
       server.send(200, "text/plain", "OK");
     }
   });
@@ -474,10 +497,10 @@ void setup(void) {
         server.send(200, "text/plain", String(galaxyMasterDelay));
       }
       else if(paramName == "minDel"){
-        server.send(200, "text/plain", String(galaxyDelayMin));
+        server.send(200, "text/plain", String(galaxyMinDel));
       }
       else if(paramName == "maxDel"){
-        server.send(200, "text/plain", String(galaxyDelayMax));
+        server.send(200, "text/plain", String(galaxyMaxDel));
       }
       else if(paramName == "workers"){
         server.send(200, "text/plain", String(galaxyLedWorkers));
@@ -545,7 +568,7 @@ void setup(void) {
 void loop(void) {
   server.handleClient();
 
-  switch(mode){
+  switch(currentMode){
     case 0:
     if(changeMode == true){
       // do something

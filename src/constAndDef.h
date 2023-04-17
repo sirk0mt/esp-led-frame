@@ -6,12 +6,15 @@
 #include <Update.h>
 #include <Adafruit_NeoPixel.h>
 #include <Preferences.h>
+// #include <nvs_flash.h> //to format settings
 
 #define PIN        2 // pin connected to LED strip
 
-#define DEBUG
+// #define DEBUG
 
 Preferences devSettings; //device settings
+Preferences mainSettings; //main program settings
+Preferences galaxyParams; //parameters of galaxy mode
 
 //v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
 const char* ver = "v0.0.5";
@@ -25,6 +28,13 @@ Adafruit_NeoPixel strip(1, PIN, NEO_GRB + NEO_KHZ800); //create instance for neo
 String host;
 String ssid;
 String password;
+
+uint16_t currentMode;
+
+uint16_t galaxyMasterDelay;
+uint16_t galaxyMinDel;
+uint16_t galaxyMaxDel;
+uint16_t galaxyLedWorkers=1;
 
 WebServer server(80);
 
