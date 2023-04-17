@@ -315,7 +315,7 @@ void setup(void) {
   galaxyParams.begin("galaxyParams", false);
 
   // Initialize default values (do it only once)  -->
- // devSettings.putUShort("pixelsInRow",15);
+  // devSettings.putUShort("pixelsInRow",15);
   // devSettings.putUShort("pixelsRows",10);
   // devSettings.putString("host","obraz");
   // devSettings.putString("ssid", "Siedziba_PIS"); 
