@@ -1,3 +1,8 @@
+
+#ifndef SETTINGS_H
+/* If first use this header, define all things */
+#define SETTINGS_H
+
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
 #include <Preferences.h>
@@ -7,42 +12,61 @@
 #include "rainbow.h"
 #include "static.h"
 #include "pixels.h"
+#include "rainbow_flow.h"
 
-// #include <nvs_flash.h> //to format settings
-
-#ifndef SETTINGS_H
-#define SETTINGS_H
-
-//v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
-extern const char* ver;
-
-#define PIN        2 // pin connected to LED strip
-
-#define DEBUG
-
-extern Preferences devSettings; //device settings
-extern Preferences mainSettings; //main program settings
-
-// LEDs settings
-extern uint16_t pixelsInRow;
-extern uint16_t pixelsRows; 
-
-extern uint16_t NUMPIXELS;
-
-extern Adafruit_NeoPixel strip;
-// LEDs settings
-
-extern uint16_t currentMode;
-
-extern bool changeMode;
-
-void saveWiFiConfig(const String& ssid, const String& password);
-
-void handleRestart();
-
-bool initializeSettings();
-
-void initializeMode();
+/*  
+ *  Include nvs_flash.h for format all settings process
+ *  #include <nvs_flash.h>
+ */
 
 
-#endif
+/* Version variable initialized in cpp file for that header */
+extern const char*  ver;
+
+#define LED_STRIP_PIN        2              /* GPIO pin for NeoPixel strip*/
+
+#define DEBUG                               /* To enable print serial debug information define / for disable comment that line */
+
+extern Preferences          dev_settings;   /* Device settings class instance */
+extern Preferences          main_settings;  /* Main settings class instance */
+
+/* LED settings START */
+extern uint16_t             pixels_in_row;  /* Number of pixels in row */
+extern uint16_t             pixels_rows;    /* Number of rows */
+
+extern uint16_t             num_of_pixels;  /* Number of all pixels */
+
+extern Adafruit_NeoPixel    strip;          /* LED strip class instance */
+/* LED settings END */
+
+extern uint16_t             current_mode;   /* Variable to store current mode of light */
+
+extern bool                 change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
+
+
+
+/**
+ * \brief               Function saving new network coordinates.
+ * \param[ssid]         ssid: SSID of network to save.
+ * \param[password]     password: Password of new network to save.
+*/
+void save_new_wifi_config(const String& ssid, const String& password);
+
+/**
+ * \brief               Function that restart device.
+*/
+void handle_restart();
+
+/**
+ * \brief               Function that initialize settings from memory.
+*/
+void initialize_settings();
+
+
+/**
+ * \brief               Function that initialize start of last light mode.
+*/
+void initialize_starting_mode();
+
+
+#endif      /* ifndef SETTINGS_H */

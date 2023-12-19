@@ -1,20 +1,38 @@
 
-
 #ifndef STATIC_H
 #define STATIC_H
 
-extern Preferences staticParams; //params for static color mode
+/**
+ * \brief         Struct to store color
+*/
+struct color_struct {
+  /**
+   * \brief       Value of red color 0-255
+  */
+  uint8_t red;
 
-struct color{
-  uint8_t R;
-  uint8_t G;
-  uint8_t B;
+  /**
+   * \brief       Value of green color 0-255
+  */
+  uint8_t green;
+
+  /**
+   * \brief       Value of blue color 0-255
+  */
+  uint8_t blue;
 };
 
-extern color currentStatic; //store last static color
-extern boolean staticColorChanged;
 
-void staticSetColor();
+extern Preferences  static_params;          /* Static mode settings class instance */
+
+extern color_struct current_static_color;   /* Current static mode color */
+extern boolean      static_color_changed;   /* If static color was chaged */
 
 
-#endif
+/**
+ * \brief         Function that sets color from color struct for whole LEDs
+*/
+void static_color_set();
+
+
+#endif    /* ifndef STATIC_H */

@@ -2,84 +2,90 @@
 #include "settings_things.h"
 #include "pixels.h"
 
-pixels_struct* PIXELS = new pixels_struct[1]; //initialize array of pixel color structs
+pixel_color* pixels = new pixel_color[1];
 
-bool stripInitialize() {
-  strip.updateLength(NUMPIXELS);
-  #ifdef DEBUG
-    Serial.println("Initialize LED strip with " + String(NUMPIXELS) + " pixels");
-  #endif
-  strip.begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
+void strip_initialize() {
+  strip.updateLength(num_of_pixels);
+  strip.begin();
   strip.clear();
   strip.show();
-  return true;
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Initialized LED strip with " + String(num_of_pixels) + " pixels");
+  #endif    /* defined(DEBUG) */
 }
 
-bool resizePixelStruct(uint16_t newSize) {
-  int newSize1 = 150;
-  #ifdef DEBUG
-    Serial.println("--- resizePixelStruct("+String(newSize1)+") START---");
-    Serial.println("Change PIXEL array size from " + String(sizeof(PIXELS)));
-  #endif
+void resize_pixels_struct(uint16_t new_size) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Changing pixel table from " + String(sizeof(pixels)) + " to " + String(new_size));
+  #endif    /* defined(DEBUG) */
 
-  // create a new array with the new size
-  pixels_struct* newArray = new pixels_struct[newSize1];
-  #ifdef DEBUG
-    Serial.println("Generated new array with size: "+ String(sizeof(PIXELS)));
-  #endif
-  // delete the old array
-  delete[] PIXELS;
-  // update the global pointer and size variables
-  PIXELS = newArray;
+  pixel_color* new_array = new pixel_color[new_size];
+  delete[] pixels;
+  pixels = new_array;
 
-  #ifdef DEBUG
-    Serial.println("Success changed to new size: "+ String(sizeof(PIXELS)));
-    Serial.println("--- resizePixelStruct END---");
-  #endif
-  return true;
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Success changed to new size: "+ String(sizeof(pixels)));
+  #endif    /* defined(DEBUG) */
 }
 
-uint16_t* resizeArray(uint16_t* oldArray, uint16_t oldSize, uint16_t newSize) {
-  #ifdef DEBUG
-    Serial.println("--- resizeArray(oldArray, oldSize:"+String(oldSize)+", newSize: "+String(newSize)+") START---");
-  #endif
-  uint16_t* newArray = new uint16_t[newSize]; // Allocate a new array with the new size
-  uint16_t minSize = (oldSize < newSize) ? oldSize : newSize; // Get the smaller size
+uint16_t* resize_array(uint16_t* old_array, uint16_t old_size, uint16_t new_size) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Resizing array from " + String(old_size) + " to " + String(new_size));
+  #endif    /* defined(DEBUG) */
+
+  uint16_t* new_array = new uint16_t[new_size];
+  uint16_t  min_size  = (old_size < new_size) ? old_size : new_size;         /* size of smaller array */
   
-  // Copy the elements from the old array to the new array
-  for (int i = 0; i < minSize; i++) {
-    newArray[i] = oldArray[i];
+  for (int i = 0; i < min_size; ++i) {
+    new_array[i] = old_array[i];
   }
-  
-  delete[] oldArray; // Free the memory of the old array
-  return newArray; // Return the new array
+  delete[] old_array;
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Success changed to new size");
+  #endif    /* defined(DEBUG) */
+
+  return new_array;
 }
 
-void sendPixelColor(uint16_t led) {
-  #ifdef DEBUG
-    Serial.println("--- sendPixelColor("+String(led)+" START---");
-  #endif
-  strip.setPixelColor(led, strip.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
+void send_pixel(uint16_t led_to_send) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Sending " + String(led_to_send) + " pixel to LED strip");
+  #endif    /* defined(DEBUG) */
+
+  strip.setPixelColor(led_to_send, strip.Color(pixels[led_to_send].green, pixels[led_to_send].red, pixels[led_to_send].blue));
   strip.show();
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] pixel sended");
+  #endif    /* defined(DEBUG) */
 }
 
-void setLedColor(uint16_t led, uint8_t R, uint8_t G, uint8_t B) {
-  #ifdef DEBUG
-    Serial.println("--- setLedColor( LED: "+String(led)+" R: "+String(R)+" G: "+String(G)+" B: "+String(B)+") START---");
-  #endif
-  PIXELS[led].R = R;
-  PIXELS[led].G = G;
-  PIXELS[led].B = B;
-  strip.setPixelColor(led, strip.Color(PIXELS[led].G, PIXELS[led].R, PIXELS[led].B));
-  //Serial.println("set [" + String(led) + "] to -> R: " + String(PIXELS[led].R) + " G: " + String(PIXELS[led].G) + " B: " + String(PIXELS[led].B));
+void set_pixel_color(uint16_t led, uint8_t r, uint8_t g, uint8_t b) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Set " + String(led) + " pixel color R: " + String(r) + " G: " + String(g) + " B: " + String(b));
+  #endif    /* defined(DEBUG) */
+
+  pixels[led].red   = r;
+  pixels[led].green = g;
+  pixels[led].blue  = b;
+  strip.setPixelColor(led, strip.Color(pixels[led].green, pixels[led].red, pixels[led].blue));
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] color is set");
+  #endif    /* defined(DEBUG) */
 }
 
-bool showTriangle() {
-  for (int c = 0; c <= pixelsInRow; c++) {
-    for (int r = 0; r <= pixelsRows-c-1; r++){
-      strip.setPixelColor(r * pixelsInRow + c, strip.Color(0, 255, 0));
+void show_triangle() {
+  for (int c = 0; c <= pixels_in_row; ++c) {
+    for (int r = 0; r <= pixels_rows - c - 1; ++r){
+      strip.setPixelColor(r * pixels_in_row + c, strip.Color(0, 255, 0));
     }
   }
   strip.show();
-  return true;
+  
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] RED triangle was shown");
+  #endif    /* defined(DEBUG) */
 }

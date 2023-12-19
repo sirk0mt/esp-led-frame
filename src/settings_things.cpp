@@ -1,144 +1,155 @@
 #include "settings_things.h"
 
-//v0.0.0 - v(pelna wersja).(wstepnie gotowa).(skonczny dzien modow)
-const char* ver = "v0.0.1a";
+/* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
+const char*       ver = "v0.0.3";
 
-Preferences devSettings; //device settings
-Preferences mainSettings; //main program settings
+Preferences       dev_settings;
+Preferences       main_settings;
 
-uint16_t pixelsInRow;
-uint16_t pixelsRows; 
-uint16_t NUMPIXELS;
-uint16_t currentMode;
+uint16_t          pixels_in_row;
+uint16_t          pixels_rows; 
+uint16_t          num_of_pixels;
+uint16_t          current_mode;
 
-Adafruit_NeoPixel strip(1, PIN, NEO_GRB + NEO_KHZ800); //create instance for neopixel strip
+Adafruit_NeoPixel strip(1, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
 
-bool changeMode = false;
+bool              change_mode = false;
 
-void handleRestart() {
-  #ifdef DEBUG
-    Serial.println("Restarting device...");
-  #endif
+void handle_restart() {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Restarting device...");
+  #endif    /* defined(DEBUG) */
+
   ESP.restart();
 }
 
-void saveWiFiConfig(const String& ssid, const String& password) {
-  devSettings.putString("ssid", ssid); 
-  devSettings.putString("password", password);
-  #ifdef DEBUG
-    Serial.println("New network settings saved");
-    Serial.println("SSID: " + devSettings.getString("ssid") + "  Password: " + devSettings.getString("password"));
-  #endif
+void save_new_wifi_config(const String& ssid, const String& password) {
+  dev_settings.putString("ssid", ssid); 
+  dev_settings.putString("password", password);
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] New network settings saved" +
+                                              " SSID: " + dev_settings.getString("ssid") +
+                                              " Password: " + dev_settings.getString("password"));
+  #endif    /* defined(DEBUG) */
 }
 
-bool initializeSettings() {
+void initialize_settings() {
   //to format settings
   // nvs_flash_erase(); // erase the NVS partition and...
   // nvs_flash_init(); // initialize the NVS partition.
 
-  devSettings.begin("devSettings", false);
-  mainSettings.begin("mainSettings", false);
-  galaxyParams.begin("galaxyParams", false);
-  staticParams.begin("staticParams", false);
-  rainbowParams.begin("rainbowParams", false);
+  dev_settings.begin("devSettings", false);
+  main_settings.begin("mainSettings", false);
+  galaxy_params.begin("galaxyParams", false);
+  static_params.begin("staticParams", false);
+  rainbow_params.begin("rainbowParams", false);
 
   // Initialize default values (do it only once)  -->
 
-  //devSettings.putUShort("pixelsInRow",15);
-  //devSettings.putUShort("pixelsRows",10);
-  //devSettings.putString("host","obraz");
-  //devSettings.putString("ssid", "Siedziba_PIS11"); 
-  //devSettings.putString("password", "niepowiemci11");
-  //mainSettings.putUShort("currentMode", 1);
-  //galaxyMasterDelay = galaxyParams.putUShort("MasterDel",30);
-  //galaxyMinDel = galaxyParams.putUShort("MinDel",50);
-  //galaxyMaxDel = galaxyParams.putUShort("MaxDel",2000);
-  //galaxyLedWorkers = galaxyParams.putUShort("LedWorkers",600);
-  //staticParams.putUShort("R",10);
-  //staticParams.putUShort("G",10);
-  //staticParams.putUShort("B",10);
-  //rainbowParams.putUShort("rMasterDel",10);
-  //rainbowParams.putUShort("rMaxChange",10);
+  //dev_settings.putUShort("pixelsInRow",15);
+  //dev_settings.putUShort("pixelsRows",10);
+  //dev_settings.putString("host","obraz");
+  //dev_settings.putString("ssid", "Siedziba_PIS11"); 
+  //dev_settings.putString("password", "niepowiemci11");
+  //main_settings.putUShort("currentMode", 1);
+  //galaxy_master_delay = galaxy_params.putUShort("MasterDel",30);
+  //galaxy_min_del = galaxy_params.putUShort("MinDel",50);
+  //galaxy_max_del = galaxy_params.putUShort("MaxDel",2000);
+  //galaxy_led_workers = galaxy_params.putUShort("LedWorkers",600);
+  //static_params.putUShort("R",10);
+  //static_params.putUShort("G",10);
+  //static_params.putUShort("B",10);
+  //rainbow_params.putUShort("rMasterDel",10);
+  //rainbow_params.putUShort("rMaxChange",10);
 
   // <-- End of initialize with default values
 
   // Getting data from memory -->
-  pixelsInRow = devSettings.getUShort("pixelsInRow");
-  pixelsRows = devSettings.getUShort("pixelsRows");
-  host = devSettings.getString("host");
-  ssid = devSettings.getString("ssid"); 
-  password = devSettings.getString("password");
+  pixels_in_row       = dev_settings.getUShort("pixelsInRow");
+  pixels_rows         = dev_settings.getUShort("pixelsRows");
+  mdns_host_name      = dev_settings.getString("host");
+  saved_ssid          = dev_settings.getString("ssid"); 
+  saved_password      = dev_settings.getString("password");
 
-  currentMode = mainSettings.getUShort("currentMode");
+  current_mode        = main_settings.getUShort("currentMode");
 
-  galaxyMasterDelay = galaxyParams.getUShort("MasterDel");
-  galaxyMinDel = galaxyParams.getUShort("MinDel");
-  galaxyMaxDel = galaxyParams.getUShort("MaxDel");
-  galaxyLedWorkers = galaxyParams.getUShort("LedWorkers");
-  galaxyCurrDelay = resizeArray(galaxyCurrDelay,1,galaxyLedWorkers);
+  galaxy_master_delay = galaxy_params.getUShort("MasterDel");
+  galaxy_min_del      = galaxy_params.getUShort("MinDel");
+  galaxy_max_del      = galaxy_params.getUShort("MaxDel");
+  galaxy_led_workers  = galaxy_params.getUShort("LedWorkers");
+  galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
 
-  currentStatic.R = staticParams.getUShort("R");
-  currentStatic.G = staticParams.getUShort("G");
-  currentStatic.B = staticParams.getUShort("B");
+  current_static_color.red    = static_params.getUShort("R");
+  current_static_color.green  = static_params.getUShort("G");
+  current_static_color.blue   = static_params.getUShort("B");
 
-  rainbowMasterDelay = rainbowParams.getUShort("rMasterDel");
-  rainbowMaxChange= rainbowParams.getUShort("rMaxChange");
-  rainbowCurrMasterDelay = rainbowMasterDelay;
+  rainbow_master_delay      = rainbow_params.getUShort("rMasterDel");
+  rainbow_max_change        = rainbow_params.getUShort("rMaxChange");
+  rainbow_curr_master_delay = rainbow_master_delay;
 
-  #ifdef DEBUG
-    Serial.println("--- devSettings ---");
-    Serial.println("pixelsInRow: " + String(pixelsInRow));
-    Serial.println("pixelsRows: " + String(pixelsRows));
-    Serial.println("host: " + String(host));
-    Serial.println("ssid: " + String(ssid));
-    Serial.println("password: " + String(password));
-    Serial.println("--- mainSettings ---");
-    Serial.println("currentMode: " + String(currentMode));
-    Serial.println("--- galaxyParams ---");
-    Serial.println("galaxyMasterDelay: " + String(galaxyMasterDelay));
-    Serial.println("galaxyMinDel: " + String(galaxyMinDel));
-    Serial.println("galaxyMaxDel: " + String(galaxyMaxDel));
-    Serial.println("galaxyLedWorkers: " + String(galaxyLedWorkers));
-    Serial.println("--- staticParams ---");
-    Serial.println("R: " + String(currentStatic.R));
-    Serial.println("G: " + String(currentStatic.G));
-    Serial.println("B: " + String(currentStatic.B));
-    Serial.println("--- rainbowParams ---");
-    Serial.println("rainbowCurrMasterDelay: " + String(rainbowCurrMasterDelay));
-    Serial.println("rainbowMaxChange: " + String(rainbowMaxChange));
-  #endif
+  #if defined(DEBUG)
+    Serial.println("-----------------------------------");
+    Serial.println("--- Settings readed from memory ---");
+    Serial.println("--- dev_settings ---");
+    Serial.println("pixels_in_row: " + String(pixels_in_row));
+    Serial.println("pixels_rows: " + String(pixels_rows));
+    Serial.println("mdns_host_name: " + String(mdns_host_name));
+    Serial.println("saved_ssid: " + String(saved_ssid));
+    Serial.println("saved_password: " + String(saved_password));
+    Serial.println("--- main_settings ---");
+    Serial.println("current_mode: " + String(current_mode));
+    Serial.println("--- galaxy_params ---");
+    Serial.println("galaxy_master_delay: " + String(galaxy_master_delay));
+    Serial.println("galaxy_min_del: " + String(galaxy_min_del));
+    Serial.println("galaxy_max_del: " + String(galaxy_max_del));
+    Serial.println("galaxy_led_workers: " + String(galaxy_led_workers));
+    Serial.println("--- static_params ---");
+    Serial.println("R: " + String(current_static_color.red));
+    Serial.println("G: " + String(current_static_color.green));
+    Serial.println("B: " + String(current_static_color.blue));
+    Serial.println("--- rainbow_params ---");
+    Serial.println("rainbow_curr_master_delay: " + String(rainbow_curr_master_delay));
+    Serial.println("rainbow_max_change: " + String(rainbow_max_change));
+    Serial.println("-----------------------------------");
+  #endif    /* defined(DEBUG) */
 
   // <-- End of getting data from memory
-  return true;
 }
 
-void initializeMode() {
-    #ifdef DEBUG
-        Serial.println("Initialization of currentMode");
-    #endif
-    //Initialize for modes
-    switch(currentMode) {
-        case 0:
-            break;
-        case 1: //galaxy
-            galaxyMode();
-            #ifdef DEBUG
-                Serial.println("Galaxy mode initialized");
-            #endif
-            break;
-        case 3: //static
-            staticSetColor();
-            #ifdef DEBUG
-                Serial.println("Static mode initialized");
-            #endif
-            break;
-        case 4: //rainbow
-            rainbowInitialize();
-            #ifdef DEBUG
-                Serial.println("Rainbow mode initialized");
-            #endif
-            break;
-        default:
-            break;
-    }
+void initialize_starting_mode() {
+  #if defined(DEBUG)
+      Serial.println("Initialization of current_mode");
+  #endif    /* defined(DEBUG) */
+
+  switch(current_mode) {
+    case 0:
+      break;
+    case 1: /* galaxy */
+      galaxy_mode();
+
+      #if defined(DEBUG)
+        Serial.println("Galaxy mode initialized");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 3: /* static */
+      static_color_set();
+
+      #if defined(DEBUG)
+        Serial.println("Static mode initialized");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 4: /* rainbow */
+      rainbow_initialize();
+
+      #if defined(DEBUG)
+          Serial.println("Rainbow mode initialized");
+      #endif    /* defined(DEBUG) */
+      
+      break;
+    default:
+      break;
+  }
 }

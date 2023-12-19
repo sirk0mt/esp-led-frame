@@ -9,89 +9,65 @@
 
 #include "settings_things.h"
 
-wifi_mode_t currentWiFiState = WIFI_MODE_NULL;
+
+wifi_mode_t current_wifi_state = WIFI_MODE_NULL;
 
 void setup() {
-  #ifdef DEBUG
+  #if defined(DEBUG)
     Serial.begin(115200);
-  #endif
+  #endif    /* defined(DEBUG) */
 
-  if (initializeSettings()){
-    #ifdef DEBUG
-      Serial.println("Settings initialized");
-    #endif
-  }
+  initialize_settings();
+  num_of_pixels = pixels_in_row * pixels_rows;
 
-  delay(50);
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Number of pixels calculated to: " + String(num_of_pixels));
+  #endif    /* defined(DEBUG) */
 
-  NUMPIXELS = pixelsInRow*pixelsRows;
-  #ifdef DEBUG
-    Serial.println("Number of pixels calculated to: " + String(NUMPIXELS));
-  #endif
-
-  if(resizePixelStruct(NUMPIXELS)){
-    #ifdef DEBUG
-      Serial.println("Pixel struct resized");
-    #endif
-  }
-
-  delay(50);
-
+  resize_pixels_struct(num_of_pixels);
   randomSeed(analogRead(34));
-
-  if(stripInitialize()) {
-    #ifdef DEBUG
-      Serial.println("Strip initialized");
-    #endif
-  }
-  
-
-  if (connectToWiFi()) {
-    
-    startWebServer();
-
-    initializeMDNS();
-
-    initializeMode();
-
+  strip_initialize();
+  if (connect_saved_network()) {
+    start_main_server();
+    initialize_starting_mode();
   } else {
-    if(showTriangle()) {
-      #ifdef DEBUG
-        Serial.println("show warning triangle");
-      #endif
-    }
-    delay(50);
-    createAccessPoint();
+    show_triangle();
+    create_config_network();
   }
-  currentWiFiState = WiFi.getMode();
+  initialize_mdns();
+  current_wifi_state = WiFi.getMode();
 
-  #ifdef DEBUG
-    Serial.println("End of setup()");
-  #endif
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] End of function -----------");
+  #endif    /* defined(DEBUG) */
 }
 
 void loop() {
   server.handleClient();
-  if(currentWiFiState == WIFI_STA) {
-    switch(currentMode){
+  if (current_wifi_state == WIFI_STA) {
+    switch (current_mode) {
       case 0:
-        if(changeMode == true){
-          // do something
-          changeMode = false;
+        if (change_mode == true) {
+          /* ToDo if that if is necessary? */
+          change_mode = false;
         }
         break;
       case 1:
-        galaxyMode();
+        galaxy_mode();
         break;
       case 4:
-        rainbowMode();
+        rainbow_mode();
+        break;
+      case 5:
+        rainbow_flow();
         break;
       default:
         break;
     }
-    // if (mDNSdel_curr = 0){
-    //   MDNS.update();
-    // }
+    /* if (mdns_del_curr = 0){
+    *   MDNS.update();
+    * }
+    */
   }
   delay(1);
 }

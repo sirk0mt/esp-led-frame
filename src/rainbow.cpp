@@ -1,179 +1,162 @@
 #include "settings_things.h"
 #include "rainbow.h"
 
-Preferences rainbowParams; //params for rainbow mode
+Preferences     rainbow_params;
 
-uint16_t rainbowMasterDelay;
-uint16_t rainbowMaxChange;
+uint16_t        rainbow_master_delay;
+uint16_t        rainbow_max_change;
 
-colorChange rainbowChange; // store current random color change for rainbow mode
+color_ch_struct rainbow_change;
 
-uint16_t rainbowCurrMasterDelay;
+uint16_t        rainbow_curr_master_delay;
 
-void rainbowInitialize() {
-    rainbowChange.Rch = random(0, rainbowMaxChange+1);
-    rainbowChange.R = random(0, 255);
-    #ifdef DEBUG
-        Serial.println("Current changes:");
-        Serial.println("R: " + rainbowChange.Rch);
-    #endif
-    rainbowChange.Gch = random(1, rainbowMaxChange+1);
-    rainbowChange.G = random(0, 255);
-    #ifdef DEBUG
-        Serial.println("G: "+ rainbowChange.Gch);
-    #endif
-    rainbowChange.Bch = random(1, rainbowMaxChange+1);
-    rainbowChange.B = random(0, 255);
-    #ifdef DEBUG
-        Serial.println("B: "+ rainbowChange.Bch);
-    #endif
-    //all count up
-    rainbowChange.Ru = true;
-    rainbowChange.Gu = true;
-    rainbowChange.Bu = true;
+void rainbow_initialize() {
+    rainbow_change.red_change     = random(0, rainbow_max_change + 1);
+    rainbow_change.red_current    = random(0, 255);
+
+    rainbow_change.green_change   = random(1, rainbow_max_change + 1);
+    rainbow_change.green_current  = random(0, 255);
+
+    rainbow_change.blue_change    = random(1, rainbow_max_change + 1);
+    rainbow_change.blue_current   = random(0, 255);
+
+    /* all count up */
+    rainbow_change.red_up   = true;
+    rainbow_change.green_up = true;
+    rainbow_change.blue_up  = true;
+
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Current changes -" +
+                                                " R: " + rainbow_change.red_change +
+                                                " G: " + rainbow_change.green_change +
+                                                " B: " + rainbow_change.blue_change);
+    #endif    /* defined(DEBUG) */
 }
 
 
-void rainbowMode() {
-  if(rainbowCurrMasterDelay == 0){
-    // #ifdef DEBUG
+void rainbow_mode() {
+  if (rainbow_curr_master_delay == 0) {
+    // #if defined(DEBUG)
     //   Serial.println();
     //   Serial.print("R: ");
-    //   if(rainbowChange.Ru){
+    //   if(rainbow_change.red_up){
     //     Serial.print("up");
     //   }
     //   else{
     //     Serial.print("down");
     //   }
     //   Serial.print("  G: ");
-    //   if(rainbowChange.Gu){
+    //   if(rainbow_change.green_up){
     //     Serial.print("up");
     //   }
     //   else{
     //     Serial.print("down");
     //   }
     //   Serial.print("  B: ");
-    //   if(rainbowChange.Bu){
+    //   if(rainbow_change.blue_up){
     //     Serial.print("up");
     //   }
     //   else{
     //     Serial.print("down");
     //   }
     //   Serial.println();
-    // #endif
+    // #endif    /* defined(DEBUG) */
 
-    if(rainbowChange.Ru){
-        if(255<(rainbowChange.R + rainbowChange.Rch)){
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - R:255  next change: ");
-            Serial.print(rainbowChange.Rch);
-          #endif
-          rainbowChange.R = 255;
-          rainbowChange.Rch = random(1, rainbowMaxChange);
-          rainbowChange.Ru = false;
+    if (rainbow_change.red_up) {
+        if (255 < (rainbow_change.red_current + rainbow_change.red_change)) {
+          rainbow_change.red_current  = 255;
+          rainbow_change.red_change   = random(1, rainbow_max_change);
+          rainbow_change.red_up       = false;
+
+          #if defined(DEBUG)
+            Serial.println("[" + String(__func__) + "] R:255  next change: " + rainbow_change.red_change);
+          #endif    /* defined(DEBUG) */
+        } else {
+          rainbow_change.red_current  = rainbow_change.red_current + rainbow_change.red_change;
         }
-        else{
-          rainbowChange.R = rainbowChange.R + rainbowChange.Rch;
-        }
-    }
-    else{
-        if(rainbowChange.R<rainbowChange.Rch){
-          rainbowChange.R = 0;
-          rainbowChange.Rch = random(1, rainbowMaxChange+1);
-          rainbowChange.Ru = true;
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - R:0  next change: ");
-            Serial.print(rainbowChange.Rch);
-          #endif
-        }
-        else{
-          rainbowChange.R = rainbowChange.R - rainbowChange.Rch;
+    } else {
+        if (rainbow_change.red_current < rainbow_change.red_change) {
+          rainbow_change.red_current  = 0;
+          rainbow_change.red_change   = random(1, rainbow_max_change + 1);
+          rainbow_change.red_up       = true;
+
+          #if defined(DEBUG)
+            Serial.println("[" + String(__func__) + "] R:0  next change: " + rainbow_change.red_change);
+          #endif    /* defined(DEBUG) */
+        } else {
+          rainbow_change.red_current  = rainbow_change.red_current - rainbow_change.red_change;
         }
     }
 
+    if(rainbow_change.green_up){
+        if (255 < (rainbow_change.green_current + rainbow_change.green_change)) {
+          rainbow_change.green_current  = 255;
+          rainbow_change.green_change   = random(1, rainbow_max_change);
+          rainbow_change.green_up       = false;
 
-    if(rainbowChange.Gu){
-        if(255<(rainbowChange.G + rainbowChange.Gch)){
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - G:255  next change: ");
-            Serial.print(rainbowChange.Gch);
-          #endif
-          rainbowChange.G = 255;
-          rainbowChange.Gch = random(1, rainbowMaxChange);
-          rainbowChange.Gu = false;
+          #if defined(DEBUG)
+            Serial.println("[" + String(__func__) + "] G:255  next change: " + rainbow_change.green_change);
+          #endif    /* defined(DEBUG) */
+        } else {
+          rainbow_change.green_current  = rainbow_change.green_current + rainbow_change.green_change;
         }
-        else{
-          rainbowChange.G = rainbowChange.G + rainbowChange.Gch;
-        }
-    }
-    else{
-        if(rainbowChange.G<rainbowChange.Gch){
-          rainbowChange.G = 0;
-          rainbowChange.Gch = random(1, rainbowMaxChange+1);
-          rainbowChange.Gu = true;
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - G:0  next change: ");
-            Serial.print(rainbowChange.Gch);
-          #endif
-        }
-        else{
-          rainbowChange.G = rainbowChange.G - rainbowChange.Gch;
+    } else {
+        if (rainbow_change.green_current < rainbow_change.green_change) {
+          rainbow_change.green_current  = 0;
+          rainbow_change.green_change   = random(1, rainbow_max_change+1);
+          rainbow_change.green_up       = true;
+
+          #if defined(DEBUG)
+            Serial.println("[" + String(__func__) + "] G:0  next change: " + rainbow_change.green_change);
+          #endif    /* defined(DEBUG) */
+        } else {
+          rainbow_change.green_current  = rainbow_change.green_current - rainbow_change.green_change;
         }
     }
 
-        if(rainbowChange.Bu){
-        if(255<(rainbowChange.B + rainbowChange.Bch)){
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - B:255  next change: ");
-            Serial.print(rainbowChange.Bch);
-          #endif
-          rainbowChange.B = 255;
-          rainbowChange.Bch = random(1, rainbowMaxChange);
-          rainbowChange.Bu = false;
-        }
-        else{
-          rainbowChange.B = rainbowChange.B + rainbowChange.Bch;
-        }
-    }
-    else{
-        if(rainbowChange.B<rainbowChange.Bch){
-          rainbowChange.B = 0;
-          rainbowChange.Bch = random(1, rainbowMaxChange+1);
-          rainbowChange.Bu = true;
-          #ifdef DEBUG
-            Serial.println();
-            Serial.print("Rainbow - B:0  next change: ");
-            Serial.print(rainbowChange.Bch);
-          #endif
-        }
-        else{
-          rainbowChange.B = rainbowChange.B - rainbowChange.Bch;
-        }
+    if (rainbow_change.blue_up) {
+      if (255 < (rainbow_change.blue_current + rainbow_change.blue_change)) {
+        rainbow_change.blue_current   = 255;
+        rainbow_change.blue_change    = random(1, rainbow_max_change);
+        rainbow_change.blue_up        = false;
+
+        #if defined(DEBUG)
+          Serial.println("[" + String(__func__) + "] B:255  next change: " + rainbow_change.blue_change);
+        #endif    /* defined(DEBUG) */
+      } else {
+        rainbow_change.blue_current   = rainbow_change.blue_current + rainbow_change.blue_change;
+      }
+    } else {
+      if (rainbow_change.blue_current < rainbow_change.blue_change) {
+        rainbow_change.blue_current   = 0;
+        rainbow_change.blue_change    = random(1, rainbow_max_change+1);
+        rainbow_change.blue_up        = true;
+
+        #if defined(DEBUG)
+          Serial.println("[" + String(__func__) + "] B:0  next change: " + rainbow_change.blue_change);
+        #endif    /* defined(DEBUG) */
+      } else {
+        rainbow_change.blue_current   = rainbow_change.blue_current - rainbow_change.blue_change;
+      }
     }
 
+    for (uint16_t i = 0; i < num_of_pixels; ++i) {
+      pixels[i].red   = rainbow_change.red_current;
+      pixels[i].green = rainbow_change.green_current;
+      pixels[i].blue  = rainbow_change.blue_current;
 
-    for (uint16_t i=0; i < NUMPIXELS;i++){
-      PIXELS[i].R = rainbowChange.R;
-      PIXELS[i].G = rainbowChange.G;
-      PIXELS[i].B = rainbowChange.B;
-
-      strip.setPixelColor(i, strip.Color(PIXELS[i].G, PIXELS[i].R, PIXELS[i].B));
+      strip.setPixelColor(i, strip.Color(pixels[i].green, pixels[i].red, pixels[i].blue));
     }
+
     strip.show();
-    rainbowCurrMasterDelay = rainbowMasterDelay;
-  }
-  else{
-    rainbowCurrMasterDelay--;
-    // #ifdef DEBUG
+    rainbow_curr_master_delay = rainbow_master_delay;
+  } else {
+    --rainbow_curr_master_delay;
+    // #if defined(DEBUG)
     // Serial.println();
     // Serial.print("current delay");
-    // Serial.print(rainbowCurrMasterDelay);
+    // Serial.print(rainbow_curr_master_delay);
     // Serial.println();
-    // #endif
+    // #endif    /* defined(DEBUG) */
   }
 }

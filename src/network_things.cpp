@@ -1,90 +1,99 @@
 #include "settings_things.h"
 #include "network_things.h"
 
-String host;
-String ssid;
-String password;
+String    mdns_host_name;
+String    saved_ssid;
+String    saved_password;
 
-String my_ssid = "configAP";
-IPAddress staticIP(192, 168, 0, 1);
+String    config_network_ssid = "configAP";
+IPAddress config_network_ip(192, 168, 0, 1);
 
-uint8_t mDNSdel = 100;
-uint8_t mDNSdel_curr = 100;
+uint8_t   mdns_del            = 100;
+uint8_t   mdns_del_curr       = 100;
 
 WebServer server(80);
 
-bool connectToWiFi() {
-  Serial.println("Connecting to WiFi...");
-  WiFi.begin(ssid.c_str(), password.c_str());
-
+bool connect_saved_network() {
   int attempts = 0;
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Connecting to WiFi");
+  #endif    /* defined(DEBUG) */
+
+  WiFi.begin(saved_ssid.c_str(), saved_password.c_str());
   while (WiFi.status() != WL_CONNECTED && attempts < 10) {
     delay(500);
-    Serial.print(".");
-    attempts++;
+    #if defined(DEBUG)
+      Serial.print(".");
+    #endif    /* defined(DEBUG) */
+    ++attempts;
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    #ifdef DEBUG
-      Serial.println("");
-      Serial.print("Connected to ");
-      Serial.println(ssid);
-      Serial.print("IP address: ");
-      Serial.println(WiFi.localIP());
-    #endif
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Connected to " + saved_ssid + " with IP: " + WiFi.localIP());
+    #endif    /* defined(DEBUG) */
     return true;
   } else {
-    #ifdef DEBUG
-      Serial.println("\nFailed to connect to saved WiFi network");
-    #endif
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] ERROR - Failed to connect to saved WiFi network");
+    #endif    /* defined(DEBUG) */
     WiFi.disconnect();
     return false;
   }
 }
 
-String listVisibleNetworks() {
+String list_visible_networks() {
   String networks = "<ul>";
   int numNetworks = WiFi.scanNetworks();
-  #ifdef DEBUG
-    Serial.println("Found "+ String(numNetworks) + " networks");
-  #endif
-  for (int i = 0; i < numNetworks; i++) {
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Found "+ String(numNetworks) + " networks");
+  #endif    /* defined(DEBUG) */
+
+  for (int i = 0; i < numNetworks; ++i) {
     networks += "<li onclick='copyText(this)'>" + WiFi.SSID(i) + "</li>";
-    #ifdef DEBUG
+
+    #if defined(DEBUG)
         Serial.println("--[" + String(i) + "]-- "+ WiFi.SSID(i));
-    #endif
+    #endif    /* defined(DEBUG) */
   }
+
   networks += "</ul>";
-  #ifdef DEBUG
-    Serial.println("-------------------------");
-  #endif
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Function end -----------");
+  #endif    /* defined(DEBUG) */
+
   return networks;
 }
 
-void createAccessPoint() {
-  Serial.println("Creating Access Point...");
-  WiFi.softAP(my_ssid);
-  WiFi.softAPConfig(staticIP, staticIP, IPAddress(255, 255, 255, 0));
-  Serial.println("Access Point created with IP: " + WiFi.softAPIP().toString());
-  startSettingsWebServer();
+void create_config_network() {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Creating Access Point...");
+  #endif    /* defined(DEBUG) */
+
+  WiFi.softAP(config_network_ssid);
+  WiFi.softAPConfig(config_network_ip, config_network_ip, IPAddress(255, 255, 255, 0));
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Access Point created with IP: " + WiFi.softAPIP().toString());
+  #endif    /* defined(DEBUG) */
+  
+  start_network_settings_server();
 }
 
-void initializeMDNS() {
-    /*use mdns for host name resolution*/
-    if (!MDNS.begin(host.c_str())) { //http://obraz.local
-      #ifdef DEBUG
-        Serial.println("Error setting up MDNS responder!");
-      #endif
-      while (1) {
-        delay(1000);
-      }
+void initialize_mdns() {
+    if (!MDNS.begin(mdns_host_name.c_str())) {
+      #if defined(DEBUG)
+        Serial.println("[" + String(__func__) + "] ERROR setting up MDNS responder!");
+      #endif    /* defined(DEBUG) */
+
+      return;
     }
     MDNS.addService("http", "tcp", 80);
-    
-    #ifdef DEBUG
-      Serial.println("");
-      Serial.print("mDNS responder started at: ");
-      Serial.print(host);
-      Serial.println(".local");
-    #endif
+
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
+    #endif    /* defined(DEBUG) */
 }

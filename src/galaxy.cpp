@@ -1,61 +1,55 @@
 #include "settings_things.h"
 #include "galaxy.h"
 
-Preferences galaxyParams; //parameters of galaxy mode
+Preferences galaxy_params;
 
-uint16_t galaxyMasterDelay;
-uint16_t galaxyMinDel;
-uint16_t galaxyMaxDel;
-uint16_t galaxyLedWorkers=1;
+uint16_t    galaxy_master_delay;
+uint16_t    galaxy_min_del;
+uint16_t    galaxy_max_del;
+uint16_t    galaxy_led_workers        = 1;
 
-uint16_t galaxyCurrMasterDelay = 0;
-uint16_t* galaxyCurrDelay = new uint16_t[galaxyLedWorkers];
+uint16_t    galaxy_curr_master_delay  = 0;
+uint16_t*   galaxy_curr_delay         = new uint16_t[galaxy_led_workers];
 
-uint16_t galaxyDimMinus = 1;
+uint16_t    galaxy_dim_minus          = 1;
 
 
-void galaxyMode() {
-  if(galaxyCurrMasterDelay == 0){
-    for (int i = 0; i < NUMPIXELS; i++) {
-      //Serial.println("-------- [" + String(i) + "] ---------");
-      if(PIXELS[i].R >= galaxyDimMinus){
-        PIXELS[i].R = PIXELS[i].R - galaxyDimMinus;
-      }
-      else{
-        PIXELS[i].R = 0;
+void galaxy_mode() {
+  if (galaxy_curr_master_delay == 0) {
+    for (int current_pixel = 0; current_pixel < num_of_pixels; ++current_pixel) {
+      if (pixels[current_pixel].red >= galaxy_dim_minus) {
+        pixels[current_pixel].red = pixels[current_pixel].red - galaxy_dim_minus;
+      } else {
+        pixels[current_pixel].red = 0;
       }    
       
-      if(PIXELS[i].G >= galaxyDimMinus){
-        PIXELS[i].G = PIXELS[i].G - galaxyDimMinus;
-      }
-      else{
-        PIXELS[i].G = 0;
+      if (pixels[current_pixel].green >= galaxy_dim_minus) {
+        pixels[current_pixel].green = pixels[current_pixel].green - galaxy_dim_minus;
+      } else {
+        pixels[current_pixel].green = 0;
       }
 
-      if(PIXELS[i].B >= galaxyDimMinus){
-        PIXELS[i].B = PIXELS[i].B - galaxyDimMinus;
+      if (pixels[current_pixel].blue >= galaxy_dim_minus) {
+        pixels[current_pixel].blue = pixels[current_pixel].blue - galaxy_dim_minus;
+      } else {
+        pixels[current_pixel].blue = 0;
       }
-      else{
-        PIXELS[i].B = 0;
-      }
-      //Serial.println("dimmer to -> R: " + String(PIXELS[i].R) + " G: " + String(PIXELS[i].G) + " B: " + String(PIXELS[i].B));
-      strip.setPixelColor(i, strip.Color(PIXELS[i].G, PIXELS[i].R, PIXELS[i].B));
+
+      strip.setPixelColor(current_pixel, strip.Color(pixels[current_pixel].green, pixels[current_pixel].red, pixels[current_pixel].blue));
     }
 
-    for(int i = 0; i < galaxyLedWorkers; i++){
-      galaxyCurrDelay[i]--;
-      if(galaxyCurrDelay[i] <= 0){
-        galaxyCurrDelay[i] = random(galaxyMinDel, galaxyMaxDel + 1);
-        //Serial.println("new delay[" + String(i) + "]=" + String(currDelay[i]));
-        setLedColor(uint16_t(random(0, NUMPIXELS)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)));
+    for (int current_worker = 0; current_worker < galaxy_led_workers; ++current_worker) {
+      --galaxy_curr_delay[current_worker];
+      if (galaxy_curr_delay[current_worker] <= 0) {
+        galaxy_curr_delay[current_worker] = random(galaxy_min_del, galaxy_max_del + 1);
+        set_pixel_color(uint16_t(random(0, num_of_pixels)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)), uint8_t(random(0, 255 + 1)));
       }
     }
 
     strip.show();
-    galaxyCurrMasterDelay = galaxyMasterDelay;
-  }
-  else{
-    galaxyCurrMasterDelay--;
+    galaxy_curr_master_delay = galaxy_master_delay;
+  } else {
+    --galaxy_curr_master_delay;
   }
 
 }
