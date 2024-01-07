@@ -38,9 +38,8 @@ void start_main_server();
 
 /**
  * \brief               Get string with HTML setting for selected mode
- * \param[mode]         mode: Number of mode to get settings
 */
-String get_html_settings_for_mode(int mode);
+String get_html_settings_for_mode();
 
 /**
  * \brief               API for set values
