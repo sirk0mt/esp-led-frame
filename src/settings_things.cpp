@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
 /* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
-const char*       ver = "v0.0.5";
+const char*       ver = "v0.0.6";
 
 Preferences       dev_settings;
 Preferences       main_settings;

@@ -31,7 +31,7 @@ bool connect_saved_network() {
 
   if (WiFi.status() == WL_CONNECTED) {
     #if defined(DEBUG)
-      Serial.println("[" + String(__func__) + "] Connected to " + saved_ssid + " with IP: " + WiFi.localIP());
+      Serial.println("[" + String(__func__) + "] Connected to " + saved_ssid + " with IP: " + WiFi.localIP().toString());
     #endif    /* defined(DEBUG) */
     return true;
   } else {
@@ -44,7 +44,7 @@ bool connect_saved_network() {
 }
 
 String list_visible_networks() {
-  String networks = "<ul>";
+  String networks = "<div class='list-group'>";
   int numNetworks = WiFi.scanNetworks();
 
   #if defined(DEBUG)
@@ -52,14 +52,14 @@ String list_visible_networks() {
   #endif    /* defined(DEBUG) */
 
   for (int i = 0; i < numNetworks; ++i) {
-    networks += "<li onclick='copyText(this)'>" + WiFi.SSID(i) + "</li>";
+    networks += "<button type='button' class='list-group-item list-group-item-action' onclick='copyText(this)'>" + WiFi.SSID(i) + "</button>";
 
     #if defined(DEBUG)
         Serial.println("--[" + String(i) + "]-- "+ WiFi.SSID(i));
     #endif    /* defined(DEBUG) */
   }
 
-  networks += "</ul>";
+  networks += "</div>";
 
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Function end -----------");

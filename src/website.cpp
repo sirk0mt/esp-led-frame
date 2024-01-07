@@ -3,50 +3,19 @@
 
 uint16_t    ajax_current_pixel  = 0;
 
-const char* update_html    =
-"<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
-  "<div class='input-group mb-3'>"
-    "<input type='file' class='form-control' id='upFile' name='update' >"
-  "</div>"
-  "<input class='btn btn-info' type='submit' value='Update'>"
-"</form>"
-"<div id='prg'>progress: 0%</div>"
-"<script>"
-  "$('form').submit(function(e){"
-    "e.preventDefault();"
-    "var form = $('#upload_form')[0];"
-    "var data = new FormData(form);"
-    "$.ajax({"
-      "url: '/update',"
-      "type: 'POST',"
-      "data: data,"
-      "contentType: false,"
-      "processData:false,"
-      "xhr: function() {"
-        "var xhr = new window.XMLHttpRequest();"
-        "xhr.upload.addEventListener('progress', function(evt) {"
-          "if (evt.lengthComputable) {"
-            "var per = evt.loaded / evt.total;"
-            "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-          "}"
-        "}, false);"
-        "return xhr;"
-      "},"
-      "success:function(d, s) {"
-        "console.log('success!')"
-      "},"
-      "error: function (a, b, c) {}"
-    "});"
-  "});"
-"</script>";
-
 String get_available_networks_html() {
   String networkChoiseSiteHead    = 
-      "<p>Choose a WiFi network:</p>"
+      "<b>Choose a WiFi network:</b>"
       "<form method='post' action='/saveNetwork'>"
-        "SSID: <input type='text' name='ssid' id='ssid'><br>"
-        "Password: <input type='password' name='password'><br>"
-        "<input type='submit' value='Connect'>"
+        "<div class='mb-3'>"
+          "<label for='ssid' class='form-label'>SSID</label>"
+          "<input type='text' class='form-control' id='ssid' name='ssid'>"
+        "</div>"
+        "<div class='mb-3'>"
+          "<label for='passVal' class='form-label'>Password</label>"
+          "<input type='password' class='form-control' id='passVal' name='password'>"
+        "</div>"
+        "<button type='submit' class='btn btn-primary'>Connect</button>"
       "</form>"
       "<b>Available Networks</b>";
   String networkChoiseSiteFooter  = 
@@ -58,6 +27,16 @@ String get_available_networks_html() {
       "</script>";
 
   return networkChoiseSiteHead + String(list_visible_networks()) + networkChoiseSiteFooter;
+}
+
+String network_page_html() {
+  return
+    "<h3>Network Settings</h3><br>"
+    "<b>WiFi network:</b> " + WiFi.SSID() + "<br>"
+    "<b>WiFi RSSI:</b> " + String(WiFi.RSSI()) + "<br>"
+    "<b>Current IP:</b> " + WiFi.localIP().toString() + "<br>"
+    "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
+    "<hr>" + get_available_networks_html();
 }
 
 String get_curr_mode_name() {
@@ -86,6 +65,35 @@ String get_curr_mode_name() {
   }
 }
 
+String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Received color R: " + String(red) + " G: " + String(green) + " B: "+ String(blue));
+  #endif    /* defined(DEBUG) */
+
+  // check if values are between 0-255
+  red = (red < 0) ? 0 : (red > 255) ? 255 : red;
+  green = (green < 0) ? 0 : (green > 255) ? 255 : green;
+  blue = (blue < 0) ? 0 : (blue > 255) ? 255 : blue;
+  char hex_color[7];
+  sprintf(hex_color, "#%02X%02X%02X", red, green, blue);
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Returning HEX: " + hex_color);
+  #endif    /* defined(DEBUG) */
+
+  return hex_color;
+}
+
+void hex_to_rgb(String hex_color, uint8_t *red, uint8_t *green, uint8_t *blue) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Got HEX: " + hex_color);
+  #endif    /* defined(DEBUG) */
+  const char *temp = hex_color.c_str();
+  sscanf(temp, "%02x%02x%02x", red, green, blue);
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] R: " + String(*red) + " G: " + String(*green) + " B: "+ String(*blue));
+  #endif    /* defined(DEBUG) */
+}
 
 void redirect_to_root() {
   server.sendHeader("Location", "http://" + server.client().localIP().toString());
@@ -120,97 +128,136 @@ void start_network_settings_server() {
 
 void start_main_server() {
     server.on("/", HTTP_GET, []() {
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/html", "<html><head><title>LED PICTURE " + String(ver) + "</title>"
-                                    "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
-                                    "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
-                                    "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
-                                    "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
-                                  "</head><body onload='onLoad()'>"
-                                  "<div class='container mt-5'>"
-                                    "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
-                                    "<ul class='nav nav-tabs' id='myTabs'>"
-                                      "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
-                                      "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
-                                      "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
-                                      "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
-                                    "</ul>"
-                                    "<div class='tab-content mt-3'>"
-                                      "<div class='tab-pane fade show active' id='modes'>"
-                                        "<h3>Modes</h3><hr>"
-                                        "<b>Current mode:</b> <div class='d-inline' id='curr-name'>" + get_curr_mode_name() + "</div>"
-                                        "<form class='text-center'>"
-                                          "<label>Change mode:</label><br>"
-                                          "<button type='button' class='btn btn-primary' id='mode-0' onclick='btnClick(this)'>Off</button>"
-                                          "<button type='button' class='btn btn-primary' id='mode-1' onclick='btnClick(this)'>Galaxy</button>"
-                                          "<button type='button' class='btn btn-primary' id='mode-2' onclick='btnClick(this)'>Selective</button>"
-                                          "<button type='button' class='btn btn-primary' id='mode-3' onclick='btnClick(this)'>Static</button>"
-                                          "<button type='button' class='btn btn-primary' id='mode-4' onclick='btnClick(this)'>Color flow</button>"
-                                          "<button type='button' class='btn btn-primary' id='mode-5' onclick='btnClick(this)'>Rainbow</button>"
-                                        "</form>"
-                                        "<div>Mode settings:</div>"
-                                        "<div class='text-center mb-3' id='mode-pref-content'></div>"
-                                        "<button type='button' class='btn btn-primary' id='clear-btn' onclick='btnClick(this)'>Clear strip</button>"
-                                      "</div>"
-                                      "<div class='tab-pane fade' id='network'>"
-                                        "<h3>Network Settings</h3><br>"
-                                        + get_available_networks_html() +
-                                      "</div>"
-                                      "<div class='tab-pane fade' id='preferences'>"
-                                        "<h3>System Preferences</h3>"
-                                      "</div>"
-                                      "<div class='tab-pane fade' id='update'>"
-                                        "<h3>Update Settings</h3><br>"
-                                        + String(update_html) +
-                                      "</div>"
-                                    "</div>"
-                                    "<hr><div class='text-center mb-4'>"
-                                      "<b>WiFi network:</b> " + WiFi.SSID() + "<br>"
-                                      "<b>WiFi RSSI:</b> " + String(WiFi.RSSI()) + "<br>"
-                                      "Kompilacja " + String(__DATE__) + " " + String(__TIME__) + 
-                                    "</div>"
-                                  "</div>"
-                                  "<script>"
-                                    "function fetchDataAndPopulate(apiEndpoint, contentDivId) {"
-                                      "$.get(apiEndpoint, function(data) {"
-                                        "const content = JSON.stringify(data, null, 2);"
-                                        "$(contentDivId).html(content);"
-                                      "});"
-                                    "}"
-                                    "function onLoad() {"
-                                      "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
-                                    "}"
-                                    "function btnClick(clickedElement) {"
-                                      "console.log('Clicked:', clickedElement.id);"
-                                      "const modeSel = clickedElement.id.match(/^mode-(\\d+)$/);"
-                                      "if (modeSel) {"
-                                        "fetch('/setvalue?mode=' + parseInt(modeSel[1], 10), { method: 'POST' }).then(response => response.text());"
-                                        "fetchDataAndPopulate('/getVal?v=currModeS', '#curr-name');"
-                                        "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
-                                      "} else {"
-                                        "switch (clickedElement.id) {"
-                                          "case 'clear-btn':"
-                                            "fetch('/clear', { method: 'POST' })"
-                                              ".then(response => response.text());"
-                                            "console.log('done clear');"
-                                            "break;"
-                                          "case '2-btn':"
-                                            "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
-                                            "console.log('done 2');"
-                                            "break;"
-                                          "case '3-btn':"
-                                            "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
-                                            "console.log('done 3');"
-                                            "break;"
-                                          "default:"
-                                            "break;"
-                                        "}"
-                                      "}"
-                                    "}</script></body></html>");
+      server.sendHeader("Connection", "close");
+      server.send(200, "text/html", 
+        "<html><head><title>LED PICTURE " + String(ver) + "</title>"
+          "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
+          "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
+          "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
+          "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
+        "</head><body onload='onLoad()'>"
+        "<div class='container mt-5'>"
+          "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
+          "<ul class='nav nav-tabs' id='myTabs'>"
+            "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
+            "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
+            "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
+            "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
+          "</ul>"
+          "<div class='tab-content mt-3'>"
+            "<div class='tab-pane fade show active' id='modes'>"
+              "<h3>Modes</h3><hr>"
+              "<b>Current mode:</b> <div class='d-inline' id='curr-name'>" + get_curr_mode_name() + "</div>"
+              "<form class='text-center'>"
+                "<label>Change mode:</label><br>"
+                "<button type='button' class='btn btn-primary' id='mode-0' onclick='btnClick(this)'>Off</button>"
+                "<button type='button' class='btn btn-primary' id='mode-1' onclick='btnClick(this)'>Galaxy</button>"
+                "<button type='button' class='btn btn-primary' id='mode-2' onclick='btnClick(this)'>Selective</button>"
+                "<button type='button' class='btn btn-primary' id='mode-3' onclick='btnClick(this)'>Static</button>"
+                "<button type='button' class='btn btn-primary' id='mode-4' onclick='btnClick(this)'>Color flow</button>"
+                "<button type='button' class='btn btn-primary' id='mode-5' onclick='btnClick(this)'>Rainbow</button>"
+              "</form>"
+              "<h3>Mode settings:</h3>"
+              "<div class='text-center mb-3' id='mode-pref-content'></div>"
+              "<button type='button' class='btn btn-primary' id='clear-btn' onclick='btnClick(this)'>Clear strip</button>"
+            "</div>"
+            "<div class='tab-pane fade' id='network'></div>"
+            "<div class='tab-pane fade' id='preferences'>"
+              "<h3>System Preferences</h3><br>"
+              "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
+              "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
+            "</div>"
+            "<div class='tab-pane fade' id='update'>"
+              "<h3>OTA Update</h3><br>"
+              "<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
+                "<div class='input-group mb-3'>"
+                  "<input type='file' class='form-control' id='upFile' name='update' >"
+                "</div>"
+                "<input class='btn btn-info' type='submit' value='Update'>"
+              "</form>"
+              "<div id='prg'>progress: 0%</div>"
+              "<script>"
+                "$('form').submit(function(e){"
+                  "e.preventDefault();"
+                  "var form = $('#upload_form')[0];"
+                  "var data = new FormData(form);"
+                  "$.ajax({"
+                    "url: '/update',"
+                    "type: 'POST',"
+                    "data: data,"
+                    "contentType: false,"
+                    "processData:false,"
+                    "xhr: function() {"
+                      "var xhr = new window.XMLHttpRequest();"
+                      "xhr.upload.addEventListener('progress', function(evt) {"
+                        "if (evt.lengthComputable) {"
+                          "var per = evt.loaded / evt.total;"
+                          "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+                        "}"
+                      "}, false);"
+                      "return xhr;"
+                    "},"
+                    "success:function(d, s) {"
+                      "console.log('success!')"
+                    "},"
+                    "error: function (a, b, c) {}"
+                  "});"
+                "});"
+              "</script>"
+            "</div>"
+          "</div>"
+          "<hr><div class='text-center mb-4'>"
+            "Compilation " + String(__DATE__) + " " + String(__TIME__) + 
+          "</div>"
+        "</div>"
+        "<script>"
+          "function fetchDataAndPopulate(apiEndpoint, contentDivId) {"
+            "$.get(apiEndpoint, function(data) {"
+              "const content = JSON.stringify(data, null, 2);"
+              "$(contentDivId).html(content);"
+            "});"
+          "}"
+          "$('#myTabs a').on('shown.bs.tab', function (e) {"
+            "const tabId = e.target.id;"
+            "if (tabId == 'network-tab') {"
+              "$('#network').html('Searching available networks...');"
+              "fetchDataAndPopulate('/changeNetwork', '#network');"
+            "}"
+          "});"
+          "function onLoad() {"
+            "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
+          "}"
+          "function btnClick(clickedElement) {"
+            "console.log('Clicked:', clickedElement.id);"
+            "const modeSel = clickedElement.id.match(/^mode-(\\d+)$/);"
+            "if (modeSel) {"
+              "fetch('/setvalue?mode=' + parseInt(modeSel[1], 10), { method: 'POST' }).then(response => response.text());"
+              "fetchDataAndPopulate('/getVal?v=currModeS', '#curr-name');"
+              "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
+            "} else {"
+              "switch (clickedElement.id) {"
+                "case 'clear-btn':"
+                  "fetch('/clear', { method: 'POST' })"
+                    ".then(response => response.text());"
+                  "console.log('done clear');"
+                  "break;"
+                "case '2-btn':"
+                  "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
+                  "console.log('done 2');"
+                  "break;"
+                "case '3-btn':"
+                  "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
+                  "console.log('done 3');"
+                  "break;"
+                "default:"
+                  "break;"
+              "}"
+            "}"
+          "}</script></body></html>");
     });
     server.on("/changeNetwork", HTTP_GET, [](){
         server.sendHeader("Connection", "close");
-        server.send(200, "text/html", get_available_networks_html());
+        server.send(200, "text/html", network_page_html());
     });
     server.on("/saveNetwork", HTTP_POST, [](){
         if (server.hasArg("ssid") && server.hasArg("password")) { // check if value parameter is present
@@ -250,24 +297,24 @@ void start_main_server() {
         String paramName = server.argName(0); // Get the name of the parameter
         String paramValue = server.arg(0); // Get the value of the parameter
         if(paramName == "i"){
-        ajax_current_pixel = paramValue.toInt(); 
-        server.send(200, "text/plain", "OK");
+          ajax_current_pixel = paramValue.toInt(); 
+          server.send(200, "text/plain", "OK");
         }
         else if(paramName == "r"){
-        pixels[ajax_current_pixel].red = paramValue.toInt();
-        server.send(200, "text/plain", "OK");
+          pixels[ajax_current_pixel].red = paramValue.toInt();
+          server.send(200, "text/plain", "OK");
         }
         else if(paramName == "g"){
-        pixels[ajax_current_pixel].green = paramValue.toInt();
-        server.send(200, "text/plain", "OK");
+          pixels[ajax_current_pixel].green = paramValue.toInt();
+          server.send(200, "text/plain", "OK");
         }
         else if(paramName == "b"){
-        pixels[ajax_current_pixel].blue = paramValue.toInt();
-        server.send(200, "text/plain", "OK");
+          pixels[ajax_current_pixel].blue = paramValue.toInt();
+          server.send(200, "text/plain", "OK");
         }
         else if(paramName == "send"){
-        send_pixel(ajax_current_pixel);
-        server.send(200, "text/plain", "OK");
+          send_pixel(ajax_current_pixel);
+          server.send(200, "text/plain", "OK");
         }
     });
     server.on("/selectiveGet", HTTP_GET, [](){
@@ -350,18 +397,24 @@ void start_main_server() {
       static_color_set();
       server.send(200, "text/plain", "OK");
     }
+    else if(paramName == "hex"){
+      hex_to_rgb(paramValue, &current_static_color.red, &current_static_color.green, &current_static_color.blue);
+      static_color_changed = true;
+      static_color_set();
+      server.send(200, "text/plain", "OK");
+    }
   });
-    server.on("/staticGet", HTTP_GET, [](){
-      String paramName = server.arg("v");
-      if(paramName == "r"){
-        server.send(200, "text/plain", String(current_static_color.red));
-      }
-      else if(paramName == "g"){
-        server.send(200, "text/plain", String(current_static_color.green));
-      }
-      else if(paramName == "b"){
-        server.send(200, "text/plain", String(current_static_color.blue));
-      }
+  server.on("/staticGet", HTTP_GET, [](){
+    String paramName = server.arg("v");
+    if(paramName == "r"){
+      server.send(200, "text/plain", String(current_static_color.red));
+    }
+    else if(paramName == "g"){
+      server.send(200, "text/plain", String(current_static_color.green));
+    }
+    else if(paramName == "b"){
+      server.send(200, "text/plain", String(current_static_color.blue));
+    }
   });
   // STATIC MODE END
   // RAINBOW MODE START
@@ -390,10 +443,6 @@ void start_main_server() {
   });
   // RAINBOW MODE END
   server.on("/setvalue", handle_set_value);
-  server.on("/updateIndex", HTTP_GET, []() {
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/html", update_html);
-  });
   /*handling uploading firmware file */
   server.on("/update", HTTP_POST, []() {
     server.sendHeader("Connection", "close");
@@ -439,163 +488,163 @@ String get_html_settings_for_mode() {
     return "Off";
     break;
   case 1:
-    return "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(galaxy_master_delay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
-            "Minimum delay: <input type='number' id='minDel' min='0' step='1' value='" + String(galaxy_min_del) + "' style='display: inline-block;'> <input type='button' onclick='setMinDel()' value='set'> <br>"
-            "Maximum delay: <input type='number' id='maxDel' min='0' step='1' value='" + String(galaxy_max_del) + "' style='display: inline-block;'> <input type='button' onclick='setMaxDel()' value='set'> <br>"
-            "LED workers: <input type='number' id='workers' min='0' max='150' step='1' value='" + String(galaxy_led_workers) + "' style='display: inline-block;'> <input type='button' onclick='setWorkers()' value='set'> <br>"
-            "<script>"
-              "function setMasterDel() {"
-                "var newval = parseInt(document.getElementById('masterDel').value);"
-                "fetch('/galaxySet?masterDel=' + newval, { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-	            "function setMinDel() {"
-                "var newval = parseInt(document.getElementById('minDel').value);"
-                "fetch('/galaxySet?minDel=' + newval, { method: 'POST' })"
-                ".then(response => response.text());"
-              "}"
-	            "function setMaxDel() {"
-                "var newval = parseInt(document.getElementById('maxDel').value);"
-                "fetch('/galaxySet?maxDel=' + newval, { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-	            "function setWorkers() {"
-                "var newval = parseInt(document.getElementById('workers').value);"
-                "fetch('/galaxySet?workers=' + newval, { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-            "</script>";
+    return 
+      "<div class='form-row align-items-center mb-2'>"
+        "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+        "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
+        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
+      "</div>"
+      "<div class='form-row align-items-center mb-2'>"
+        "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
+        "<div class='col-auto'><input type='number' class='form-control' id='minDel' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
+        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
+      "</div>"
+      "<div class='form-row align-items-center mb-2'>"
+        "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
+        "<div class='col-auto'><input type='number' class='form-control' id='maxDel' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
+        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
+      "</div>"
+      "<div class='form-row align-items-center mb-2'>"
+        "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
+        "<div class='col-auto'><input type='number' class='form-control' id='workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
+        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
+      "</div>"
+      "<script>"
+        "function galaxySetVal(clickedElement) {"
+          "switch (clickedElement.id) {"
+            "case 'bt-masterDel':"
+              "var paramId = 'masterDel';"
+              "break;"
+            "case 'bt-minDel':"
+              "var paramId = 'minDel';"
+              "break;"
+            "case 'bt-maxDel':"
+              "var paramId = 'maxDel';"
+              "break;"
+            "case 'bt-workers':"
+              "var paramId = 'workers';"
+              "break;"
+            "default:"
+              "var paramId = '';"
+          "}"
+          "var newval = parseInt(document.getElementById(paramId).value);"
+          "fetch('/galaxySet?' + paramId + '=' + newval, { method: 'POST' }).then(response => response.text());"
+        "}"
+      "</script>";
     break;
   case 2:
-    return "Pixel: <input type='number' id='currPixel' min='0' max='" + String(num_of_pixels) + "' step='1' value='0' style='display: inline-block;'><br><br>"
-            "<input type='color' id='colorpicker' value='#000000'><br>"
+    return 
+      "Pixel: <input type='number' id='currPixel' min='0' max='" + String(num_of_pixels) + "' step='1' value='0' style='display: inline-block;'><br><br>"
+      "<input type='color' id='colorpicker' value='#000000'><br>"
 			"R: <div id='Red' style='display: inline-block;'>0</div><br>"
 			"G: <div id='Green' style='display: inline-block;'>0</div><br>"
 			"B: <div id='Blue' style='display: inline-block;'>0</div><br>"
-			"<br>"
-            "<input type='button' onclick='getColor()' value='get color'>"
+			"<br><input type='button' onclick='getColor()' value='get color'>"
 			"<input type='button' onclick='setColor()' value='set color'>"
-            "<script>"
-              "function getColor() {"
-				
-                "var currPixel = document.getElementById('currPixel').value;"
-				"var rDiv = document.getElementById('Red');"
-				"var gDiv = document.getElementById('Green');"
-				"var bDiv = document.getElementById('Blue');"
-				"var rval = 0;"
-				"var gval = 0;"
-				"var bval = 0;"
-                "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/selectiveGet?v=r')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "rval = parseInt(data);"
-					"rDiv.textContent = parseInt(data);"
-                  "});"
-                "fetch('/selectiveGet?v=g')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "gval = parseInt(data);"
-					"gDiv.textContent = parseInt(data);"
-                  "});"
-                "fetch('/selectiveGet?v=b')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "bval = parseInt(data);"
-					"bDiv.textContent = parseInt(data);"
-                  "});"
-                "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
-                "document.getElementById('colorpicker').value = RGBval;"
-              "}"
-              "function setColor() {"
-                "var currPixel = document.getElementById('currPixel').value;"
-                "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "var RGB = document.getElementById('colorpicker').value;"
-                "var r = parseInt(RGB.slice(1, 3), 16);"
-                "var g = parseInt(RGB.slice(3, 5), 16);"
-                "var b = parseInt(RGB.slice(5, 7), 16);"
-                "fetch('/selectiveSet?r=' + r, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/selectiveSet?g=' + g, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/selectiveSet?b=' + b, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/selectiveSet?send=0', { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-            "</script>";
+      "<script>"
+        "function getColor() {"
+          "var currPixel = document.getElementById('currPixel').value;"
+				  "var rDiv = document.getElementById('Red');"
+				  "var gDiv = document.getElementById('Green');"
+				  "var bDiv = document.getElementById('Blue');"
+				  "var rval = 0;"
+				  "var gval = 0;"
+				  "var bval = 0;"
+          "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' }).then(response => response.text());"
+          "fetch('/selectiveGet?v=r').then(response => response.text()).then(data => {"
+            "rval = parseInt(data);"
+					  "rDiv.textContent = parseInt(data);"
+          "});"
+          "fetch('/selectiveGet?v=g').then(response => response.text()).then(data => {"
+            "gval = parseInt(data);"
+					  "gDiv.textContent = parseInt(data);"
+          "});"
+          "fetch('/selectiveGet?v=b').then(response => response.text()).then(data => {"
+            "bval = parseInt(data);"
+					  "bDiv.textContent = parseInt(data);"
+          "});"
+          "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
+          "document.getElementById('colorpicker').value = RGBval;"
+        "}"
+        "function setColor() {"
+          "var currPixel = document.getElementById('currPixel').value;"
+          "fetch('/selectiveSet?i=' + currPixel, { method: 'POST' }).then(response => response.text());"
+          "var RGB = document.getElementById('colorpicker').value;"
+          "var r = parseInt(RGB.slice(1, 3), 16);"
+          "var g = parseInt(RGB.slice(3, 5), 16);"
+          "var b = parseInt(RGB.slice(5, 7), 16);"
+          "fetch('/selectiveSet?r=' + r, { method: 'POST' }).then(response => response.text());"
+          "fetch('/selectiveSet?g=' + g, { method: 'POST' }).then(response => response.text());"
+          "fetch('/selectiveSet?b=' + b, { method: 'POST' }).then(response => response.text());"
+          "fetch('/selectiveSet?send=0', { method: 'POST' }).then(response => response.text());"
+        "}"
+      "</script>";
     break;
   case 3:
-    return "<input type='color' id='colorpicker' value='#000000'><br>"
-			"R: <div id='Red' style='display: inline-block;'>0</div><br>"
-			"G: <div id='Green' style='display: inline-block;'>0</div><br>"
-			"B: <div id='Blue' style='display: inline-block;'>0</div><br>"
-			"<br>"
-            "<input type='button' onclick='getStaticColor()' value='get color'>"
-			"<input type='button' onclick='setStaticColor()' value='set color'>"
-            "<script>"
-              "function getStaticColor() {"
-				
-				"var rDiv = document.getElementById('Red');"
-				"var gDiv = document.getElementById('Green');"
-				"var bDiv = document.getElementById('Blue');"
-				"var rval = 0;"
-				"var gval = 0;"
-				"var bval = 0;"
-                "fetch('/staticGet?v=r')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "rval = parseInt(data);"
-					"rDiv.textContent = parseInt(data);"
-                  "});"
-                "fetch('/staticGet?v=g')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "gval = parseInt(data);"
-					"gDiv.textContent = parseInt(data);"
-                  "});"
-                "fetch('/staticGet?v=b')"
-                  ".then(response => response.text())"
-                  ".then(data => {"
-                    "bval = parseInt(data);"
-					"bDiv.textContent = parseInt(data);"
-                  "});"
-                "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
-                "document.getElementById('colorpicker').value = RGBval;"
-              "}"
-              "function setStaticColor() {"
-                "var RGB = document.getElementById('colorpicker').value;"
-                "var r = parseInt(RGB.slice(1, 3), 16);"
-                "var g = parseInt(RGB.slice(3, 5), 16);"
-                "var b = parseInt(RGB.slice(5, 7), 16);"
-                "fetch('/staticSet?r=' + r, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/staticSet?g=' + g, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/staticSet?b=' + b, { method: 'POST' })"
-                  ".then(response => response.text());"
-                "fetch('/staticSet?send=0', { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-            "</script>";
+    return 
+      "<input type='color' id='colorpicker' value='#" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "'><br>"
+			"R: <div id='Red' style='display: inline-block;'>" + current_static_color.red + "</div><br>"
+			"G: <div id='Green' style='display: inline-block;'>" + current_static_color.green + "</div><br>"
+			"B: <div id='Blue' style='display: inline-block;'>" + current_static_color.blue + "</div><br>"
+			"<br><button type='button' class='btn btn-primary' id='mode-5' onclick='getStaticColor()'>Get color</button>"
+			"<button type='button' class='btn btn-primary' id='mode-5' onclick='setStaticColor()'>Set color</button>"
+      "<script>"
+        "function getStaticColor() {"
+          "var rval = 0;"
+          "var gval = 0;"
+          "var bval = 0;"
+          "fetch('/staticGet?v=r').then(response => response.text()).then(data => {"
+            "rval = parseInt(data);"
+					  "document.getElementById('Red').textContent = rval;"
+          "});"
+          "fetch('/staticGet?v=g').then(response => response.text()).then(data => {"
+            "gval = parseInt(data);"
+            "document.getElementById('Green').textContent = gval;"
+          "});"
+          "fetch('/staticGet?v=b').then(response => response.text()).then(data => {"
+            "bval = parseInt(data);"
+					  "document.getElementById('Blue').textContent = bval;"
+          "});"
+          "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
+          "document.getElementById('colorpicker').value = RGBval;"
+        "}"
+        "function setStaticColor() {"
+          "var RGB = document.getElementById('colorpicker').value;"
+          "var r = parseInt(RGB.slice(1, 3), 16);"
+          "var g = parseInt(RGB.slice(3, 5), 16);"
+          "var b = parseInt(RGB.slice(5, 7), 16);"
+          "fetch('/staticSet?r=' + r, { method: 'POST' })"
+            ".then(response => response.text());"
+          "fetch('/staticSet?g=' + g, { method: 'POST' })"
+            ".then(response => response.text());"
+          "fetch('/staticSet?b=' + b, { method: 'POST' })"
+            ".then(response => response.text());"
+          "fetch('/staticSet?send=0', { method: 'POST' })"
+            ".then(response => response.text());"
+        "}"
+      "</script>";
+      /*        "function setStaticColor() {"
+          "var RGB = document.getElementById('colorpicker').value;"
+          "fetch('/staticSet?hex=' + RGB.slice(1, 7), { method: 'POST' }).then(response => response.text());"
+        "}"
+      */
     break;
   case 4:
-    return "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
-            "Max change value: <input type='number' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "' style='display: inline-block;'> <input type='button' onclick='setMaxChange()' value='set'> <br>"
-            "<script>"
-              "function setMasterDel() {"
-                "var newval = parseInt(document.getElementById('masterDel').value);"
-                "fetch('/rainbowSet?masterDel=' + newval, { method: 'POST' })"
-                  ".then(response => response.text());"
-              "}"
-	            "function setMaxChange() {"
-                "var newval = parseInt(document.getElementById('maxChange').value);"
-                "fetch('/rainbowSet?maxChange=' + newval, { method: 'POST' })"
-                ".then(response => response.text());"
-              "}"
-            "</script>";
+    return 
+      "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
+      "Max change value: <input type='number' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "' style='display: inline-block;'> <input type='button' onclick='setMaxChange()' value='set'> <br>"
+      "<script>"
+        "function setMasterDel() {"
+          "var newval = parseInt(document.getElementById('masterDel').value);"
+          "fetch('/rainbowSet?masterDel=' + newval, { method: 'POST' })"
+            ".then(response => response.text());"
+        "}"
+        "function setMaxChange() {"
+          "var newval = parseInt(document.getElementById('maxChange').value);"
+          "fetch('/rainbowSet?maxChange=' + newval, { method: 'POST' })"
+          ".then(response => response.text());"
+        "}"
+      "</script>";
     break;
   default:
     return "Unknown";
