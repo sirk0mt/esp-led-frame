@@ -84,14 +84,20 @@ String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
   return hex_color;
 }
 
-void hex_to_rgb(String hex_color, uint8_t *red, uint8_t *green, uint8_t *blue) {
+void hex_to_rgb(String hex_color, struct color_struct *current_color) {
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Got HEX: " + hex_color);
   #endif    /* defined(DEBUG) */
   const char *temp = hex_color.c_str();
-  sscanf(temp, "%02x%02x%02x", red, green, blue);
+  uint8_t temp_red, temp_green, temp_blue;
+  sscanf(temp, "%02x%02x%02x", &temp_red, &temp_green, &temp_blue);
+
+  current_color->red = temp_red;
+  current_color->green = temp_green;
+  current_color->blue = temp_blue;
+
   #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] R: " + String(*red) + " G: " + String(*green) + " B: "+ String(*blue));
+    Serial.println("[" + String(__func__) + "] R: " + String(current_color->red) + " G: " + String(current_color->green) + " B: "+ String(current_color->blue));
   #endif    /* defined(DEBUG) */
 }
 
@@ -166,6 +172,12 @@ void start_main_server() {
               "<h3>System Preferences</h3><br>"
               "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
               "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
+              "<button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
+              "<script>"
+                "function restart() {"
+                  "fetch('/restart');"
+                "}"
+              "</script>"
             "</div>"
             "<div class='tab-pane fade' id='update'>"
               "<h3>OTA Update</h3><br>"
@@ -380,25 +392,12 @@ void start_main_server() {
   server.on("/staticSet", HTTP_POST, [](){
     String paramName = server.argName(0); // Get the name of the parameter
     String paramValue = server.arg(0); // Get the value of the parameter
-    if(paramName == "r"){
-      current_static_color.red = paramValue.toInt();
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "g"){
-      current_static_color.green = paramValue.toInt();
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "b"){
-      current_static_color.blue = paramValue.toInt();
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "send"){
-      static_color_changed = true;
-      static_color_set();
+    if (paramName == "save") {
+      static_color_save();
       server.send(200, "text/plain", "OK");
     }
     else if(paramName == "hex"){
-      hex_to_rgb(paramValue, &current_static_color.red, &current_static_color.green, &current_static_color.blue);
+      hex_to_rgb(paramValue, &current_static_color);
       static_color_changed = true;
       static_color_set();
       server.send(200, "text/plain", "OK");
@@ -406,14 +405,8 @@ void start_main_server() {
   });
   server.on("/staticGet", HTTP_GET, [](){
     String paramName = server.arg("v");
-    if(paramName == "r"){
-      server.send(200, "text/plain", String(current_static_color.red));
-    }
-    else if(paramName == "g"){
-      server.send(200, "text/plain", String(current_static_color.green));
-    }
-    else if(paramName == "b"){
-      server.send(200, "text/plain", String(current_static_color.blue));
+    if(paramName == "hex"){
+      server.send(200, "text/plain", String(rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue)));
     }
   });
   // STATIC MODE END
@@ -487,7 +480,7 @@ String get_html_settings_for_mode() {
   case 0:
     return "Off";
     break;
-  case 1:
+  case 1: /* galaxy */
     return 
       "<div class='form-row align-items-center mb-2'>"
         "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
@@ -532,7 +525,7 @@ String get_html_settings_for_mode() {
         "}"
       "</script>";
     break;
-  case 2:
+  case 2: /* selective */
     return 
       "Pixel: <input type='number' id='currPixel' min='0' max='" + String(num_of_pixels) + "' step='1' value='0' style='display: inline-block;'><br><br>"
       "<input type='color' id='colorpicker' value='#000000'><br>"
@@ -580,47 +573,27 @@ String get_html_settings_for_mode() {
         "}"
       "</script>";
     break;
-  case 3:
+  case 3: /* static */
     return 
-      "<input type='color' id='colorpicker' value='#" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "'><br>"
+      "<input type='color' id='colorpicker' value='" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "'><br>"
+      "HEX: <div id='StaHEX' style='display: inline-block;'>" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "</div><br>"
 			"R: <div id='Red' style='display: inline-block;'>" + current_static_color.red + "</div><br>"
 			"G: <div id='Green' style='display: inline-block;'>" + current_static_color.green + "</div><br>"
 			"B: <div id='Blue' style='display: inline-block;'>" + current_static_color.blue + "</div><br>"
-			"<br><button type='button' class='btn btn-primary' id='mode-5' onclick='getStaticColor()'>Get color</button>"
-			"<button type='button' class='btn btn-primary' id='mode-5' onclick='setStaticColor()'>Set color</button>"
+			"<button type='button' class='btn btn-primary' id='mode-5' onclick='setStaticColor()'>Save color</button>"
       "<script>"
-        "function getStaticColor() {"
-          "var rval = 0;"
-          "var gval = 0;"
-          "var bval = 0;"
-          "fetch('/staticGet?v=r').then(response => response.text()).then(data => {"
-            "rval = parseInt(data);"
-					  "document.getElementById('Red').textContent = rval;"
-          "});"
-          "fetch('/staticGet?v=g').then(response => response.text()).then(data => {"
-            "gval = parseInt(data);"
-            "document.getElementById('Green').textContent = gval;"
-          "});"
-          "fetch('/staticGet?v=b').then(response => response.text()).then(data => {"
-            "bval = parseInt(data);"
-					  "document.getElementById('Blue').textContent = bval;"
-          "});"
-          "var RGBval = '#' + ((1 << 24) + (rval << 16) + (gval << 8) + bval).toString(16).slice(1);"
-          "document.getElementById('colorpicker').value = RGBval;"
-        "}"
+        "var colorpicker = document.getElementById('colorpicker');"
+        "colorpicker.addEventListener('input', function(event) {"
+            "var selected_color = event.target.value;"
+            "var hexval = document.getElementById('colorpicker').value;"
+            "var hexint = parseInt(hexval.slice(1, 7), 16);"
+            "document.getElementById('Red').textContent = (hexint >> 16) & 255;"
+            "document.getElementById('Green').textContent = (hexint >> 8) & 255;"
+            "document.getElementById('Blue').textContent = hexint & 255;"
+            "fetch('/staticSet?hex=' + hexval.slice(1, 7), { method: 'POST' }).then(response => response.text());"
+        "});"
         "function setStaticColor() {"
-          "var RGB = document.getElementById('colorpicker').value;"
-          "var r = parseInt(RGB.slice(1, 3), 16);"
-          "var g = parseInt(RGB.slice(3, 5), 16);"
-          "var b = parseInt(RGB.slice(5, 7), 16);"
-          "fetch('/staticSet?r=' + r, { method: 'POST' })"
-            ".then(response => response.text());"
-          "fetch('/staticSet?g=' + g, { method: 'POST' })"
-            ".then(response => response.text());"
-          "fetch('/staticSet?b=' + b, { method: 'POST' })"
-            ".then(response => response.text());"
-          "fetch('/staticSet?send=0', { method: 'POST' })"
-            ".then(response => response.text());"
+          "fetch('/staticSet?save=0', { method: 'POST' }).then(response => response.text());"
         "}"
       "</script>";
       /*        "function setStaticColor() {"
@@ -629,7 +602,7 @@ String get_html_settings_for_mode() {
         "}"
       */
     break;
-  case 4:
+  case 4: /* color flow */
     return 
       "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
       "Max change value: <input type='number' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "' style='display: inline-block;'> <input type='button' onclick='setMaxChange()' value='set'> <br>"

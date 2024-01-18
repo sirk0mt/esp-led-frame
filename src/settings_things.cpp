@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
 /* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
-const char*       ver = "v0.0.6";
+const char*       ver = "v0.0.7";
 
 Preferences       dev_settings;
 Preferences       main_settings;
@@ -11,7 +11,7 @@ uint16_t          pixels_rows;
 uint16_t          num_of_pixels;
 uint16_t          current_mode;
 
-Adafruit_NeoPixel strip(1, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip(1, LED_STRIP_PIN, LED_STRIP_COLOR_ORDER + NEO_KHZ800);
 
 bool              change_mode = false;
 
@@ -57,9 +57,9 @@ void initialize_settings() {
   //galaxy_min_del = galaxy_params.putUShort("MinDel",50);
   //galaxy_max_del = galaxy_params.putUShort("MaxDel",2000);
   //galaxy_led_workers = galaxy_params.putUShort("LedWorkers",600);
-  //static_params.putUShort("R",10);
-  //static_params.putUShort("G",10);
-  //static_params.putUShort("B",10);
+  //static_params.putUChar("R",10);
+  //static_params.putUChar("G",10);
+  //static_params.putUChar("B",10);
   //rainbow_params.putUShort("rMasterDel",10);
   //rainbow_params.putUShort("rMaxChange",10);
 
@@ -80,9 +80,9 @@ void initialize_settings() {
   galaxy_led_workers  = galaxy_params.getUShort("LedWorkers");
   galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
 
-  current_static_color.red    = static_params.getUShort("R");
-  current_static_color.green  = static_params.getUShort("G");
-  current_static_color.blue   = static_params.getUShort("B");
+  current_static_color.red    = static_params.getUChar("R");
+  current_static_color.green  = static_params.getUChar("G");
+  current_static_color.blue   = static_params.getUChar("B");
 
   rainbow_master_delay      = rainbow_params.getUShort("rMasterDel");
   rainbow_max_change        = rainbow_params.getUShort("rMaxChange");

@@ -23,25 +23,26 @@
 /* Version variable initialized in cpp file for that header */
 extern const char*  ver;
 
-#define LED_STRIP_PIN        2              /* GPIO pin for NeoPixel strip*/
+#define LED_STRIP_PIN           2               /* GPIO pin for NeoPixel strip*/
+#define LED_STRIP_COLOR_ORDER   NEO_GRB         /* Awailable stripe types: NEO_RGB, NEO_RBG, NEO_GRB, NEO_GBR, NEO_BRG, NEO_BGR */
+ 
+#define DEBUG                                   /* To enable print serial debug information define / for disable comment that line */
 
-#define DEBUG                               /* To enable print serial debug information define / for disable comment that line */
-
-extern Preferences          dev_settings;   /* Device settings class instance */
-extern Preferences          main_settings;  /* Main settings class instance */
+extern Preferences              dev_settings;   /* Device settings class instance */
+extern Preferences              main_settings;  /* Main settings class instance */
 
 /* LED settings START */
-extern uint16_t             pixels_in_row;  /* Number of pixels in row */
-extern uint16_t             pixels_rows;    /* Number of rows */
+extern uint16_t                 pixels_in_row;  /* Number of pixels in row */
+extern uint16_t                 pixels_rows;    /* Number of rows */
 
-extern uint16_t             num_of_pixels;  /* Number of all pixels */
+extern uint16_t                 num_of_pixels;  /* Number of all pixels */
 
-extern Adafruit_NeoPixel    strip;          /* LED strip class instance */
+extern Adafruit_NeoPixel        strip;          /* LED strip class instance */
 /* LED settings END */
 
-extern uint16_t             current_mode;   /* Variable to store current mode of light */
+extern uint16_t                 current_mode;   /* Variable to store current mode of light */
 
-extern bool                 change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
+extern bool                     change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
 
 
 
