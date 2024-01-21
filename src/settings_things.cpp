@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
 /* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
-const char*       ver = "v0.0.7";
+const char*       ver = "v0.0.8";
 
 Preferences       dev_settings;
 Preferences       main_settings;
@@ -87,6 +87,10 @@ void initialize_settings() {
   rainbow_master_delay      = rainbow_params.getUShort("rMasterDel");
   rainbow_max_change        = rainbow_params.getUShort("rMaxChange");
   rainbow_curr_master_delay = rainbow_master_delay;
+
+  rainbow_color_change_rate   = 0.5;
+  rainbow_color_change_degree = 90;
+  rainbow_color_gradient_density = 1;
 
   #if defined(DEBUG)
     Serial.println("-----------------------------------");

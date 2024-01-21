@@ -172,6 +172,7 @@ void start_main_server() {
               "<h3>System Preferences</h3><br>"
               "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
               "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
+              "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
               "<button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
               "<script>"
                 "function restart() {"
@@ -435,6 +436,36 @@ void start_main_server() {
       }
   });
   // RAINBOW MODE END
+  // RAINBOW FLOW MODE START
+  server.on("/rainbowFlowSet", HTTP_GET, []() {
+    String paramName = server.argName(0); // Get the name of the parameter
+    String paramValue = server.arg(0); // Get the value of the parameter
+    Serial.println("Change: " + paramName + " to: " + paramValue);
+    if (paramValue != "") {
+      if (paramName == "speed") {
+        rainbow_color_change_rate = paramValue.toFloat();
+        Serial.println("Change rate changed to: " + String(rainbow_color_change_rate));
+      }
+      else if (paramName == "degree") {
+        rainbow_color_change_degree = paramValue.toInt();
+        Serial.println("Change degree changed to: " + String(rainbow_color_change_degree));
+      }
+      else if (paramName == "grad") {
+        rainbow_color_gradient_density = paramValue.toFloat();
+        Serial.println("Gradient density changed to: " + String(rainbow_color_gradient_density));
+      }
+      server.send(200, "text/plain", "OK");
+    } else {
+      server.send(404, "text/plain", "Parameter not found");
+    }
+  });
+  server.on("/rainbowFlowGet", HTTP_GET, [](){
+    String paramName = server.arg("v");
+    if(paramName == "speed") {
+      server.send(200, "text/plain", String(rainbow_color_change_rate));
+    }
+  });
+  // RAINBOW FLOW MODE END
   server.on("/setvalue", handle_set_value);
   /*handling uploading firmware file */
   server.on("/update", HTTP_POST, []() {
@@ -482,25 +513,29 @@ String get_html_settings_for_mode() {
     break;
   case 1: /* galaxy */
     return 
-      "<div class='form-row align-items-center mb-2'>"
-        "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
-        "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
-        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
-      "</div>"
-      "<div class='form-row align-items-center mb-2'>"
-        "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
-        "<div class='col-auto'><input type='number' class='form-control' id='minDel' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
-        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
-      "</div>"
-      "<div class='form-row align-items-center mb-2'>"
-        "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
-        "<div class='col-auto'><input type='number' class='form-control' id='maxDel' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
-        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
-      "</div>"
-      "<div class='form-row align-items-center mb-2'>"
-        "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
-        "<div class='col-auto'><input type='number' class='form-control' id='workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
-        "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
+      "<div class='row justify-content-center'>"
+        "<div class='col-auto text-center'>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='minDel' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='maxDel' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+        "</div>"
       "</div>"
       "<script>"
         "function galaxySetVal(clickedElement) {"
@@ -596,16 +631,23 @@ String get_html_settings_for_mode() {
           "fetch('/staticSet?save=0', { method: 'POST' }).then(response => response.text());"
         "}"
       "</script>";
-      /*        "function setStaticColor() {"
-          "var RGB = document.getElementById('colorpicker').value;"
-          "fetch('/staticSet?hex=' + RGB.slice(1, 7), { method: 'POST' }).then(response => response.text());"
-        "}"
-      */
     break;
   case 4: /* color flow */
     return 
-      "Master delay: <input type='number' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "' style='display: inline-block;'> <input type='button' onclick='setMasterDel()' value='set'> <br>"
-      "Max change value: <input type='number' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "' style='display: inline-block;'> <input type='button' onclick='setMaxChange()' value='set'> <br>"
+      "<div class='row justify-content-center'>"
+        "<div class='col-auto text-center'>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='setMasterDel()'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Max change value:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='setMaxChange()'>Set</button></div>"
+          "</div>"
+        "</div>"
+      "</div>"
       "<script>"
         "function setMasterDel() {"
           "var newval = parseInt(document.getElementById('masterDel').value);"
@@ -616,6 +658,51 @@ String get_html_settings_for_mode() {
           "var newval = parseInt(document.getElementById('maxChange').value);"
           "fetch('/rainbowSet?maxChange=' + newval, { method: 'POST' })"
           ".then(response => response.text());"
+        "}"
+      "</script>";
+    break;
+  case 5: /* rainbow flow */
+    return 
+      "<div class='row justify-content-center'>"
+        "<div class='col-auto text-center'>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Speed:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='masterSpeed' min='0' step='0.1' value='" + String(rainbow_color_change_rate) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterSpeed' onclick='setVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Degree of animation:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='degree' min='0' step='1' value='" + String(rainbow_color_change_degree) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-degree' onclick='setVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Gradient density:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='grad' min='0' step='1' value='" + String(rainbow_color_gradient_density) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-grad' onclick='setVal(this)'>Set</button></div>"
+          "</div>"
+        "</div>"
+      "</div>"
+      "<script>"
+        "function setVal(clickedElement) {"
+          "switch(clickedElement.id) {"
+            "case 'bt-masterSpeed':"
+              "var newval = parseFloat(document.getElementById('masterSpeed').value);"
+              "fetch('/rainbowFlowSet?speed=' + newval, { method: 'GET' })"
+                ".then(response => response.text());"
+              "break;"
+            "case 'bt-degree':"
+              "var newval = parseInt(document.getElementById('degree').value);"
+              "fetch('/rainbowFlowSet?degree=' + newval, { method: 'GET' })"
+                ".then(response => response.text());"
+              "break;"
+            "case 'bt-grad':"
+              "var newval = parseInt(document.getElementById('grad').value);"
+              "fetch('/rainbowFlowSet?grad=' + newval, { method: 'GET' })"
+                ".then(response => response.text());"
+              "break;"
+            "default:"
+              "break;"
+          "}"
         "}"
       "</script>";
     break;
@@ -659,11 +746,11 @@ void handle_set_value() {
         break;
       case 1: //galaxy
         main_settings.putUShort("currentMode", 1);
-        for(int i = 0; i < galaxy_led_workers; ++i){
-          galaxy_curr_delay[i] = i*random(0, 50);
-          //Serial.println("set delay[" + String(i) + "]=" + String(currDelay[i]));
-          set_pixel_color(int(random(0, num_of_pixels)), int(random(0, 255 + 1)), int(random(0, 255 + 1)), int(random(0, 255 + 1)));
-        }
+        // for(int i = 0; i < galaxy_led_workers; ++i){
+        //   galaxy_curr_delay[i] = i*random(0, 50);
+        //   //Serial.println("set delay[" + String(i) + "]=" + String(currDelay[i]));
+        //   set_pixel_color(int(random(0, num_of_pixels)), int(random(0, 255 + 1)), int(random(0, 255 + 1)), int(random(0, 255 + 1)));
+        // }
         #if defined(DEBUG)
           Serial.println("--- handle_set_value END - set to 1 - GALAXY ---");
         #endif    /* defined(DEBUG) */
@@ -710,6 +797,12 @@ void handle_set_value() {
         main_settings.putUShort("currentMode", 4);
         #if defined(DEBUG)
           Serial.println("--- handle_set_value END - set to 4 - RAINBOW ---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case 5: // rainbow flow
+        main_settings.putUShort("currentMode", 5);
+        #if defined(DEBUG)
+          Serial.println("--- handle_set_value END - set to 5 - RAINBOW FLOW ---");
         #endif    /* defined(DEBUG) */
         break;
       default:

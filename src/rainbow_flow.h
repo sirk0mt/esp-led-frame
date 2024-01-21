@@ -6,6 +6,12 @@
 
 /* DEV TEST functions ToDo*/
 
+extern float rainbow_color_change_rate;
+
+extern int rainbow_color_change_degree;
+
+extern int rainbow_color_gradient_density;
+
 void rainbow_flow();
 
 uint32_t wheel(byte wheel_pos);

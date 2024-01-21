@@ -21,7 +21,7 @@
 
 
 /* Version variable initialized in cpp file for that header */
-extern const char*  ver;
+extern const char*              ver;
 
 #define LED_STRIP_PIN           2               /* GPIO pin for NeoPixel strip*/
 #define LED_STRIP_COLOR_ORDER   NEO_GRB         /* Awailable stripe types: NEO_RGB, NEO_RBG, NEO_GRB, NEO_GBR, NEO_BRG, NEO_BGR */

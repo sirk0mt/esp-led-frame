@@ -2,18 +2,27 @@
 #include "settings_things.h"
 #include "rainbow_flow.h"
 
+float rainbow_color_change_rate;
+
+int rainbow_color_change_degree;
+
+int rainbow_color_gradient_density;
+
 void rainbow_flow() {
-  if (rainbow_curr_master_delay == 0) {
-    for (int j = 0; j < 256; ++j) {
-      for (int i = 0; i < strip.numPixels(); ++i) {
-        strip.setPixelColor(i, wheel((i + j) & 255));
-      }
-      strip.show();
+  static int offset = 0;
+  float radianDirection = rainbow_color_change_degree * PI / 180.0; // Convert degrees to radians
+  float dx = cos(radianDirection);
+  float dy = sin(radianDirection);
+
+  for(int x = 0; x < pixels_in_row; x++) {
+    for(int y = 0; y < pixels_rows; y++) {
+      int pixelIndex = xy_to_index(x, y);
+      int colorIndex = (int)((x * dx + y * dy) * rainbow_color_gradient_density + offset) % 256;
+      strip.setPixelColor(pixelIndex, wheel(colorIndex));
     }
-    rainbow_curr_master_delay = rainbow_master_delay;
-  } else {
-    --rainbow_curr_master_delay;
   }
+  strip.show();
+  offset = (int)(offset + rainbow_color_change_rate) % 256; // Increment offset for the next frame
 }
 
 // Input a value 0 to 255 to get a color value.
