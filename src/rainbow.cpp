@@ -36,32 +36,6 @@ void rainbow_initialize() {
 
 void rainbow_mode() {
   if (rainbow_curr_master_delay == 0) {
-    // #if defined(DEBUG)
-    //   Serial.println();
-    //   Serial.print("R: ");
-    //   if(rainbow_change.red_up){
-    //     Serial.print("up");
-    //   }
-    //   else{
-    //     Serial.print("down");
-    //   }
-    //   Serial.print("  G: ");
-    //   if(rainbow_change.green_up){
-    //     Serial.print("up");
-    //   }
-    //   else{
-    //     Serial.print("down");
-    //   }
-    //   Serial.print("  B: ");
-    //   if(rainbow_change.blue_up){
-    //     Serial.print("up");
-    //   }
-    //   else{
-    //     Serial.print("down");
-    //   }
-    //   Serial.println();
-    // #endif    /* defined(DEBUG) */
-
     if (rainbow_change.red_up) {
         if (255 < (rainbow_change.red_current + rainbow_change.red_change)) {
           rainbow_change.red_current  = 255;
@@ -71,6 +45,7 @@ void rainbow_mode() {
           #if defined(DEBUG)
             Serial.println("[" + String(__func__) + "] R:255  next change: " + rainbow_change.red_change);
           #endif    /* defined(DEBUG) */
+
         } else {
           rainbow_change.red_current  = rainbow_change.red_current + rainbow_change.red_change;
         }
@@ -83,6 +58,7 @@ void rainbow_mode() {
           #if defined(DEBUG)
             Serial.println("[" + String(__func__) + "] R:0  next change: " + rainbow_change.red_change);
           #endif    /* defined(DEBUG) */
+
         } else {
           rainbow_change.red_current  = rainbow_change.red_current - rainbow_change.red_change;
         }
@@ -97,6 +73,7 @@ void rainbow_mode() {
           #if defined(DEBUG)
             Serial.println("[" + String(__func__) + "] G:255  next change: " + rainbow_change.green_change);
           #endif    /* defined(DEBUG) */
+
         } else {
           rainbow_change.green_current  = rainbow_change.green_current + rainbow_change.green_change;
         }
@@ -109,6 +86,7 @@ void rainbow_mode() {
           #if defined(DEBUG)
             Serial.println("[" + String(__func__) + "] G:0  next change: " + rainbow_change.green_change);
           #endif    /* defined(DEBUG) */
+
         } else {
           rainbow_change.green_current  = rainbow_change.green_current - rainbow_change.green_change;
         }
@@ -123,6 +101,7 @@ void rainbow_mode() {
         #if defined(DEBUG)
           Serial.println("[" + String(__func__) + "] B:255  next change: " + rainbow_change.blue_change);
         #endif    /* defined(DEBUG) */
+
       } else {
         rainbow_change.blue_current   = rainbow_change.blue_current + rainbow_change.blue_change;
       }
@@ -135,6 +114,7 @@ void rainbow_mode() {
         #if defined(DEBUG)
           Serial.println("[" + String(__func__) + "] B:0  next change: " + rainbow_change.blue_change);
         #endif    /* defined(DEBUG) */
+
       } else {
         rainbow_change.blue_current   = rainbow_change.blue_current - rainbow_change.blue_change;
       }
@@ -152,11 +132,5 @@ void rainbow_mode() {
     rainbow_curr_master_delay = rainbow_master_delay;
   } else {
     --rainbow_curr_master_delay;
-    // #if defined(DEBUG)
-    // Serial.println();
-    // Serial.print("current delay");
-    // Serial.print(rainbow_curr_master_delay);
-    // Serial.println();
-    // #endif    /* defined(DEBUG) */
   }
 }

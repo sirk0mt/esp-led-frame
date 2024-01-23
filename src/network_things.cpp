@@ -84,16 +84,16 @@ void create_config_network() {
 }
 
 void initialize_mdns() {
-    if (!MDNS.begin(mdns_host_name.c_str())) {
-      #if defined(DEBUG)
-        Serial.println("[" + String(__func__) + "] ERROR setting up MDNS responder!");
-      #endif    /* defined(DEBUG) */
-
-      return;
-    }
-    MDNS.addService("http", "tcp", 80);
-
+  if (!MDNS.begin(mdns_host_name.c_str())) {
     #if defined(DEBUG)
-      Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
+      Serial.println("[" + String(__func__) + "] ERROR setting up MDNS responder!");
     #endif    /* defined(DEBUG) */
+
+    return;
+  }
+  MDNS.addService("http", "tcp", 80);
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
+  #endif    /* defined(DEBUG) */
 }

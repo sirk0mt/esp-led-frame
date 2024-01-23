@@ -10,16 +10,18 @@ boolean static_color_changed = false;
 
 
 void static_color_set() {
-  for (uint16_t i = 0; i < num_of_pixels; ++i) {
-    pixels[i].red   = current_static_color.red;
-    pixels[i].green = current_static_color.green;
-    pixels[i].blue  = current_static_color.blue;
-    strip.setPixelColor(i, strip.Color(pixels[i].green, pixels[i].red, pixels[i].blue));
-  }
+  // for (uint16_t i = 0; i < num_of_pixels; ++i) {
+  //   pixels[i].red   = current_static_color.red;
+  //   pixels[i].green = current_static_color.green;
+  //   pixels[i].blue  = current_static_color.blue;
+
+  //   strip.setPixelColor(i, strip.Color(pixels[i].green, pixels[i].red, pixels[i].blue));
+  // }
+  strip.fill(reorder_color(strip.Color(current_static_color.red, current_static_color.green, current_static_color.blue)));
   strip.show();
 }
 
-void static_color_save(){
+void static_color_save() {
   #if defined(DEBUG)
     Serial.println("Colors to save - R: " + String(current_static_color.red) + " G: " + String(current_static_color.green) + " B: " + String(current_static_color.blue));
   #endif    /* defined(DEBUG) */

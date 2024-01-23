@@ -26,6 +26,11 @@ struct pixel_color{
 
 extern pixel_color* pixels;       /* Table of pixel_color elements */
 
+/**
+ * \brief               Reorder combined color to configured strip color order
+ * \param[color]        color: 32-bit packed RGB value for egz. from NeoPixel Color function
+*/
+uint32_t reorder_color(uint32_t color);
 
 /**
  * \brief               Function that initialize LED strip.

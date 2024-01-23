@@ -3,6 +3,14 @@
 
 uint16_t    ajax_current_pixel  = 0;
 
+String get_color_order_checked_state(uint8_t radio_id) {
+  if (radio_id == color_order) {
+    return "checked";
+  } else {
+    return "";
+  }
+}
+
 String get_available_networks_html() {
   String networkChoiseSiteHead    = 
       "<b>Choose a WiFi network:</b>"
@@ -173,7 +181,36 @@ void start_main_server() {
               "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
               "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
               "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
-              "<button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
+              "<br><br>"
+              "<b>Choose LED color order: <br>"
+              "<div class='btn-group btn-group-toggle' data-toggle='buttons'>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order0' " + get_color_order_checked_state(0) + "> RGB"
+                "</label>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order1' " + get_color_order_checked_state(1) + "> RBG"
+                "</label>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order2' " + get_color_order_checked_state(2) + "> GRB"
+                "</label>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order3' " + get_color_order_checked_state(3) + "> GBR"
+                "</label>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order4' " + get_color_order_checked_state(4) + "> BRG"
+                "</label>"
+                "<label class='btn btn-secondary'>"
+                  "<input type='radio' name='colOr' id='order5' " + get_color_order_checked_state(5) + "> BGR"
+                "</label>"
+              "</div>"
+              "<script>"
+                "$(document).ready(function(){"
+                    "$('input[type=\\'radio\\'][name=\\'colOr\\']').change(function() {"
+                      "console.log('select changed to: ' + this.id);"
+                    "});"
+                "});"
+              "</script>"
+              "<br><br><button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
               "<script>"
                 "function restart() {"
                   "fetch('/restart');"
@@ -443,16 +480,24 @@ void start_main_server() {
     Serial.println("Change: " + paramName + " to: " + paramValue);
     if (paramValue != "") {
       if (paramName == "speed") {
-        rainbow_color_change_rate = paramValue.toFloat();
-        Serial.println("Change rate changed to: " + String(rainbow_color_change_rate));
+        rainbow_flow_change_rate = paramValue.toInt();
+        rainbow_flow_params.putUShort("rChRate", rainbow_flow_change_rate);
+        Serial.println("Change rate changed to: " + String(rainbow_flow_change_rate));
       }
       else if (paramName == "degree") {
-        rainbow_color_change_degree = paramValue.toInt();
-        Serial.println("Change degree changed to: " + String(rainbow_color_change_degree));
+        rainbow_flow_change_degree = paramValue.toInt();
+        rainbow_flow_params.putUShort("rChDeg", rainbow_flow_change_degree);
+        Serial.println("Change degree changed to: " + String(rainbow_flow_change_degree));
       }
       else if (paramName == "grad") {
-        rainbow_color_gradient_density = paramValue.toFloat();
-        Serial.println("Gradient density changed to: " + String(rainbow_color_gradient_density));
+        rainbow_flow_gradient_density = paramValue.toInt();
+        rainbow_flow_params.putUShort("rGradDen", rainbow_flow_gradient_density);
+        Serial.println("Gradient density changed to: " + String(rainbow_flow_gradient_density));
+      }
+      else if (paramName == "del") {
+        rainbow_flow_master_delay = paramValue.toInt();
+        rainbow_flow_params.putUShort("rMDel", rainbow_flow_master_delay);
+        Serial.println("Delay changed to: " + String(rainbow_flow_master_delay));
       }
       server.send(200, "text/plain", "OK");
     } else {
@@ -462,7 +507,7 @@ void start_main_server() {
   server.on("/rainbowFlowGet", HTTP_GET, [](){
     String paramName = server.arg("v");
     if(paramName == "speed") {
-      server.send(200, "text/plain", String(rainbow_color_change_rate));
+      server.send(200, "text/plain", String(rainbow_flow_change_rate));
     }
   });
   // RAINBOW FLOW MODE END
@@ -667,18 +712,23 @@ String get_html_settings_for_mode() {
         "<div class='col-auto text-center'>"
           "<div class='form-row align-items-center mb-2'>"
             "<div class='col-auto'><label for='exampleNumber'>Speed:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='masterSpeed' min='0' step='0.1' value='" + String(rainbow_color_change_rate) + "'></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='masterSpeed' min='0' step='1' value='" + String(rainbow_flow_change_rate) + "'></div>"
             "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterSpeed' onclick='setVal(this)'>Set</button></div>"
           "</div>"
           "<div class='form-row align-items-center mb-2'>"
             "<div class='col-auto'><label for='exampleNumber'>Degree of animation:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='degree' min='0' step='1' value='" + String(rainbow_color_change_degree) + "'></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='degree' min='0' step='1' value='" + String(rainbow_flow_change_degree) + "'></div>"
             "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-degree' onclick='setVal(this)'>Set</button></div>"
           "</div>"
           "<div class='form-row align-items-center mb-2'>"
             "<div class='col-auto'><label for='exampleNumber'>Gradient density:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='grad' min='0' step='1' value='" + String(rainbow_color_gradient_density) + "'></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='grad' min='0' step='1' value='" + String(rainbow_flow_gradient_density) + "'></div>"
             "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-grad' onclick='setVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='del' min='0' step='1' value='" + String(rainbow_flow_master_delay) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-del' onclick='setVal(this)'>Set</button></div>"
           "</div>"
         "</div>"
       "</div>"
@@ -686,7 +736,7 @@ String get_html_settings_for_mode() {
         "function setVal(clickedElement) {"
           "switch(clickedElement.id) {"
             "case 'bt-masterSpeed':"
-              "var newval = parseFloat(document.getElementById('masterSpeed').value);"
+              "var newval = parseInt(document.getElementById('masterSpeed').value);"
               "fetch('/rainbowFlowSet?speed=' + newval, { method: 'GET' })"
                 ".then(response => response.text());"
               "break;"
@@ -698,6 +748,11 @@ String get_html_settings_for_mode() {
             "case 'bt-grad':"
               "var newval = parseInt(document.getElementById('grad').value);"
               "fetch('/rainbowFlowSet?grad=' + newval, { method: 'GET' })"
+                ".then(response => response.text());"
+              "break;"
+            "case 'bt-del':"
+              "var newval = parseInt(document.getElementById('del').value);"
+              "fetch('/rainbowFlowSet?del=' + newval, { method: 'GET' })"
                 ".then(response => response.text());"
               "break;"
             "default:"

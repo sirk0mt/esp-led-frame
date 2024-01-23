@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
 /* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
-const char*       ver = "v0.0.8";
+const char*       ver = "v0.0.9";
 
 Preferences       dev_settings;
 Preferences       main_settings;
@@ -9,11 +9,68 @@ Preferences       main_settings;
 uint16_t          pixels_in_row;
 uint16_t          pixels_rows; 
 uint16_t          num_of_pixels;
+uint16_t          color_order;
 uint16_t          current_mode;
 
-Adafruit_NeoPixel strip(1, LED_STRIP_PIN, LED_STRIP_COLOR_ORDER + NEO_KHZ800);
+Adafruit_NeoPixel strip(1, LED_STRIP_PIN, NEO_RGB + NEO_KHZ800);
 
 bool              change_mode = false;
+
+void change_strip_color_order(uint16_t col_order) {
+  switch (col_order) {
+    case 0:
+      strip.updateType(NEO_RGB + NEO_KHZ800);
+
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to RGB");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 1:
+      strip.updateType(NEO_RBG + NEO_KHZ800);
+      
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to RBG");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 2:
+      strip.updateType(NEO_GRB + NEO_KHZ800);
+      
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to GRB");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 3:
+      strip.updateType(NEO_GBR + NEO_KHZ800);
+      
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to GBR");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 4:
+      strip.updateType(NEO_BRG + NEO_KHZ800);
+      
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to BRG");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    case 5:
+      strip.updateType(NEO_BGR + NEO_KHZ800);
+      
+      #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] Changed strip color order to BGR");
+      #endif    /* defined(DEBUG) */
+
+      break;
+    default:
+      break;
+  }
+  dev_settings.putUShort("colorOrder", col_order);
+}
 
 void handle_restart() {
   #if defined(DEBUG)
@@ -44,6 +101,7 @@ void initialize_settings() {
   galaxy_params.begin("galaxyParams", false);
   static_params.begin("staticParams", false);
   rainbow_params.begin("rainbowParams", false);
+  rainbow_flow_params.begin("rflowParams", false);
 
   // Initialize default values (do it only once)  -->
 
@@ -52,6 +110,7 @@ void initialize_settings() {
   //dev_settings.putString("host","obraz");
   //dev_settings.putString("ssid", "Siedziba_PIS11"); 
   //dev_settings.putString("password", "niepowiemci11");
+  //dev_settings.putUShort("colorOrder", 2);
   //main_settings.putUShort("currentMode", 1);
   //galaxy_master_delay = galaxy_params.putUShort("MasterDel",30);
   //galaxy_min_del = galaxy_params.putUShort("MinDel",50);
@@ -62,6 +121,10 @@ void initialize_settings() {
   //static_params.putUChar("B",10);
   //rainbow_params.putUShort("rMasterDel",10);
   //rainbow_params.putUShort("rMaxChange",10);
+  //rainbow_flow_params.putUShort("rChRate",1);
+  //rainbow_flow_params.putUShort("rChDeg",0);
+  //rainbow_flow_params.putUShort("rGradDen",10);
+  //rainbow_flow_params.putUShort("rMDel",0);
 
   // <-- End of initialize with default values
 
@@ -71,6 +134,8 @@ void initialize_settings() {
   mdns_host_name      = dev_settings.getString("host");
   saved_ssid          = dev_settings.getString("ssid"); 
   saved_password      = dev_settings.getString("password");
+  color_order         = dev_settings.getUShort("colorOrder");
+  
 
   current_mode        = main_settings.getUShort("currentMode");
 
@@ -88,9 +153,10 @@ void initialize_settings() {
   rainbow_max_change        = rainbow_params.getUShort("rMaxChange");
   rainbow_curr_master_delay = rainbow_master_delay;
 
-  rainbow_color_change_rate   = 0.5;
-  rainbow_color_change_degree = 90;
-  rainbow_color_gradient_density = 1;
+  rainbow_flow_change_rate      = rainbow_flow_params.getUShort("rChRate");
+  rainbow_flow_change_degree    = rainbow_flow_params.getUShort("rChDeg");
+  rainbow_flow_gradient_density = rainbow_flow_params.getUShort("rGradDen");
+  rainbow_flow_master_delay     = rainbow_flow_params.getUShort("rMDel");
 
   #if defined(DEBUG)
     Serial.println("-----------------------------------");
@@ -115,6 +181,11 @@ void initialize_settings() {
     Serial.println("--- rainbow_params ---");
     Serial.println("rainbow_curr_master_delay: " + String(rainbow_curr_master_delay));
     Serial.println("rainbow_max_change: " + String(rainbow_max_change));
+    Serial.println("--- rainbow_flow_params ---");
+    Serial.println("rainbow_flow_change_rate: " + String(rainbow_flow_change_rate));
+    Serial.println("rainbow_flow_change_degree: " + String(rainbow_flow_change_degree));
+    Serial.println("rainbow_flow_gradient_density: " + String(rainbow_flow_gradient_density));
+    Serial.println("rainbow_flow_master_delay: " + String(rainbow_flow_master_delay));
     Serial.println("-----------------------------------");
   #endif    /* defined(DEBUG) */
 
