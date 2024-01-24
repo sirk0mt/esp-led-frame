@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
-/* v0.0.0 - v(OR).(dev test ver).(dev working ver) */
-const char*       ver = "v0.0.10";
+/* v0.0.0-dev_branch_name - v(OR).(dev test ver).(dev working ver - working branch) */
+const char*       ver = "v0.1.0";
 
 Preferences       dev_settings;
 Preferences       main_settings;
