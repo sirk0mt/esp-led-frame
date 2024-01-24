@@ -1,0 +1,36 @@
+Fire function:
+
+  // Step 1: Initialize the bottom row of the matrix with fire colors
+  // rand() % (max_number + 1 - minimum_number) + minimum_number
+  for (int x = 0; x < pixels_in_row; x++) {
+    int r = rand() % (255 + 1 - 180) + 180;
+    int g = rand() % (150 + 1 - 0) + 0;
+    int b = 0;
+
+    // Adjust green component based on red to keep the orange-yellow tone
+    g = (r > 200) ? min(100, g) : min(50, g);
+    Serial.println("R: "+String(r) + " G: "+String(g) + " B: "+String(b));
+    strip.setPixelColor(xy_to_index(x, pixels_rows - 1), g, r, b);
+  }
+
+  // Step 2: Move the colors up, fading them
+  for (int y = 0; y < pixels_rows - 1; y++) {
+    for (int x = 0; x < pixels_in_row; x++) {
+      uint32_t colorBelow = strip.getPixelColor(xy_to_index(x, y + 1));
+      uint8_t r = (uint8_t)(colorBelow >> 8);
+      uint8_t g = (uint8_t)(colorBelow >> 16);
+      uint8_t b = 0; // Keep blue off
+
+      // Fade effect
+      r = (uint8_t)max(0, (int)(r - rand() % (20 + 1 - 0) + 0));
+      g = (uint8_t)max(0, (int)(g - rand() % (20 + 1 - 0) + 0));
+
+      strip.setPixelColor(xy_to_index(x, y), g, r, b);
+    }
+  }
+
+  strip.show();
+
+
+
+  -----------------------------------------------

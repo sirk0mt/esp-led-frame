@@ -12,8 +12,6 @@ extern uint16_t     ajax_current_pixel;             /* Current pixel for ajax fr
 
 extern const char*  auto_back_html;                 /* string to add in HTML to automatic redirect to previours page */
 
-extern const char*  update_site_html;               /* OTA update site HTML */
-
 
 /**
  * \brief               Function to get HTML list of available networks
@@ -38,9 +36,8 @@ void start_main_server();
 
 /**
  * \brief               Get string with HTML setting for selected mode
- * \param[mode]         mode: Number of mode to get settings
 */
-String get_html_settings_for_mode(int mode);
+String get_html_settings_for_mode();
 
 /**
  * \brief               API for set values

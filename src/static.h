@@ -34,5 +34,10 @@ extern boolean      static_color_changed;   /* If static color was chaged */
 */
 void static_color_set();
 
+/**
+ * \brief         Save color to memory
+*/
+void static_color_save();
+
 
 #endif    /* ifndef STATIC_H */

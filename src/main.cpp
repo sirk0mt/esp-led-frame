@@ -18,12 +18,14 @@ void setup() {
   #endif    /* defined(DEBUG) */
 
   initialize_settings();
+
   num_of_pixels = pixels_in_row * pixels_rows;
 
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Number of pixels calculated to: " + String(num_of_pixels));
   #endif    /* defined(DEBUG) */
-
+  
+  change_strip_color_order(color_order);
   resize_pixels_struct(num_of_pixels);
   randomSeed(analogRead(34));
   strip_initialize();

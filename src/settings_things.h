@@ -21,29 +21,41 @@
 
 
 /* Version variable initialized in cpp file for that header */
-extern const char*  ver;
+extern const char*              ver;
 
-#define LED_STRIP_PIN        2              /* GPIO pin for NeoPixel strip*/
+#define LED_STRIP_PIN           2               /* GPIO pin for NeoPixel strip*/
+ 
+#define DEBUG                                   /* To enable print serial debug information define / for disable comment that line */
 
-#define DEBUG                               /* To enable print serial debug information define / for disable comment that line */
-
-extern Preferences          dev_settings;   /* Device settings class instance */
-extern Preferences          main_settings;  /* Main settings class instance */
+extern Preferences              dev_settings;   /* Device settings class instance */
+extern Preferences              main_settings;  /* Main settings class instance */
 
 /* LED settings START */
-extern uint16_t             pixels_in_row;  /* Number of pixels in row */
-extern uint16_t             pixels_rows;    /* Number of rows */
+extern uint16_t                 pixels_in_row;  /* Number of pixels in row */
+extern uint16_t                 pixels_rows;    /* Number of rows */
 
-extern uint16_t             num_of_pixels;  /* Number of all pixels */
+extern uint16_t                 num_of_pixels;  /* Number of all pixels */
 
-extern Adafruit_NeoPixel    strip;          /* LED strip class instance */
+extern Adafruit_NeoPixel        strip;          /* LED strip class instance */
 /* LED settings END */
 
-extern uint16_t             current_mode;   /* Variable to store current mode of light */
+extern uint16_t                 color_order;    /* NeoPixel strip color order */
 
-extern bool                 change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
+extern uint16_t                 current_mode;   /* Variable to store current mode of light */
+
+extern bool                     change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
 
 
+/**
+ * \brief               Change strip type (color order)
+ * \param[col_order]    col_order: 0 - NEO_RGB, 1 - NEO_RBG, 2 - NEO_GRB, 3 - NEO_GBR, 4 - NEO_BRG, 5 - NEO_BGR
+*/
+void change_strip_color_order(uint16_t col_order);
+
+/**
+ * \brief               Function that restart device.
+*/
+void handle_restart();
 
 /**
  * \brief               Function saving new network coordinates.
@@ -51,11 +63,6 @@ extern bool                 change_mode;    /* Variable to handle changid mode m
  * \param[password]     password: Password of new network to save.
 */
 void save_new_wifi_config(const String& ssid, const String& password);
-
-/**
- * \brief               Function that restart device.
-*/
-void handle_restart();
 
 /**
  * \brief               Function that initialize settings from memory.

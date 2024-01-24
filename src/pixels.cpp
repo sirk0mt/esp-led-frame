@@ -4,6 +4,54 @@
 
 pixel_color* pixels = new pixel_color[1];
 
+uint32_t reorder_color(uint32_t color) {
+  if (color_order == 0) {
+    return color;
+  }
+
+  int col_order;
+
+  switch (color_order) {
+    case 1:
+      col_order = NEO_RBG;
+      break;
+    case 2:
+      col_order = NEO_GRB;
+      break;
+    case 3:
+      col_order = NEO_GBR;
+      break;
+    case 4:
+      col_order = NEO_BRG;
+      break;
+    case 5:
+      col_order = NEO_BGR;
+      break;
+    default:
+    
+      #if defined(DEBUG)
+        Serial.println("[" + String(__func__) + "] ERROR: Unknown color order");
+      #endif    /* defined(DEBUG) */
+
+      return color;
+    break;
+  }
+
+  // Extract the Red, Green, and Blue components
+  uint8_t red = (color >> 16) & 0xFF;
+  uint8_t green = (color >> 8) & 0xFF;
+  uint8_t blue = color & 0xFF;
+
+  uint8_t reordered_colors[3];
+
+  // Reorder the color components
+  reordered_colors[0] = (col_order & 0x30) == 0x00 ? red   : ((col_order & 0x30) == 0x10 ? green : blue);
+  reordered_colors[1] = (col_order & 0x0C) == 0x00 ? red   : ((col_order & 0x0C) == 0x04 ? green : blue);
+  reordered_colors[2] = (col_order & 0x03) == 0x00 ? red   : ((col_order & 0x03) == 0x01 ? green : blue);
+
+  return (uint32_t(reordered_colors[0]) << 16) | (uint32_t(reordered_colors[1]) << 8) | uint32_t(reordered_colors[2]);
+}
+
 void strip_initialize() {
   strip.updateLength(num_of_pixels);
   strip.begin();

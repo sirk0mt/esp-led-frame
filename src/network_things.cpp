@@ -31,7 +31,7 @@ bool connect_saved_network() {
 
   if (WiFi.status() == WL_CONNECTED) {
     #if defined(DEBUG)
-      Serial.println("[" + String(__func__) + "] Connected to " + saved_ssid + " with IP: " + WiFi.localIP());
+      Serial.println("[" + String(__func__) + "] Connected to " + saved_ssid + " with IP: " + WiFi.localIP().toString());
     #endif    /* defined(DEBUG) */
     return true;
   } else {
@@ -44,7 +44,7 @@ bool connect_saved_network() {
 }
 
 String list_visible_networks() {
-  String networks = "<ul>";
+  String networks = "<div class='list-group'>";
   int numNetworks = WiFi.scanNetworks();
 
   #if defined(DEBUG)
@@ -52,14 +52,14 @@ String list_visible_networks() {
   #endif    /* defined(DEBUG) */
 
   for (int i = 0; i < numNetworks; ++i) {
-    networks += "<li onclick='copyText(this)'>" + WiFi.SSID(i) + "</li>";
+    networks += "<button type='button' class='list-group-item list-group-item-action' onclick='copyText(this)'>" + WiFi.SSID(i) + "</button>";
 
     #if defined(DEBUG)
         Serial.println("--[" + String(i) + "]-- "+ WiFi.SSID(i));
     #endif    /* defined(DEBUG) */
   }
 
-  networks += "</ul>";
+  networks += "</div>";
 
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Function end -----------");
@@ -84,16 +84,16 @@ void create_config_network() {
 }
 
 void initialize_mdns() {
-    if (!MDNS.begin(mdns_host_name.c_str())) {
-      #if defined(DEBUG)
-        Serial.println("[" + String(__func__) + "] ERROR setting up MDNS responder!");
-      #endif    /* defined(DEBUG) */
-
-      return;
-    }
-    MDNS.addService("http", "tcp", 80);
-
+  if (!MDNS.begin(mdns_host_name.c_str())) {
     #if defined(DEBUG)
-      Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
+      Serial.println("[" + String(__func__) + "] ERROR setting up MDNS responder!");
     #endif    /* defined(DEBUG) */
+
+    return;
+  }
+  MDNS.addService("http", "tcp", 80);
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
+  #endif    /* defined(DEBUG) */
 }
