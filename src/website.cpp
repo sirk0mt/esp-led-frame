@@ -180,7 +180,14 @@ void start_main_server() {
               "<h3>System Preferences</h3><br>"
               "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
               "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
-              "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
+              "<b>mDNS domain:</b>"
+              "<div class='input-group mb-3 col-md-4'>"
+                "<input type='text' class='form-control' id='domName' aria-describedby='domain' value='" + mdns_host_name + "'>"
+                "<div class='input-group-append'>"
+                  "<span class='input-group-text' id='domain'>.local</span>"
+                "</div>"
+                "<button type='button' class='btn btn-primary' onclick='setDomain();'>save and reboot</button>"
+              "</div>"
               "<br><br>"
               "<b>Choose LED color order: <br>"
               "<div class='btn-group btn-group-toggle' data-toggle='buttons'>"
@@ -203,18 +210,21 @@ void start_main_server() {
                   "<input type='radio' name='colOr' id='order5' " + get_color_order_checked_state(5) + "> BGR"
                 "</label>"
               "</div>"
+              "<br><br><button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
               "<script>"
+                "function restart() {"
+                  "fetch('/restart');"
+                "};"
                 "$(document).ready(function(){"
                     "$('input[type=\\'radio\\'][name=\\'colOr\\']').change(function() {"
                       "console.log('select changed to: ' + this.id);"
                     "});"
                 "});"
-              "</script>"
-              "<br><br><button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
-              "<script>"
-                "function restart() {"
-                  "fetch('/restart');"
-                "}"
+                "function setDomain() {"
+                  "var newName = document.getElementById('domName').value;"
+                  "fetch('/setvalue?domname=' + newName, { method: 'POST' }).then(response => response.text());"
+                  "restart();"
+                "};"
               "</script>"
             "</div>"
             "<div class='tab-pane fade' id='update'>"
@@ -864,6 +874,38 @@ void handle_set_value() {
         break;
     }
     server.send(200, "text/html", "Mode changed <br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
+  } else if (server.hasArg("domname")) {
+    mdns_host_name = server.arg("domname");
+    dev_settings.putString("host", mdns_host_name);
+    #if defined(DEBUG)
+      Serial.println("--- handle_set_value END - mDNS changed to: " + mdns_host_name + ".local");
+    #endif    /* defined(DEBUG) */
+  } else if (server.hasArg("size")) {
+    int in_row, rows;
+
+    if (server.hasArg("x")) {
+      pixels_in_row = server.arg("x").toInt();
+      dev_settings.putUShort("pixelsInRow", pixels_in_row);
+    } else {
+      #if defined(DEBUG)
+        Serial.println("--- handle_set_value no x param");
+      #endif    /* defined(DEBUG) */
+      return;
+    }
+
+    if (server.hasArg("y")) {
+      pixels_rows = server.arg("y").toInt();
+      dev_settings.putUShort("pixelsRows", pixels_rows);
+    } else {
+      #if defined(DEBUG)
+        Serial.println("--- handle_set_value no y param");
+      #endif    /* defined(DEBUG) */
+      return;
+    }
+    
+    #if defined(DEBUG)
+      Serial.println("--- handle_set_value new matrix size - x: " + String(pixels_in_row) + " y: " + String(pixels_rows));
+    #endif    /* defined(DEBUG) */
   }
 }
 
