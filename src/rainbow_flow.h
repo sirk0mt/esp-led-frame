@@ -13,6 +13,8 @@ extern uint16_t     rainbow_flow_gradient_density;  /* Density of rainbow gradie
 
 extern uint16_t     rainbow_flow_master_delay;      /* Delay between animation cycles */
 
+extern bool         rainbow_flow_direction;         /* Direction of center point animation */
+
 /**
  * \brief               Main function of rainbow flow mode
 */

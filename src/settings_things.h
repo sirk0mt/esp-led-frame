@@ -45,7 +45,6 @@ extern uint16_t                 current_mode;   /* Variable to store current mod
 
 extern bool                     change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
 
-
 /**
  * \brief               Change strip type (color order)
  * \param[col_order]    col_order: 0 - NEO_RGB, 1 - NEO_RBG, 2 - NEO_GRB, 3 - NEO_GBR, 4 - NEO_BRG, 5 - NEO_BGR

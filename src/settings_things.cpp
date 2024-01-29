@@ -125,6 +125,7 @@ void initialize_settings() {
   //rainbow_flow_params.putUShort("rChDeg",0);
   //rainbow_flow_params.putUShort("rGradDen",10);
   //rainbow_flow_params.putUShort("rMDel",0);
+  //rainbow_flow_params.putBool("rDir", false);
 
   // <-- End of initialize with default values
 
@@ -157,6 +158,7 @@ void initialize_settings() {
   rainbow_flow_change_degree    = rainbow_flow_params.getUShort("rChDeg");
   rainbow_flow_gradient_density = rainbow_flow_params.getUShort("rGradDen");
   rainbow_flow_master_delay     = rainbow_flow_params.getUShort("rMDel");
+  rainbow_flow_direction        = rainbow_flow_params.getBool("rDir");
 
   #if defined(DEBUG)
     Serial.println("-----------------------------------");
@@ -186,10 +188,12 @@ void initialize_settings() {
     Serial.println("rainbow_flow_change_degree: " + String(rainbow_flow_change_degree));
     Serial.println("rainbow_flow_gradient_density: " + String(rainbow_flow_gradient_density));
     Serial.println("rainbow_flow_master_delay: " + String(rainbow_flow_master_delay));
+    Serial.println("rainbow_flow_direction: " +  String(rainbow_flow_direction));
     Serial.println("-----------------------------------");
   #endif    /* defined(DEBUG) */
 
   // <-- End of getting data from memory
+
 }
 
 void initialize_starting_mode() {

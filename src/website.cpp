@@ -493,21 +493,28 @@ void start_main_server() {
         rainbow_flow_change_rate = paramValue.toInt();
         rainbow_flow_params.putUShort("rChRate", rainbow_flow_change_rate);
         Serial.println("Change rate changed to: " + String(rainbow_flow_change_rate));
-      }
-      else if (paramName == "degree") {
+      } else if (paramName == "degree") {
         rainbow_flow_change_degree = paramValue.toInt();
         rainbow_flow_params.putUShort("rChDeg", rainbow_flow_change_degree);
         Serial.println("Change degree changed to: " + String(rainbow_flow_change_degree));
-      }
-      else if (paramName == "grad") {
+      } else if (paramName == "grad") {
         rainbow_flow_gradient_density = paramValue.toInt();
         rainbow_flow_params.putUShort("rGradDen", rainbow_flow_gradient_density);
         Serial.println("Gradient density changed to: " + String(rainbow_flow_gradient_density));
-      }
-      else if (paramName == "del") {
+      } else if (paramName == "del") {
         rainbow_flow_master_delay = paramValue.toInt();
         rainbow_flow_params.putUShort("rMDel", rainbow_flow_master_delay);
         Serial.println("Delay changed to: " + String(rainbow_flow_master_delay));
+      } else if (paramName == "dir") {
+        if (rainbow_flow_params.getBool("rDir")) {
+          rainbow_flow_direction = false;
+          rainbow_flow_params.putBool("rDir", false);
+          Serial.println("Delay changed to: false");
+        } else {
+          rainbow_flow_direction = true;
+          rainbow_flow_params.putBool("rDir", true);
+          Serial.println("Delay changed to: true");
+        }
       }
       server.send(200, "text/plain", "OK");
     } else {
@@ -740,6 +747,9 @@ String get_html_settings_for_mode() {
             "<div class='col-auto'><input type='number' class='form-control' id='del' min='0' step='1' value='" + String(rainbow_flow_master_delay) + "'></div>"
             "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-del' onclick='setVal(this)'>Set</button></div>"
           "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-dir' onclick='setVal(this)'>Change direction</button></div>"
+          "</div>"
         "</div>"
       "</div>"
       "<script>"
@@ -763,6 +773,10 @@ String get_html_settings_for_mode() {
             "case 'bt-del':"
               "var newval = parseInt(document.getElementById('del').value);"
               "fetch('/rainbowFlowSet?del=' + newval, { method: 'GET' })"
+                ".then(response => response.text());"
+              "break;"
+            "case 'bt-dir':"
+              "fetch('/rainbowFlowSet?dir=1', { method: 'GET' })"
                 ".then(response => response.text());"
               "break;"
             "default:"
