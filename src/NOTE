@@ -34,3 +34,42 @@ Fire function:
 
 
   -----------------------------------------------
+
+    void rainbow_from_center() {
+    // Center coordinates
+    float centerX = pixels_in_row / 2.0;
+    float centerY = pixels_rows / 2.0;
+
+    // Maximum distance from the center to the farthest corner
+    float maxDistance = sqrt(pow(centerX, 2) + pow(centerY, 2));
+
+    // Time factor to create the animation
+    unsigned long startTime = millis();
+    unsigned long timeFactor;
+
+    while (true) { // Or some condition to stop the animation
+        // Update the time factor
+        timeFactor = (millis() - startTime) / 10; // Change the divisor to control speed
+
+        for (int x = 0; x < pixels_in_row; ++x) {
+            for (int y = 0; y < pixels_rows; ++y) {
+                // Calculate distance from center
+                float distance = sqrt(pow(x - centerX, 2) + pow(y - centerY, 2));
+
+                // Normalize distance and calculate color
+                int colorIndex = static_cast<int>((distance / maxDistance) * 255 + timeFactor) % 255;
+                uint32_t color = wheel(colorIndex);
+
+                // Set LED color
+                int index = xy_to_index(x, y);
+                strip.setPixelColor(index, color);
+            }
+        }
+
+        // Update display
+        strip.show();
+
+        // Delay between frames
+        delay(rainbow_flow_master_delay);
+    }
+}
