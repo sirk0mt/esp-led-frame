@@ -1,7 +1,7 @@
 #include "settings_things.h"
 
 /* v0.0.0-dev_branch_name - v(OR).(dev test ver).(dev working ver - working branch) */
-const char*       ver = "v0.1.0";
+const char*       ver = "v0.1.1 - dev_rainbow_from_center";
 
 Preferences       dev_settings;
 Preferences       main_settings;

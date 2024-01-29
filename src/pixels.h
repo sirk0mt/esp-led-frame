@@ -72,4 +72,19 @@ void set_pixel_color(uint16_t led, uint8_t r, uint8_t g, uint8_t b);
 */
 void show_triangle();
 
+/**
+ * \brief               Get color from color wheel
+ * \param[wheel_pos]    wheel_pos: Byte position of wheel to get color.
+ * \return              32-bit packed RGB value of color.
+*/
+uint32_t wheel(byte wheel_pos);
+
+/**
+ * \brief               Calculate index of pixel by x and y position.
+ * \param[x]            x: X position of pixel in matrix.
+ * \param[y]            y: Y position of pixel in matrix.
+ * \return              Index of selected pixel.
+*/
+int xy_to_index(int x, int y);
+
 #endif  /* ifndef PIXELS_H */

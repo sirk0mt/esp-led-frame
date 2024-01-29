@@ -12,26 +12,6 @@ uint16_t    rainbow_flow_gradient_density;
 
 uint16_t    rainbow_flow_master_delay;
 
-/**
- * \brief             Input a value 0 to 255 to get a color value. The colors are a transition r - g - b - back to r.
- * \param[wheel_pos]  wheel_pos: Position of color wheel to get color.
-*/
-uint32_t wheel(byte wheel_pos) {
-  wheel_pos = 255 - wheel_pos;
-  if (wheel_pos < 85) {
-    return strip.Color(255 - wheel_pos * 3, 0, wheel_pos * 3);
-  }
-  if (wheel_pos < 170) {
-    wheel_pos -= 85;
-    return strip.Color(0, wheel_pos * 3, 255 - wheel_pos * 3);
-  }
-  wheel_pos -= 170;
-  return strip.Color(wheel_pos * 3, 255 - wheel_pos * 3, 0);
-}
-
-int xy_to_index(int x, int y) {
-  return y * pixels_in_row + x;
-}
 
 void rainbow_flow() {
   static int curr_del = 0;

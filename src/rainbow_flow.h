@@ -14,13 +14,6 @@ extern uint16_t     rainbow_flow_gradient_density;  /* Density of rainbow gradie
 extern uint16_t     rainbow_flow_master_delay;      /* Delay between animation cycles */
 
 /**
- * \brief               Get color from color wheel
- * \param[wheel_pos]    wheel_pos: Byte position of wheel to get color.
- * \return              32-bit packed RGB value of color.
-*/
-uint32_t wheel(byte wheel_pos);
-
-/**
  * \brief               Main function of rainbow flow mode
 */
 void rainbow_flow();

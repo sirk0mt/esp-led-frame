@@ -137,3 +137,20 @@ void show_triangle() {
     Serial.println("[" + String(__func__) + "] RED triangle was shown");
   #endif    /* defined(DEBUG) */
 }
+
+uint32_t wheel(byte wheel_pos) {
+  wheel_pos = 255 - wheel_pos;
+  if (wheel_pos < 85) {
+    return strip.Color(255 - wheel_pos * 3, 0, wheel_pos * 3);
+  }
+  if (wheel_pos < 170) {
+    wheel_pos -= 85;
+    return strip.Color(0, wheel_pos * 3, 255 - wheel_pos * 3);
+  }
+  wheel_pos -= 170;
+  return strip.Color(wheel_pos * 3, 255 - wheel_pos * 3, 0);
+}
+
+int xy_to_index(int x, int y) {
+  return y * pixels_in_row + x;
+}
