@@ -20,6 +20,13 @@ extern WebServer    server;                     /* WebServer class instace */
 extern uint8_t      mdns_del;                    /* ToDo check if necessary */
 extern uint8_t      mdns_del_curr;               /* ToDo check if necessary */
 
+/**
+ * \brief               Function to get HTML list of available networks
+ * \return              String with HTML style list of networks
+*/
+String get_available_networks_html();
+
+String network_page_html();
 
 /**
  * \brief               Function that tries to connect to saved WiFi network.
@@ -42,5 +49,31 @@ void create_config_network();
  * \brief               Initialize mDNS server.
 */
 void initialize_mdns();
+
+/* HTMLs START*/
+
+String networkChoiseSiteHead    = 
+      "<b>Choose a WiFi network:</b>"
+      "<form method='post' action='/saveNetwork'>"
+        "<div class='mb-3'>"
+          "<label for='ssid' class='form-label'>SSID</label>"
+          "<input type='text' class='form-control' id='ssid' name='ssid'>"
+        "</div>"
+        "<div class='mb-3'>"
+          "<label for='passVal' class='form-label'>Password</label>"
+          "<input type='password' class='form-control' id='passVal' name='password'>"
+        "</div>"
+        "<button type='submit' class='btn btn-primary'>Connect</button>"
+      "</form>"
+      "<b>Available Networks</b>";
+String networkChoiseSiteFooter  = 
+      "<script>"
+        "function copyText(element) {"
+          "var textToCopy = element.textContent || element.innerText;"
+          "document.getElementById('ssid').value = textToCopy;"
+        "}"
+      "</script>";
+
+/* HTMLs END*/
 
 #endif      /* ifndef NETWORK_THINGS_H */

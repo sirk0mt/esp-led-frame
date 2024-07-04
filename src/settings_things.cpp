@@ -1,10 +1,8 @@
 #include "settings_things.h"
 
 /* v0.0.0-dev_branch_name - v(OR).(dev test ver).(dev working ver - working branch) */
-const char*       ver = "v0.1.0";
+const char*       ver = "v0.2.0";
 
-Preferences       dev_settings;
-Preferences       main_settings;
 
 uint16_t          pixels_in_row;
 uint16_t          pixels_rows; 
@@ -16,9 +14,46 @@ Adafruit_NeoPixel strip(1, LED_STRIP_PIN, NEO_RGB + NEO_KHZ800);
 
 bool              change_mode = false;
 
+void save_default_settings(const char* prefs_file) {
+  if (memcmp(prefs_file, main_prefs_file, sizeof(prefs_file))) {
+    main_json_doc.clear();
+    // set default values like json_doc[key] = value
+    pixels_in_row               = 15;
+    main_json_doc["led_in_row"] = pixels_in_row ;
+
+    pixels_rows               = 10;
+    main_json_doc["led_rows"] = pixels_rows;
+
+    color_order                  = GRB_ORDER;
+    main_json_doc["color_order"] = color_order;
+    
+    mdns_host_name        = "obraz";
+    main_json_doc["host"] = mdns_host_name;
+
+    saved_ssid            = "Siedziba_PIS";
+    main_json_doc["ssid"] = saved_ssid; 
+
+    saved_password            = "niepowiemci";
+    main_json_doc["wifipass"] = saved_password;
+
+    current_mode                  = MODE_GALAXY;
+    main_json_doc["current_mode"] = current_mode;
+
+  } else if (memcmp(prefs_file, galaxy_prefs_file, sizeof(prefs_file))) {
+    mode_json_doc.clear();
+    galaxy_init_defaults();
+  } else if (memcmp(prefs_file, rainbow_flow_prefs_file, sizeof(prefs_file))) {
+    mode_json_doc.clear();
+    rainbow_flow_init_defaults();
+  }
+
+
+  json_save_prefs_file(prefs_file);
+}
+
 void change_strip_color_order(uint16_t col_order) {
   switch (col_order) {
-    case 0:
+    case RGB_ORDER:
       strip.updateType(NEO_RGB + NEO_KHZ800);
 
       #if defined(DEBUG)
@@ -26,7 +61,7 @@ void change_strip_color_order(uint16_t col_order) {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 1:
+    case RBG_ORDER:
       strip.updateType(NEO_RBG + NEO_KHZ800);
       
       #if defined(DEBUG)
@@ -34,7 +69,7 @@ void change_strip_color_order(uint16_t col_order) {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 2:
+    case GRB_ORDER:
       strip.updateType(NEO_GRB + NEO_KHZ800);
       
       #if defined(DEBUG)
@@ -42,7 +77,7 @@ void change_strip_color_order(uint16_t col_order) {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 3:
+    case GBR_ORDER:
       strip.updateType(NEO_GBR + NEO_KHZ800);
       
       #if defined(DEBUG)
@@ -50,7 +85,7 @@ void change_strip_color_order(uint16_t col_order) {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 4:
+    case BRG_ORDER:
       strip.updateType(NEO_BRG + NEO_KHZ800);
       
       #if defined(DEBUG)
@@ -58,7 +93,7 @@ void change_strip_color_order(uint16_t col_order) {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 5:
+    case BGR_ORDER:
       strip.updateType(NEO_BGR + NEO_KHZ800);
       
       #if defined(DEBUG)
@@ -69,7 +104,10 @@ void change_strip_color_order(uint16_t col_order) {
     default:
       break;
   }
-  dev_settings.putUShort("colorOrder", col_order);
+
+  json_load_prefs_file(main_prefs_file);
+  main_json_doc["color_order"] = col_order;
+  json_save_prefs_file(main_prefs_file);
 }
 
 void handle_restart() {
@@ -81,82 +119,60 @@ void handle_restart() {
 }
 
 void save_new_wifi_config(const String& ssid, const String& password) {
-  dev_settings.putString("ssid", ssid); 
-  dev_settings.putString("password", password);
+  json_load_prefs_file(main_prefs_file);
+
+  main_json_doc["ssid"] = ssid; 
+  main_json_doc["wifipass"] = password;
 
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] New network settings saved" +
-                                              " SSID: " + dev_settings.getString("ssid") +
-                                              " Password: " + dev_settings.getString("password"));
+                                              " SSID: " + json_load_string(main_json_doc, "ssid") +
+                                              " Password: " + json_load_string(main_json_doc, "wifipass"));
   #endif    /* defined(DEBUG) */
+
+  json_save_prefs_file(main_prefs_file);
 }
 
 void initialize_settings() {
-  //to format settings
-  // nvs_flash_erase(); // erase the NVS partition and...
-  // nvs_flash_init(); // initialize the NVS partition.
+  json_load_prefs_file(main_prefs_file);
 
-  dev_settings.begin("devSettings", false);
-  main_settings.begin("mainSettings", false);
-  galaxy_params.begin("galaxyParams", false);
-  static_params.begin("staticParams", false);
-  rainbow_params.begin("rainbowParams", false);
-  rainbow_flow_params.begin("rflowParams", false);
+  pixels_in_row       = json_load_uint16(main_json_doc, "led_in_row");
+  pixels_rows         = json_load_uint16(main_json_doc, "led_rows");
+  color_order         = json_load_uint16(main_json_doc, "color_order");
+  mdns_host_name      = json_load_string(main_json_doc, "host");
+  saved_ssid          = json_load_string(main_json_doc, "ssid");
+  saved_password      = json_load_string(main_json_doc, "wifipass");
+  current_mode        = json_load_uint16(main_json_doc, "current_mode");
 
   // Initialize default values (do it only once)  -->
 
-  //dev_settings.putUShort("pixelsInRow",15);
-  //dev_settings.putUShort("pixelsRows",10);
-  //dev_settings.putString("host","obraz");
-  //dev_settings.putString("ssid", "Siedziba_PIS11"); 
-  //dev_settings.putString("password", "niepowiemci11");
-  //dev_settings.putUShort("colorOrder", 2);
-  //main_settings.putUShort("currentMode", 1);
-  //galaxy_master_delay = galaxy_params.putUShort("MasterDel",30);
-  //galaxy_min_del = galaxy_params.putUShort("MinDel",50);
-  //galaxy_max_del = galaxy_params.putUShort("MaxDel",2000);
-  //galaxy_led_workers = galaxy_params.putUShort("LedWorkers",600);
   //static_params.putUChar("R",10);
   //static_params.putUChar("G",10);
   //static_params.putUChar("B",10);
-  //rainbow_params.putUShort("rMasterDel",10);
-  //rainbow_params.putUShort("rMaxChange",10);
-  //rainbow_flow_params.putUShort("rChRate",1);
-  //rainbow_flow_params.putUShort("rChDeg",0);
-  //rainbow_flow_params.putUShort("rGradDen",10);
-  //rainbow_flow_params.putUShort("rMDel",0);
 
   // <-- End of initialize with default values
 
   // Getting data from memory -->
-  pixels_in_row       = dev_settings.getUShort("pixelsInRow");
-  pixels_rows         = dev_settings.getUShort("pixelsRows");
-  mdns_host_name      = dev_settings.getString("host");
-  saved_ssid          = dev_settings.getString("ssid"); 
-  saved_password      = dev_settings.getString("password");
-  color_order         = dev_settings.getUShort("colorOrder");
-  
 
-  current_mode        = main_settings.getUShort("currentMode");
-
-  galaxy_master_delay = galaxy_params.getUShort("MasterDel");
-  galaxy_min_del      = galaxy_params.getUShort("MinDel");
-  galaxy_max_del      = galaxy_params.getUShort("MaxDel");
-  galaxy_led_workers  = galaxy_params.getUShort("LedWorkers");
+  galaxy_master_delay = 20;
+  galaxy_min_del      = 20;
+  galaxy_max_del      = 200;
+  galaxy_led_workers  = 600;
   galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
 
-  current_static_color.red    = static_params.getUChar("R");
-  current_static_color.green  = static_params.getUChar("G");
-  current_static_color.blue   = static_params.getUChar("B");
+  current_static_color.red    = 20;
+  current_static_color.green  = 20;
+  current_static_color.blue   = 20;
 
-  rainbow_master_delay      = rainbow_params.getUShort("rMasterDel");
-  rainbow_max_change        = rainbow_params.getUShort("rMaxChange");
+  rainbow_master_delay      = 10;
+  rainbow_max_change        = 5;
   rainbow_curr_master_delay = rainbow_master_delay;
 
-  rainbow_flow_change_rate      = rainbow_flow_params.getUShort("rChRate");
-  rainbow_flow_change_degree    = rainbow_flow_params.getUShort("rChDeg");
-  rainbow_flow_gradient_density = rainbow_flow_params.getUShort("rGradDen");
-  rainbow_flow_master_delay     = rainbow_flow_params.getUShort("rMDel");
+  rainbow_flow_change_rate      = 10;
+  rainbow_flow_change_degree    = 0;
+  rainbow_flow_gradient_density = 10;
+  rainbow_flow_master_delay     = 10;
+
 
   #if defined(DEBUG)
     Serial.println("-----------------------------------");
@@ -217,7 +233,7 @@ void initialize_starting_mode() {
 
       break;
     case 4: /* rainbow */
-      rainbow_initialize();
+      rainbow_start();
 
       #if defined(DEBUG)
           Serial.println("Rainbow mode initialized");

@@ -97,3 +97,17 @@ void initialize_mdns() {
     Serial.println("[" + String(__func__) + "] mDNS responder started at: " + mdns_host_name + ".local");
   #endif    /* defined(DEBUG) */
 }
+
+String get_available_networks_html() {
+  return networkChoiseSiteHead + String(list_visible_networks()) + networkChoiseSiteFooter;
+}
+
+String network_page_html() {
+  return
+    "<h3>Network Settings</h3><br>"
+    "<b>WiFi network:</b> " + WiFi.SSID() + "<br>"
+    "<b>WiFi RSSI:</b> " + String(WiFi.RSSI()) + "<br>"
+    "<b>Current IP:</b> " + WiFi.localIP().toString() + "<br>"
+    "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
+    "<hr>" + get_available_networks_html();
+}

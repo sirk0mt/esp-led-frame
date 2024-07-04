@@ -4,6 +4,13 @@
 /* If first use this header, define all things */
 #define PIXELS_H
 
+#define RGB_ORDER 0
+#define RBG_ORDER 1
+#define GRB_ORDER 2
+#define GBR_ORDER 3
+#define BRG_ORDER 4
+#define BGR_ORDER 5
+
 /**
  * \brief       Struct of color for LED pixel
 */

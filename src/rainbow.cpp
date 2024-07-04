@@ -1,7 +1,6 @@
 #include "settings_things.h"
 #include "rainbow.h"
 
-Preferences     rainbow_params;
 
 uint16_t        rainbow_master_delay;
 uint16_t        rainbow_max_change;
@@ -10,29 +9,43 @@ color_ch_struct rainbow_change;
 
 uint16_t        rainbow_curr_master_delay;
 
-void rainbow_initialize() {
-    rainbow_change.red_change     = random(0, rainbow_max_change + 1);
-    rainbow_change.red_current    = random(0, 255);
 
-    rainbow_change.green_change   = random(1, rainbow_max_change + 1);
-    rainbow_change.green_current  = random(0, 255);
+void rainbow_init_defaults() {
+  rainbow_master_delay          = 10;
+  mode_json_doc["master_del"]   = rainbow_master_delay;
 
-    rainbow_change.blue_change    = random(1, rainbow_max_change + 1);
-    rainbow_change.blue_current   = random(0, 255);
-
-    /* all count up */
-    rainbow_change.red_up   = true;
-    rainbow_change.green_up = true;
-    rainbow_change.blue_up  = true;
-
-    #if defined(DEBUG)
-      Serial.println("[" + String(__func__) + "] Current changes -" +
-                                                " R: " + rainbow_change.red_change +
-                                                " G: " + rainbow_change.green_change +
-                                                " B: " + rainbow_change.blue_change);
-    #endif    /* defined(DEBUG) */
+  rainbow_max_change            = 10;
+  mode_json_doc["min_del"]      = rainbow_max_change;
 }
 
+void rainbow_start() {
+  // malloc dla każdej zmiennej
+
+  rainbow_change.red_change     = random(0, rainbow_max_change + 1);
+  rainbow_change.red_current    = random(0, 255);
+
+  rainbow_change.green_change   = random(1, rainbow_max_change + 1);
+  rainbow_change.green_current  = random(0, 255);
+
+  rainbow_change.blue_change    = random(1, rainbow_max_change + 1);
+  rainbow_change.blue_current   = random(0, 255);
+
+  /* all count up */
+  rainbow_change.red_up   = true;
+  rainbow_change.green_up = true;
+  rainbow_change.blue_up  = true;
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Current changes -" +
+                                              " R: " + rainbow_change.red_change +
+                                              " G: " + rainbow_change.green_change +
+                                              " B: " + rainbow_change.blue_change);
+  #endif    /* defined(DEBUG) */
+}
+
+void rainbow_stop() {
+  // free dla każdej zmiennej
+}
 
 void rainbow_mode() {
   if (rainbow_curr_master_delay == 0) {

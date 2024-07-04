@@ -14,12 +14,6 @@ extern const char*  auto_back_html;                 /* string to add in HTML to 
 
 
 /**
- * \brief               Function to get HTML list of available networks
- * \return              String with HTML style list of networks
-*/
-String get_available_networks_html();
-
-/**
  * \brief               Function that send redirect to root of device to TCP client
 */
 void redirect_to_root();

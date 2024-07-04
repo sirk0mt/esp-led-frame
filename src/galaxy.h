@@ -3,7 +3,7 @@
 /* If first use this header, define all things */
 #define GALAXY_H
 
-extern Preferences  galaxy_params;              /* Galaxy mode settings class instance */
+const char* galaxy_prefs_file = "/galaxy.json"; 
 
 extern uint16_t     galaxy_master_delay;        /* Value of delay between main loop */
 extern uint16_t     galaxy_min_del;             /* Minimum time of life LED workers */
@@ -15,6 +15,14 @@ extern uint16_t*    galaxy_curr_delay;          /* Table of current calculated d
 
 extern uint16_t     galaxy_dim_minus;           /* Value of single decrement for every LED color */
 
+
+void galaxy_init_defaults();
+
+void galaxy_init_endpoints();
+
+void galaxy_start();
+
+void galaxy_stop();
 
 /**
  * \brief               Main function of galaxy mode.

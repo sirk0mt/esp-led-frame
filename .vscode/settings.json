@@ -1,5 +1,7 @@
 {
     "files.associations": {
-        "new": "cpp"
+        "new": "cpp",
+        "arduinojson.h": "c",
+        "json.h": "c"
     }
 }

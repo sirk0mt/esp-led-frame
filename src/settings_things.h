@@ -5,20 +5,23 @@
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <Preferences.h>
+#include <LITTLEFS.h>
+#include <ArduinoJson.h>
 #include "network_things.h"
 #include "website.h"
-#include "galaxy.h"
-#include "rainbow.h"
-#include "static.h"
-#include "pixels.h"
-#include "rainbow_flow.h"
+#include "all_modes.h"
+#include "json.h"
+
 
 /*  
  *  Include nvs_flash.h for format all settings process
  *  #include <nvs_flash.h>
  */
 
+
+#define FORMAT_LITTLEFS_IF_FAILED true
+
+const char* main_prefs_file = "/prefs.json";         /* main preferences file*/
 
 /* Version variable initialized in cpp file for that header */
 extern const char*              ver;
@@ -27,8 +30,8 @@ extern const char*              ver;
  
 #define DEBUG                                   /* To enable print serial debug information define / for disable comment that line */
 
-extern Preferences              dev_settings;   /* Device settings class instance */
-extern Preferences              main_settings;  /* Main settings class instance */
+// extern Preferences              dev_settings;   /* Device settings class instance */
+// extern Preferences              main_settings;  /* Main settings class instance */
 
 /* LED settings START */
 extern uint16_t                 pixels_in_row;  /* Number of pixels in row */
@@ -45,6 +48,8 @@ extern uint16_t                 current_mode;   /* Variable to store current mod
 
 extern bool                     change_mode;    /* Variable to handle changid mode moment. ToDo is necessary? */
 
+
+void save_default_settings(const char* prefs_file);
 
 /**
  * \brief               Change strip type (color order)

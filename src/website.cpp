@@ -11,68 +11,6 @@ String get_color_order_checked_state(uint8_t radio_id) {
   }
 }
 
-String get_available_networks_html() {
-  String networkChoiseSiteHead    = 
-      "<b>Choose a WiFi network:</b>"
-      "<form method='post' action='/saveNetwork'>"
-        "<div class='mb-3'>"
-          "<label for='ssid' class='form-label'>SSID</label>"
-          "<input type='text' class='form-control' id='ssid' name='ssid'>"
-        "</div>"
-        "<div class='mb-3'>"
-          "<label for='passVal' class='form-label'>Password</label>"
-          "<input type='password' class='form-control' id='passVal' name='password'>"
-        "</div>"
-        "<button type='submit' class='btn btn-primary'>Connect</button>"
-      "</form>"
-      "<b>Available Networks</b>";
-  String networkChoiseSiteFooter  = 
-      "<script>"
-        "function copyText(element) {"
-          "var textToCopy = element.textContent || element.innerText;"
-          "document.getElementById('ssid').value = textToCopy;"
-        "}"
-      "</script>";
-
-  return networkChoiseSiteHead + String(list_visible_networks()) + networkChoiseSiteFooter;
-}
-
-String network_page_html() {
-  return
-    "<h3>Network Settings</h3><br>"
-    "<b>WiFi network:</b> " + WiFi.SSID() + "<br>"
-    "<b>WiFi RSSI:</b> " + String(WiFi.RSSI()) + "<br>"
-    "<b>Current IP:</b> " + WiFi.localIP().toString() + "<br>"
-    "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
-    "<hr>" + get_available_networks_html();
-}
-
-String get_curr_mode_name() {
-  switch (current_mode) {
-    case 0:
-      return "Off";
-      break;
-    case 1:
-      return "Galaxy";
-      break;
-    case 2:
-      return "Selective";
-      break;
-    case 3:
-      return "Static";
-      break;
-    case 4:
-      return "Color flow";
-      break;
-    case 5:
-      return "Rainbow";
-      break;
-    default:
-      return "Undefined";
-      break;
-  }
-}
-
 String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Received color R: " + String(red) + " G: " + String(green) + " B: "+ String(blue));
@@ -90,23 +28,6 @@ String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
   #endif    /* defined(DEBUG) */
 
   return hex_color;
-}
-
-void hex_to_rgb(String hex_color, struct color_struct *current_color) {
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] Got HEX: " + hex_color);
-  #endif    /* defined(DEBUG) */
-  const char *temp = hex_color.c_str();
-  uint8_t temp_red, temp_green, temp_blue;
-  sscanf(temp, "%02x%02x%02x", &temp_red, &temp_green, &temp_blue);
-
-  current_color->red = temp_red;
-  current_color->green = temp_green;
-  current_color->blue = temp_blue;
-
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] R: " + String(current_color->red) + " G: " + String(current_color->green) + " B: "+ String(current_color->blue));
-  #endif    /* defined(DEBUG) */
 }
 
 void redirect_to_root() {
@@ -393,49 +314,7 @@ void start_main_server() {
       }
     });
     // SELECTIVE MODE END
-  // GALAXY MODE START
-  server.on("/galaxySet", HTTP_POST, [](){
-    String paramName = server.argName(0); // Get the name of the parameter
-    String paramValue = server.arg(0); // Get the value of the parameter
-    if(paramName == "masterDel"){
-      galaxy_master_delay = paramValue.toInt(); 
-      galaxy_params.putUShort("MasterDel", galaxy_master_delay);
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "minDel"){
-      galaxy_min_del= paramValue.toInt(); 
-      galaxy_params.putUShort("MinDel", galaxy_min_del);
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "maxDel"){
-      galaxy_max_del = paramValue.toInt(); 
-      galaxy_params.putUShort("MaxDel", galaxy_max_del);
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "workers"){
-      int newsize = paramValue.toInt(); 
-      galaxy_curr_delay = resize_array(galaxy_curr_delay, galaxy_led_workers,newsize);
-      galaxy_led_workers = newsize;
-      galaxy_params.putUShort("LedWorkers", galaxy_led_workers);
-      server.send(200, "text/plain", "OK");
-    }
-  });
-    server.on("/galaxyGet", HTTP_GET, [](){
-      String paramName = server.arg("v");
-      if(paramName == "masterDel") {
-        server.send(200, "text/plain", String(galaxy_master_delay));
-      }
-      else if(paramName == "minDel"){
-        server.send(200, "text/plain", String(galaxy_min_del));
-      }
-      else if(paramName == "maxDel"){
-        server.send(200, "text/plain", String(galaxy_max_del));
-      }
-      else if(paramName == "workers"){
-        server.send(200, "text/plain", String(galaxy_led_workers));
-      }
-  });
-  // GALAXY MODE END
+
   // STATIC MODE START
   server.on("/staticSet", HTTP_POST, [](){
     String paramName = server.argName(0); // Get the name of the parameter

@@ -3,7 +3,7 @@
 /* If first use this header, define all things */
 #define RAINBOW_FLOW_H
 
-extern Preferences  rainbow_flow_params;            /* Rainbow flow mode settings class instance */
+const char* rainbow_flow_prefs_file = "/rainbow_flow.json"; 
 
 extern uint16_t     rainbow_flow_change_rate;       /* Rainbow flow rate */
 
@@ -12,6 +12,12 @@ extern uint16_t     rainbow_flow_change_degree;     /* Degree of animation */
 extern uint16_t     rainbow_flow_gradient_density;  /* Density of rainbow gradient */
 
 extern uint16_t     rainbow_flow_master_delay;      /* Delay between animation cycles */
+
+void rainbow_flow_init_defaults();
+
+void rainbow_flow_start();
+
+void rainbow_flow_stop();
 
 /**
  * \brief               Get color from color wheel

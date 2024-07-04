@@ -2,6 +2,8 @@
 #ifndef RAINBOW_H
 #define RAINBOW_H
 
+const char* rainbow_prefs_file = "/rainbow.json"; 
+
 /**
  * \brief       Struct of current color change and direction of changing
 */
@@ -52,9 +54,6 @@ struct color_ch_struct  {
   uint8_t blue_current;
 };
 
-
-extern Preferences      rainbow_params;             /* Rainbow mode settings class instance */
-
 extern uint16_t         rainbow_master_delay;       /* Value of delay between main loop */
 extern uint16_t         rainbow_max_change;         /* Value of max change of color between cycles */
 
@@ -62,10 +61,15 @@ extern color_ch_struct  rainbow_change;             /* store current random colo
 
 extern uint16_t         rainbow_curr_master_delay;  /* Value of current delay between algorithm changes smth */
 
+void rainbow_init_defaults();
+
+void rainbow_start();
+
+void rainbow_stop();
+
 /**
  * \brief         Initialize first random values of all mode parameters
 */
-void rainbow_initialize();
 
 /**
  * \brief         Main function of rainbow mode.

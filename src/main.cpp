@@ -5,7 +5,7 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <Adafruit_NeoPixel.h>
-#include <Preferences.h>
+
 
 #include "settings_things.h"
 
@@ -16,6 +16,11 @@ void setup() {
   #if defined(DEBUG)
     Serial.begin(115200);
   #endif    /* defined(DEBUG) */
+
+  if (!LITTLEFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
 
   initialize_settings();
 
@@ -48,19 +53,19 @@ void loop() {
   server.handleClient();
   if (current_wifi_state == WIFI_STA) {
     switch (current_mode) {
-      case 0:
+      case MODE_OFF:
         if (change_mode == true) {
           /* ToDo if that if is necessary? */
           change_mode = false;
         }
         break;
-      case 1:
+      case MODE_GALAXY:
         galaxy_mode();
         break;
-      case 4:
+      case MODE_RAINBOW:
         rainbow_mode();
         break;
-      case 5:
+      case MODE_RAINBOW_FLOW:
         rainbow_flow();
         break;
       default:

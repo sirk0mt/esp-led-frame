@@ -22,12 +22,19 @@ struct color_struct {
   uint8_t blue;
 };
 
-
-extern Preferences  static_params;          /* Static mode settings class instance */
+const char* static_params_file = "/static.json"; 
 
 extern color_struct current_static_color;   /* Current static mode color */
 extern boolean      static_color_changed;   /* If static color was chaged */
 
+
+void static_init_defaults();
+
+void static_start();
+
+void static_stop();
+
+void hex_to_rgb(String hex_color, struct color_struct *current_color);
 
 /**
  * \brief         Function that sets color from color struct for whole LEDs

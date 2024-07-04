@@ -1,3 +1,26 @@
+// Global variable
+int *globalPtr;
+
+void setup() {
+    // Allocate memory
+    globalPtr = (int *)malloc(sizeof(int) * 10);
+    if (globalPtr == NULL) {
+        // Handle allocation failure
+    }
+}
+
+void loop() {
+    // Use globalPtr
+    // Example: globalPtr[0] = 42;
+
+    // Free memory when done
+    free(globalPtr);
+    globalPtr = NULL; // Optional: Set pointer to NULL after freeing
+}
+
+
+
+
 Fire function:
 
   // Step 1: Initialize the bottom row of the matrix with fire colors
