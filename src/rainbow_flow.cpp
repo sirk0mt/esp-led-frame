@@ -24,6 +24,55 @@ void rainbow_flow_init_defaults() {
   mode_json_doc["master_del"]   = rainbow_flow_master_delay;
 }
 
+void rainbow_flow_init_endpoints() {
+  server.on("/rainbowFlowSet", HTTP_GET, []() {
+    if (current_mode == MODE_RAINBOW_FLOW) {
+      String paramName = server.argName(0); // Get the name of the parameter
+      String paramValue = server.arg(0); // Get the value of the parameter
+      Serial.println("Change: " + paramName + " to: " + paramValue);
+      if (paramValue != "") {
+        if (paramName == "speed") {
+          rainbow_flow_change_rate = paramValue.toInt();
+          mode_json_doc["change_rate"]  = rainbow_flow_change_rate;
+          Serial.println("Change rate changed to: " + String(rainbow_flow_change_rate));
+        }
+        else if (paramName == "degree") {
+          rainbow_flow_change_degree = paramValue.toInt();
+          mode_json_doc["degree"]       = rainbow_flow_change_degree;
+          Serial.println("Change degree changed to: " + String(rainbow_flow_change_degree));
+        }
+        else if (paramName == "grad") {
+          rainbow_flow_gradient_density = paramValue.toInt();
+          mode_json_doc["density"]      = rainbow_flow_gradient_density;
+          Serial.println("Gradient density changed to: " + String(rainbow_flow_gradient_density));
+        }
+        else if (paramName == "del") {
+          rainbow_flow_master_delay = paramValue.toInt();
+          mode_json_doc["master_del"]   = rainbow_flow_master_delay;
+          Serial.println("Delay changed to: " + String(rainbow_flow_master_delay));
+        }
+        server.send(200, "text/plain", "OK");
+      } else {
+        server.send(404, "text/plain", "Parameter not found");
+      }
+    }
+    else {
+      server.send(200, "text/plain", "You're not in rainbow_flow mode!");
+    }
+  });
+  server.on("/rainbowFlowGet", HTTP_GET, [](){
+    if (current_mode == MODE_RAINBOW_FLOW) {
+      String paramName = server.arg("v");
+      if(paramName == "speed") {
+        server.send(200, "text/plain", String(rainbow_flow_change_rate));
+      }
+    }
+    else {
+      server.send(200, "text/plain", "You're not in rainbow_flow mode!");
+    }
+  });
+}
+
 void rainbow_flow_start() {
   // malloc dla każdej zmiennej
 }

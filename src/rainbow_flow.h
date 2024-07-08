@@ -15,6 +15,8 @@ extern uint16_t     rainbow_flow_master_delay;      /* Delay between animation c
 
 void rainbow_flow_init_defaults();
 
+void rainbow_flow_init_endpoints();
+
 void rainbow_flow_start();
 
 void rainbow_flow_stop();

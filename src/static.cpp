@@ -17,8 +17,43 @@ void static_init_defaults() {
   mode_json_doc["b"]      = current_static_color.blue;
 }
 
+void static_init_endpoints() {
+  server.on("/staticSet", HTTP_POST, [](){
+    if (current_mode == MODE_STATIC) {
+      String paramName = server.argName(0); // Get the name of the parameter
+      String paramValue = server.arg(0); // Get the value of the parameter
+      if (paramName == "save") {
+        static_color_save();
+        server.send(200, "text/plain", "OK");
+      }
+      else if(paramName == "hex"){
+        hex_to_rgb(paramValue, &current_static_color);
+        static_color_changed = true;
+        static_color_set();
+        server.send(200, "text/plain", "OK");
+      }
+      else {
+        server.send(200, "text/plain", "You're not in static mode!");
+      }
+    }
+  });
+  server.on("/staticGet", HTTP_GET, [](){
+    if (current_mode == MODE_STATIC) {
+      String paramName = server.arg("v");
+      if(paramName == "hex"){
+        server.send(200, "text/plain", String(rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue)));
+      }
+      else {
+        server.send(200, "text/plain", "You're not in static mode!");
+      }
+    }
+  });
+}
+
 void static_start() {
   // malloc dla każdej zmiennej oraz load parametów
+
+  static_color_set();
 }
 
 void static_stop() {

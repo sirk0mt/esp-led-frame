@@ -79,4 +79,6 @@ void set_pixel_color(uint16_t led, uint8_t r, uint8_t g, uint8_t b);
 */
 void show_triangle();
 
+String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue);
+
 #endif  /* ifndef PIXELS_H */

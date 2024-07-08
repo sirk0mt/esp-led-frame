@@ -11,25 +11,6 @@ String get_color_order_checked_state(uint8_t radio_id) {
   }
 }
 
-String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] Received color R: " + String(red) + " G: " + String(green) + " B: "+ String(blue));
-  #endif    /* defined(DEBUG) */
-
-  // check if values are between 0-255
-  red = (red < 0) ? 0 : (red > 255) ? 255 : red;
-  green = (green < 0) ? 0 : (green > 255) ? 255 : green;
-  blue = (blue < 0) ? 0 : (blue > 255) ? 255 : blue;
-  char hex_color[7];
-  sprintf(hex_color, "#%02X%02X%02X", red, green, blue);
-
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] Returning HEX: " + hex_color);
-  #endif    /* defined(DEBUG) */
-
-  return hex_color;
-}
-
 void redirect_to_root() {
   server.sendHeader("Location", "http://" + server.client().localIP().toString());
   server.send(302, "text/plain", "");
@@ -273,6 +254,7 @@ void start_main_server() {
     });
     server.on("/clear", handle_clear_strip); // clear strip
     server.on("/restart", handle_restart);
+    
     // SELECTIVE MODE START
     server.on("/selectiveSet", HTTP_POST, [](){
         String paramName = server.argName(0); // Get the name of the parameter
@@ -315,92 +297,8 @@ void start_main_server() {
     });
     // SELECTIVE MODE END
 
-  // STATIC MODE START
-  server.on("/staticSet", HTTP_POST, [](){
-    String paramName = server.argName(0); // Get the name of the parameter
-    String paramValue = server.arg(0); // Get the value of the parameter
-    if (paramName == "save") {
-      static_color_save();
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "hex"){
-      hex_to_rgb(paramValue, &current_static_color);
-      static_color_changed = true;
-      static_color_set();
-      server.send(200, "text/plain", "OK");
-    }
-  });
-  server.on("/staticGet", HTTP_GET, [](){
-    String paramName = server.arg("v");
-    if(paramName == "hex"){
-      server.send(200, "text/plain", String(rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue)));
-    }
-  });
-  // STATIC MODE END
-  // RAINBOW MODE START
-  server.on("/rainbowSet", HTTP_POST, [](){
-    String paramName = server.argName(0); // Get the name of the parameter
-    String paramValue = server.arg(0); // Get the value of the parameter
-    if(paramName == "masterDel"){
-      rainbow_master_delay = paramValue.toInt(); 
-      rainbow_params.putUShort("rMasterDel", rainbow_master_delay);
-      server.send(200, "text/plain", "OK");
-    }
-    else if(paramName == "maxChange"){
-      rainbow_max_change = paramValue.toInt(); 
-      rainbow_params.putUShort("rMaxChange", rainbow_max_change);
-      server.send(200, "text/plain", "OK");
-    }
-  });
-    server.on("/rainbowGet", HTTP_GET, [](){
-      String paramName = server.arg("v");
-      if(paramName == "masterDel") {
-        server.send(200, "text/plain", String(rainbow_master_delay));
-      }
-      else if(paramName == "maxChange"){
-        server.send(200, "text/plain", String(rainbow_max_change));
-      }
-  });
-  // RAINBOW MODE END
-  // RAINBOW FLOW MODE START
-  server.on("/rainbowFlowSet", HTTP_GET, []() {
-    String paramName = server.argName(0); // Get the name of the parameter
-    String paramValue = server.arg(0); // Get the value of the parameter
-    Serial.println("Change: " + paramName + " to: " + paramValue);
-    if (paramValue != "") {
-      if (paramName == "speed") {
-        rainbow_flow_change_rate = paramValue.toInt();
-        rainbow_flow_params.putUShort("rChRate", rainbow_flow_change_rate);
-        Serial.println("Change rate changed to: " + String(rainbow_flow_change_rate));
-      }
-      else if (paramName == "degree") {
-        rainbow_flow_change_degree = paramValue.toInt();
-        rainbow_flow_params.putUShort("rChDeg", rainbow_flow_change_degree);
-        Serial.println("Change degree changed to: " + String(rainbow_flow_change_degree));
-      }
-      else if (paramName == "grad") {
-        rainbow_flow_gradient_density = paramValue.toInt();
-        rainbow_flow_params.putUShort("rGradDen", rainbow_flow_gradient_density);
-        Serial.println("Gradient density changed to: " + String(rainbow_flow_gradient_density));
-      }
-      else if (paramName == "del") {
-        rainbow_flow_master_delay = paramValue.toInt();
-        rainbow_flow_params.putUShort("rMDel", rainbow_flow_master_delay);
-        Serial.println("Delay changed to: " + String(rainbow_flow_master_delay));
-      }
-      server.send(200, "text/plain", "OK");
-    } else {
-      server.send(404, "text/plain", "Parameter not found");
-    }
-  });
-  server.on("/rainbowFlowGet", HTTP_GET, [](){
-    String paramName = server.arg("v");
-    if(paramName == "speed") {
-      server.send(200, "text/plain", String(rainbow_flow_change_rate));
-    }
-  });
-  // RAINBOW FLOW MODE END
   server.on("/setvalue", handle_set_value);
+  
   /*handling uploading firmware file */
   server.on("/update", HTTP_POST, []() {
     server.sendHeader("Connection", "close");
@@ -434,7 +332,8 @@ void start_main_server() {
       #endif    /* defined(DEBUG) */
     }
   });
-    server.begin();
+
+  server.begin();
 }
 
 String get_html_settings_for_mode() {
@@ -656,17 +555,18 @@ String get_html_settings_for_mode() {
   }
 } 
 
-void handle_set_value() {
+void handle_set_value() {  // ToDo - rewrite endpoints to settings things
   #if defined(DEBUG)
     Serial.println("--- handle_set_value START---");
   #endif    /* defined(DEBUG) */
   if (server.hasArg("mode")) { // check if value parameter is present
+    uint16_t last_mode = current_mode;
     current_mode = server.arg("mode").toInt(); // update variable value
     #if defined(DEBUG)
-    Serial.println("Change mode to: "+String(current_mode));
+      Serial.println("Change mode to: "+String(current_mode));
     #endif    /* defined(DEBUG) */
     change_mode = true;
-    for (int i = 0; i < num_of_pixels; i++) {
+    for (int i = 0; i < num_of_pixels; i++) { /* clear whole pixels array */
       pixels[i].red = 0;
       pixels[i].green = 0;
       pixels[i].blue = 0;
@@ -680,73 +580,57 @@ void handle_set_value() {
       Serial.println("LED strip cleared");
     #endif    /* defined(DEBUG) */
 
-    switch(current_mode){
-      case 0: //off
-        main_settings.putUShort("currentMode", 0);
-        #if defined(DEBUG)
-          Serial.println("Updated current_mode value: "+ String(main_settings.getUShort("currentMode")));
-          Serial.println("--- handle_set_value END - set to 0 - OFF ---");
-        #endif    /* defined(DEBUG) */
-        break;
-      case 1: //galaxy
-        main_settings.putUShort("currentMode", 1);
-        // for(int i = 0; i < galaxy_led_workers; ++i){
-        //   galaxy_curr_delay[i] = i*random(0, 50);
-        //   //Serial.println("set delay[" + String(i) + "]=" + String(currDelay[i]));
-        //   set_pixel_color(int(random(0, num_of_pixels)), int(random(0, 255 + 1)), int(random(0, 255 + 1)), int(random(0, 255 + 1)));
-        // }
-        #if defined(DEBUG)
-          Serial.println("--- handle_set_value END - set to 1 - GALAXY ---");
-        #endif    /* defined(DEBUG) */
-        break;
-      case 2: // selective
-        main_settings.putUShort("currentMode", 2);
-        #if defined(DEBUG)
-          Serial.println("--- handle_set_value END - set to 2 - SELECTIVE ---");
-        #endif    /* defined(DEBUG) */
-        break;
-      case 3: //static
-        static_color_set();
-        main_settings.putUShort("currentMode", 3);
-        #if defined(DEBUG)
-          Serial.println("--- handle_set_value END - set to 3 - STATIC ---");
-        #endif    /* defined(DEBUG) */
-        break;
-      case 4: //rainbow
-        rainbow_change.red_change = random(0, rainbow_max_change + 1);
-        rainbow_change.red_current = random(0, 255);
-        #if defined(DEBUG)
-          Serial.println("Current changes:");
-          Serial.println("R: " + rainbow_change.red_change);
-        #endif    /* defined(DEBUG) */
-        rainbow_change.green_change = random(1, rainbow_max_change + 1);
-        rainbow_change.green_current = random(0, 255);
-        #if defined(DEBUG)
-          Serial.println("G: "+ rainbow_change.green_change);
-        #endif    /* defined(DEBUG) */
-        rainbow_change.blue_change = random(1, rainbow_max_change + 1);
-        rainbow_change.blue_current = random(0, 255);
-        #if defined(DEBUG)
-          Serial.println("B: "+ rainbow_change.blue_change);
-        #endif    /* defined(DEBUG) */
-        //all count up
-        rainbow_change.red_up = true;
-        rainbow_change.green_up = true;
-        rainbow_change.blue_up = true;
-        #if defined(DEBUG)
-          Serial.println("Rainbow mode initialized");
-        #endif    /* defined(DEBUG) */
+    main_json_doc["current_mode"] = current_mode;
+    json_save_prefs_file(main_prefs_file);
+    #if defined(DEBUG)
+      Serial.println("Updated current_mode value: "+ String(current_mode));
+    #endif    /* defined(DEBUG) */
 
-        rainbow_mode();
-        main_settings.putUShort("currentMode", 4);
+    switch (last_mode) {
+      case MODE_GALAXY:
+        galaxy_stop();
         #if defined(DEBUG)
-          Serial.println("--- handle_set_value END - set to 4 - RAINBOW ---");
+          Serial.println("--- handle stop MODE_GALAXY---");
         #endif    /* defined(DEBUG) */
         break;
-      case 5: // rainbow flow
-        main_settings.putUShort("currentMode", 5);
+    
+      default:
+        break;
+    }
+
+    switch(current_mode) {
+      case MODE_OFF:
         #if defined(DEBUG)
-          Serial.println("--- handle_set_value END - set to 5 - RAINBOW FLOW ---");
+          Serial.println("--- handle start MODE_OFF---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case MODE_GALAXY:
+        galaxy_start();
+        #if defined(DEBUG)
+          Serial.println("--- handle start MODE_GALAXY---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case MODE_STATIC:
+        static_start();
+        #if defined(DEBUG)
+          Serial.println("--- handle start MODE_STATIC---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case MODE_RAINBOW:
+        rainbow_start();
+        #if defined(DEBUG)
+          Serial.println("--- handle start MODE_RAINBOW---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case MODE_RAINBOW_FLOW:
+        rainbow_flow_start();
+        #if defined(DEBUG)
+          Serial.println("--- handle start MODE_RAINBOW_FLOW---");
+        #endif    /* defined(DEBUG) */
+        break;
+      case 99:
+        #if defined(DEBUG)
+          Serial.println("--- handle_set_value END - set to 99 - SELECTIVE ---");
         #endif    /* defined(DEBUG) */
         break;
       default:
@@ -755,7 +639,7 @@ void handle_set_value() {
     server.send(200, "text/html", "Mode changed <br><br><a href='./'> Get back to main page</a>"); // send plain text response with new variable value
   } else if (server.hasArg("domname")) {
     mdns_host_name = server.arg("domname");
-    dev_settings.putString("host", mdns_host_name);
+    main_json_doc["host"] = mdns_host_name;
     #if defined(DEBUG)
       Serial.println("--- handle_set_value END - mDNS changed to: " + mdns_host_name + ".local");
     #endif    /* defined(DEBUG) */
@@ -764,7 +648,7 @@ void handle_set_value() {
 
     if (server.hasArg("x")) {
       pixels_in_row = server.arg("x").toInt();
-      dev_settings.putUShort("pixelsInRow", pixels_in_row);
+      main_json_doc["led_in_row"] = pixels_in_row ;
     } else {
       #if defined(DEBUG)
         Serial.println("--- handle_set_value no x param");
@@ -774,7 +658,7 @@ void handle_set_value() {
 
     if (server.hasArg("y")) {
       pixels_rows = server.arg("y").toInt();
-      dev_settings.putUShort("pixelsRows", pixels_rows);
+      main_json_doc["led_rows"] = pixels_rows;
     } else {
       #if defined(DEBUG)
         Serial.println("--- handle_set_value no y param");

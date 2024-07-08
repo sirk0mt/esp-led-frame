@@ -63,6 +63,8 @@ extern uint16_t         rainbow_curr_master_delay;  /* Value of current delay be
 
 void rainbow_init_defaults();
 
+void rainbow_init_endpoints();
+
 void rainbow_start();
 
 void rainbow_stop();

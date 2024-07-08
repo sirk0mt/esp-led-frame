@@ -15,7 +15,43 @@ void rainbow_init_defaults() {
   mode_json_doc["master_del"]   = rainbow_master_delay;
 
   rainbow_max_change            = 10;
-  mode_json_doc["min_del"]      = rainbow_max_change;
+  mode_json_doc["max_change"]      = rainbow_max_change;
+}
+
+void rainbow_init_endpoints() {
+  server.on("/rainbowSet", HTTP_POST, [](){
+    if (current_mode == MODE_RAINBOW) {
+      String paramName = server.argName(0); // Get the name of the parameter
+      String paramValue = server.arg(0); // Get the value of the parameter
+      if(paramName == "masterDel"){
+        rainbow_master_delay = paramValue.toInt(); 
+        mode_json_doc["master_del"] = rainbow_master_delay;
+        server.send(200, "text/plain", "OK");
+      }
+      else if(paramName == "maxChange"){
+        rainbow_max_change = paramValue.toInt(); 
+        mode_json_doc["max_change"] = rainbow_max_change;
+        server.send(200, "text/plain", "OK");
+      }
+    }
+    else {
+      server.send(200, "text/plain", "You're not in rainbow mode!");
+    }
+  });
+    server.on("/rainbowGet", HTTP_GET, [](){
+      if (current_mode == MODE_RAINBOW) {
+        String paramName = server.arg("v");
+        if(paramName == "masterDel") {
+          server.send(200, "text/plain", String(rainbow_master_delay));
+        }
+        else if(paramName == "maxChange"){
+          server.send(200, "text/plain", String(rainbow_max_change));
+        }
+      }
+      else {
+        server.send(200, "text/plain", "You're not in rainbow mode!");
+      }
+  });
 }
 
 void rainbow_start() {

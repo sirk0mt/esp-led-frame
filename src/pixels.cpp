@@ -137,3 +137,22 @@ void show_triangle() {
     Serial.println("[" + String(__func__) + "] RED triangle was shown");
   #endif    /* defined(DEBUG) */
 }
+
+String rgb_to_hex(uint8_t red, uint8_t green, uint8_t blue) {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Received color R: " + String(red) + " G: " + String(green) + " B: "+ String(blue));
+  #endif    /* defined(DEBUG) */
+
+  // check if values are between 0-255
+  red = (red < 0) ? 0 : (red > 255) ? 255 : red;
+  green = (green < 0) ? 0 : (green > 255) ? 255 : green;
+  blue = (blue < 0) ? 0 : (blue > 255) ? 255 : blue;
+  char hex_color[7];
+  sprintf(hex_color, "#%02X%02X%02X", red, green, blue);
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] Returning HEX: " + hex_color);
+  #endif    /* defined(DEBUG) */
+
+  return hex_color;
+}

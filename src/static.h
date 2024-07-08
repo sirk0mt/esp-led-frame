@@ -30,6 +30,8 @@ extern boolean      static_color_changed;   /* If static color was chaged */
 
 void static_init_defaults();
 
+void static_init_endpoints();
+
 void static_start();
 
 void static_stop();
