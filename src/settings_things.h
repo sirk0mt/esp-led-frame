@@ -23,9 +23,6 @@ extern const char*              ver;
  
 #define DEBUG                                   /* To enable print serial debug information define / for disable comment that line */
 
-// extern Preferences              dev_settings;   /* Device settings class instance */
-// extern Preferences              main_settings;  /* Main settings class instance */
-
 /* LED settings START */
 extern uint16_t                 pixels_in_row;  /* Number of pixels in row */
 extern uint16_t                 pixels_rows;    /* Number of rows */

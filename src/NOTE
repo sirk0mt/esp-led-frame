@@ -96,3 +96,20 @@ Fire function:
         delay(rainbow_flow_master_delay);
     }
 }
+
+_______________
+maybe clear all endpoints on change mode
+
+void removeAllEndpoints() {
+  // Stop the server
+  server.stop();
+
+  // Create a new instance of the server
+  server = WebServer(80);
+
+  // Add back only the desired endpoints
+  server.on("/", handleRoot);
+
+  // Start the server again
+  server.begin();
+}

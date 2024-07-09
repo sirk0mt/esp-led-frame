@@ -7,6 +7,61 @@
 
 const char* galaxy_prefs_file = "/galaxy.json"; 
 
+String galaxy_html() { 
+  return  "<div class='row justify-content-center'>"
+        "<div class='col-auto text-center'>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='master_del' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='min_del' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='max_del' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='led_workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
+          "</div>"
+          "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-save' onclick='galaxySave()'>SAVE</button></div>"
+          "</div>"
+        "</div>"
+      "</div>"
+      "<script>"
+        "function galaxySetVal(clickedElement) {"
+          "switch (clickedElement.id) {"
+            "case 'bt-masterDel':"
+              "var paramId = 'master_del';"
+              "break;"
+            "case 'bt-minDel':"
+              "var paramId = 'min_del';"
+              "break;"
+            "case 'bt-maxDel':"
+              "var paramId = 'max_del';"
+              "break;"
+            "case 'bt-workers':"
+              "var paramId = 'led_workers';"
+              "break;"
+            "default:"
+              "var paramId = '';"
+          "}"
+          "var newval = parseInt(document.getElementById(paramId).value);"
+          "fetch('/galaxy/set?' + paramId + '=' + newval, { method: 'GET' }).then(response => response.text());"
+        "}"
+        "function galaxySave() {"
+          "fetch('/galaxy/save', { method: 'GET' }).then(response => response.text());"
+        "}"
+      "</script>";
+}
+
 uint16_t    galaxy_master_delay;
 uint16_t    galaxy_min_del;
 uint16_t    galaxy_max_del;
@@ -34,61 +89,83 @@ void galaxy_init_defaults() {
   mode_json_doc["led_workers"]  = galaxy_led_workers;
 }
 
-void galaxy_init_endpoints() {
-  server.on("/galaxySet", HTTP_POST, [](){
-    if (current_mode == MODE_GALAXY) {
-      String paramName = server.argName(0); // Get the name of the parameter
-      String paramValue = server.arg(0); // Get the value of the parameter
-      if(paramName == "masterDel"){
-        galaxy_master_delay = paramValue.toInt(); 
-        mode_json_doc["master_del"] = galaxy_master_delay;
-        server.send(200, "text/plain", "OK");
-      }
-      else if(paramName == "minDel"){
-        galaxy_min_del = paramValue.toInt(); 
-        mode_json_doc["min_del"] = galaxy_min_del;
-        server.send(200, "text/plain", "OK");
-      }
-      else if(paramName == "maxDel"){
-        galaxy_max_del = paramValue.toInt(); 
-        mode_json_doc["max_del"] = galaxy_max_del;
-        server.send(200, "text/plain", "OK");
-      }
-      else if(paramName == "workers"){
-        int newsize = paramValue.toInt(); 
-        galaxy_curr_delay = resize_array(galaxy_curr_delay, galaxy_led_workers,newsize);
-        galaxy_led_workers = newsize;
-        mode_json_doc["led_workers"] = galaxy_led_workers;
-        server.send(200, "text/plain", "OK");
-      }
+void galaxy_handle_set() {
+  if (current_mode == MODE_GALAXY) {
+    String paramName = server.argName(0); // Get the name of the parameter
+    String paramValue = server.arg(0); // Get the value of the parameter
+    if(paramName == "master_del"){
+      galaxy_master_delay = paramValue.toInt(); 
+      mode_json_doc["master_del"] = galaxy_master_delay;
+      server.send(200, "text/plain", "OK");
     }
-    else {
-      server.send(200, "text/plain", "You're not in galaxy mode!");
+    else if(paramName == "min_del"){
+      galaxy_min_del = paramValue.toInt(); 
+      mode_json_doc["min_del"] = galaxy_min_del;
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "max_del"){
+      galaxy_max_del = paramValue.toInt(); 
+      mode_json_doc["max_del"] = galaxy_max_del;
+      server.send(200, "text/plain", "OK");
+    }
+    else if(paramName == "led_workers"){
+      int newsize = paramValue.toInt(); 
+      galaxy_curr_delay = resize_array(galaxy_curr_delay, galaxy_led_workers,newsize);
+      galaxy_led_workers = newsize;
+      mode_json_doc["led_workers"] = galaxy_led_workers;
+      server.send(200, "text/plain", "OK");
+    }
+  }
+}
+
+void galaxy_init_endpoints() {
+
+  server.on("/galaxy/set", galaxy_handle_set);
+
+  server.on("/galaxy/save", [](){
+    if (current_mode == MODE_GALAXY) {
+      json_save_prefs_file(galaxy_prefs_file);
+      server.send(200, "text/plain", "saved");
     }
   });
-    server.on("/galaxyGet", HTTP_GET, [](){
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] init galaxy get endpoint");
+  
+    server.on("/galaxy/get", HTTP_GET, [](){
       if (current_mode == MODE_GALAXY) {
         String paramName = server.arg("v");
-        if(paramName == "masterDel") {
+        if(paramName == "master_del") {
           server.send(200, "text/plain", String(galaxy_master_delay));
         }
-        else if(paramName == "minDel"){
+        else if(paramName == "min_del"){
           server.send(200, "text/plain", String(galaxy_min_del));
         }
-        else if(paramName == "maxDel"){
+        else if(paramName == "max_del"){
           server.send(200, "text/plain", String(galaxy_max_del));
         }
-        else if(paramName == "workers"){
+        else if(paramName == "led_workers"){
           server.send(200, "text/plain", String(galaxy_led_workers));
         }
       }
-      else {
-        server.send(200, "text/plain", "You're not in galaxy mode!");
-      }
-  });
+    });
+  #endif    /* defined(DEBUG) */
+
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "] endpoints init done");
+  #endif    /* defined(DEBUG) */
 }
 
 void galaxy_start() {
+  mode_json_doc.clear();
+  json_load_prefs_file(galaxy_prefs_file);
+
+  galaxy_master_delay = json_load_uint16(mode_json_doc, "master_del");
+  galaxy_min_del      = json_load_uint16(mode_json_doc, "min_del");
+  galaxy_max_del      = json_load_uint16(mode_json_doc, "max_del");
+  galaxy_led_workers  = json_load_uint16(mode_json_doc, "led_workers");
+  galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
+
   // malloc dla każdej zmiennej
 }
 

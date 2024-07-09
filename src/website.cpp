@@ -47,10 +47,9 @@ void redirect_to_root() {
 
 
 void start_main_server() {
-  server.on("/list", HTTP_GET, handleFileList);
-    server.on("/delete", HTTP_GET, handleFileDelete);
-    
-    server.on("/", HTTP_GET, []() {
+  galaxy_init_endpoints();
+  
+      server.on("/", HTTP_GET, []() {
       server.sendHeader("Connection", "close");
       server.send(200, "text/html", 
         "<html><head><title>LED PICTURE " + String(ver) + "</title>"
@@ -340,6 +339,7 @@ void start_main_server() {
     }
   });
 
+  
   server.begin();
 }
 
@@ -352,53 +352,7 @@ String get_html_settings_for_mode() {
     return "Off";
     break;
   case 1: /* galaxy */
-    return 
-      "<div class='row justify-content-center'>"
-        "<div class='col-auto text-center'>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='minDel' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='maxDel' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-        "</div>"
-      "</div>"
-      "<script>"
-        "function galaxySetVal(clickedElement) {"
-          "switch (clickedElement.id) {"
-            "case 'bt-masterDel':"
-              "var paramId = 'masterDel';"
-              "break;"
-            "case 'bt-minDel':"
-              "var paramId = 'minDel';"
-              "break;"
-            "case 'bt-maxDel':"
-              "var paramId = 'maxDel';"
-              "break;"
-            "case 'bt-workers':"
-              "var paramId = 'workers';"
-              "break;"
-            "default:"
-              "var paramId = '';"
-          "}"
-          "var newval = parseInt(document.getElementById(paramId).value);"
-          "fetch('/galaxySet?' + paramId + '=' + newval, { method: 'POST' }).then(response => response.text());"
-        "}"
-      "</script>";
+    return galaxy_html();
     break;
   case 2: /* selective */
     return 

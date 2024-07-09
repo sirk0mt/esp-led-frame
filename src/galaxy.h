@@ -17,6 +17,9 @@ extern uint16_t*    galaxy_curr_delay;          /* Table of current calculated d
 
 extern uint16_t     galaxy_dim_minus;           /* Value of single decrement for every LED color */
 
+String galaxy_html();
+
+void galaxy_handle_set();
 
 void galaxy_init_defaults();
 

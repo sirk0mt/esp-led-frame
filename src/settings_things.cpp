@@ -167,21 +167,17 @@ void initialize_settings() {
   saved_password      = json_load_string(main_json_doc, "wifipass");
   current_mode        = json_load_uint16(main_json_doc, "current_mode");
 
-  // Initialize default values (do it only once)  -->
-
-  //static_params.putUChar("R",10);
-  //static_params.putUChar("G",10);
-  //static_params.putUChar("B",10);
-
-  // <-- End of initialize with default values
+  switch (current_mode) {
+    case MODE_GALAXY:
+      galaxy_start();
+      break;
+    
+    default:
+      break;
+  }
 
   // Getting data from memory -->
 
-  galaxy_master_delay = 20;
-  galaxy_min_del      = 20;
-  galaxy_max_del      = 200;
-  galaxy_led_workers  = 600;
-  galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
 
   current_static_color.red    = 20;
   current_static_color.green  = 20;
