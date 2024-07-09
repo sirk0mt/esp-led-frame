@@ -1,6 +1,11 @@
 
+#include "all_modes.h"
 #include "settings_things.h"
-#include "static.h"
+#include "network_things.h"
+#include "json.h"
+#include "pixels.h"
+
+const char* static_params_file = "/static.json"; 
 
 color_struct current_static_color;
 

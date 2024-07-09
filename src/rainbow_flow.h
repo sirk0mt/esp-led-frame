@@ -3,7 +3,9 @@
 /* If first use this header, define all things */
 #define RAINBOW_FLOW_H
 
-const char* rainbow_flow_prefs_file = "/rainbow_flow.json"; 
+#include <Arduino.h>
+
+extern const char* rainbow_flow_prefs_file; 
 
 extern uint16_t     rainbow_flow_change_rate;       /* Rainbow flow rate */
 

@@ -52,27 +52,8 @@ void initialize_mdns();
 
 /* HTMLs START*/
 
-String networkChoiseSiteHead    = 
-      "<b>Choose a WiFi network:</b>"
-      "<form method='post' action='/saveNetwork'>"
-        "<div class='mb-3'>"
-          "<label for='ssid' class='form-label'>SSID</label>"
-          "<input type='text' class='form-control' id='ssid' name='ssid'>"
-        "</div>"
-        "<div class='mb-3'>"
-          "<label for='passVal' class='form-label'>Password</label>"
-          "<input type='password' class='form-control' id='passVal' name='password'>"
-        "</div>"
-        "<button type='submit' class='btn btn-primary'>Connect</button>"
-      "</form>"
-      "<b>Available Networks</b>";
-String networkChoiseSiteFooter  = 
-      "<script>"
-        "function copyText(element) {"
-          "var textToCopy = element.textContent || element.innerText;"
-          "document.getElementById('ssid').value = textToCopy;"
-        "}"
-      "</script>";
+extern String networkChoiseSiteHead;
+extern String networkChoiseSiteFooter;
 
 /* HTMLs END*/
 

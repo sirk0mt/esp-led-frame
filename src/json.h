@@ -2,15 +2,17 @@
 /* If first use this header, define all things */
 #define JSON_H
 
-#include "settings_things.h"
-// #include <LITTLEFS.h>
-// #include <ArduinoJson.h>
+#include <Arduino.h>
+#include <ArduinoJson.h>
+#include <LITTLEFS.h>
 
 const size_t capacity = JSON_OBJECT_SIZE(32);
 
-DynamicJsonDocument main_json_doc(capacity);
+extern DynamicJsonDocument main_json_doc;
 
-DynamicJsonDocument mode_json_doc(capacity);
+extern DynamicJsonDocument mode_json_doc;
+
+void delete_all_files();
 
 bool json_save_prefs_file(const char* prefs_file);
 

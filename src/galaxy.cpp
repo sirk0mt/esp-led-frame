@@ -1,6 +1,11 @@
-#include "settings_things.h"
-#include "galaxy.h"
+#include "all_modes.h"
 
+#include "json.h"
+#include "settings_things.h"
+#include "network_things.h"
+#include "pixels.h"
+
+const char* galaxy_prefs_file = "/galaxy.json"; 
 
 uint16_t    galaxy_master_delay;
 uint16_t    galaxy_min_del;
@@ -13,6 +18,9 @@ uint16_t*   galaxy_curr_delay         = new uint16_t[galaxy_led_workers];
 uint16_t    galaxy_dim_minus          = 1;
 
 void galaxy_init_defaults() {
+  #if defined(DEBUG)
+    Serial.println("[" + String(__func__) + "]");
+  #endif    /* defined(DEBUG) */
   galaxy_master_delay           = 30;
   mode_json_doc["master_del"]   = galaxy_master_delay;
 

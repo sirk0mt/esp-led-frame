@@ -1,3 +1,5 @@
+
+#include "all_modes.h"
 #include "settings_things.h"
 
 String get_curr_mode_name() {

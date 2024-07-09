@@ -4,6 +4,8 @@
 /* If first use this header, define all things */
 #define PIXELS_H
 
+#include <Arduino.h>
+
 #define RGB_ORDER 0
 #define RBG_ORDER 1
 #define GRB_ORDER 2

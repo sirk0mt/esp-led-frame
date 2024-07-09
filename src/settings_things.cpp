@@ -1,8 +1,14 @@
 #include "settings_things.h"
+#include "json.h"
+#include "pixels.h"
+#include "network_things.h"
+
+#include "all_modes.h"
 
 /* v0.0.0-dev_branch_name - v(OR).(dev test ver).(dev working ver - working branch) */
 const char*       ver = "v0.2.0";
 
+const char* main_prefs_file = "/prefs.json";
 
 uint16_t          pixels_in_row;
 uint16_t          pixels_rows; 
@@ -15,7 +21,15 @@ Adafruit_NeoPixel strip(1, LED_STRIP_PIN, NEO_RGB + NEO_KHZ800);
 bool              change_mode = false;
 
 void save_default_settings(const char* prefs_file) {
-  if (memcmp(prefs_file, main_prefs_file, sizeof(prefs_file))) {
+  #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] trying to save tefaults to " + String(prefs_file));
+  #endif    /* defined(DEBUG) */
+
+  if (strcmp(prefs_file, main_prefs_file) == 0) {
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] writing main settings");
+    #endif    /* defined(DEBUG) */
+
     main_json_doc.clear();
     // set default values like json_doc[key] = value
     pixels_in_row               = 15;
@@ -39,16 +53,25 @@ void save_default_settings(const char* prefs_file) {
     current_mode                  = MODE_GALAXY;
     main_json_doc["current_mode"] = current_mode;
 
-  } else if (memcmp(prefs_file, galaxy_prefs_file, sizeof(prefs_file))) {
+  } else if (strcmp(prefs_file, galaxy_prefs_file) == 0) {
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] writing galaxy settings");
+    #endif    /* defined(DEBUG) */
     mode_json_doc.clear();
     galaxy_init_defaults();
-  } else if (memcmp(prefs_file, rainbow_flow_prefs_file, sizeof(prefs_file))) {
+  } else if (strcmp(prefs_file, rainbow_flow_prefs_file) == 0) {
+    #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] writing rainbow_flow settings");
+    #endif    /* defined(DEBUG) */
     mode_json_doc.clear();
     rainbow_flow_init_defaults();
   }
 
 
   json_save_prefs_file(prefs_file);
+  #if defined(DEBUG)
+      Serial.println("[" + String(__func__) + "] saved to " + String(prefs_file));
+  #endif    /* defined(DEBUG) */
 }
 
 void change_strip_color_order(uint16_t col_order) {
@@ -104,10 +127,10 @@ void change_strip_color_order(uint16_t col_order) {
     default:
       break;
   }
-
-  json_load_prefs_file(main_prefs_file);
-  main_json_doc["color_order"] = col_order;
-  json_save_prefs_file(main_prefs_file);
+  // ToDo - necessary?
+  // json_load_prefs_file(main_prefs_file);
+  // main_json_doc["color_order"] = col_order;
+  // json_save_prefs_file(main_prefs_file);
 }
 
 void handle_restart() {

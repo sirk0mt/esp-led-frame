@@ -1,5 +1,7 @@
-#include "settings_things.h"
 #include "network_things.h"
+#include "settings_things.h"
+#include "website.h"
+#include "json.h"
 
 String    mdns_host_name;
 String    saved_ssid;
@@ -68,6 +70,34 @@ String list_visible_networks() {
   return networks;
 }
 
+void start_network_settings_server() {
+  server.on("/", HTTP_GET, [](){
+    server.sendHeader("Connection", "close");
+    server.send(200, "text/html", get_available_networks_html());
+  });
+
+  server.on("/format", delete_all_files);
+
+  server.on("/saveNetwork", HTTP_POST, [](){
+    if (server.hasArg("ssid") && server.hasArg("password")) { // check if value parameter is present
+      // Save new credentials to SPIFFS
+      save_new_wifi_config(server.arg("ssid"), server.arg("password"));
+
+      server.send(200, "text/html", "restarting device");
+      handle_restart();
+    }
+    else {
+      server.send(200, "text/html", "Wrong parameters");
+    }
+  });
+
+  server.onNotFound(redirect_to_root);
+  server.begin();
+  #if defined(DEBUG)
+    Serial.println("Config server started");
+  #endif    /* defined(DEBUG) */
+}
+
 void create_config_network() {
   #if defined(DEBUG)
     Serial.println("[" + String(__func__) + "] Creating Access Point...");
@@ -111,3 +141,26 @@ String network_page_html() {
     "<b>mDNS domain:</b> " + mdns_host_name + ".local<br>"
     "<hr>" + get_available_networks_html();
 }
+
+String networkChoiseSiteHead    = 
+      "<b>Choose a WiFi network:</b>"
+      "<form method='post' action='/saveNetwork'>"
+        "<div class='mb-3'>"
+          "<label for='ssid' class='form-label'>SSID</label>"
+          "<input type='text' class='form-control' id='ssid' name='ssid'>"
+        "</div>"
+        "<div class='mb-3'>"
+          "<label for='passVal' class='form-label'>Password</label>"
+          "<input type='password' class='form-control' id='passVal' name='password'>"
+        "</div>"
+        "<button type='submit' class='btn btn-primary'>Connect</button>"
+      "</form>"
+      "<b>Available Networks</b>";
+
+String networkChoiseSiteFooter  = 
+      "<script>"
+        "function copyText(element) {"
+          "var textToCopy = element.textContent || element.innerText;"
+          "document.getElementById('ssid').value = textToCopy;"
+        "}"
+      "</script>";

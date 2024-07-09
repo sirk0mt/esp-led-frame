@@ -5,13 +5,6 @@
 
 #include <Arduino.h>
 #include <Adafruit_NeoPixel.h>
-#include <LITTLEFS.h>
-#include <ArduinoJson.h>
-#include "network_things.h"
-#include "website.h"
-#include "all_modes.h"
-#include "json.h"
-
 
 /*  
  *  Include nvs_flash.h for format all settings process
@@ -21,7 +14,7 @@
 
 #define FORMAT_LITTLEFS_IF_FAILED true
 
-const char* main_prefs_file = "/prefs.json";         /* main preferences file*/
+extern const char* main_prefs_file;         /* main preferences file*/
 
 /* Version variable initialized in cpp file for that header */
 extern const char*              ver;

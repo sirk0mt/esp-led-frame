@@ -2,7 +2,9 @@
 #ifndef RAINBOW_H
 #define RAINBOW_H
 
-const char* rainbow_prefs_file = "/rainbow.json"; 
+#include <Arduino.h>
+
+extern const char* rainbow_prefs_file; 
 
 /**
  * \brief       Struct of current color change and direction of changing

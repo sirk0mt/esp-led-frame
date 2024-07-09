@@ -1,6 +1,6 @@
-#include <Arduino.h>
-#include "settings_things.h"
 #include "pixels.h"
+#include "settings_things.h"
+
 
 pixel_color* pixels = new pixel_color[1];
 
@@ -111,18 +111,18 @@ void send_pixel(uint16_t led_to_send) {
 }
 
 void set_pixel_color(uint16_t led, uint8_t r, uint8_t g, uint8_t b) {
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] Set " + String(led) + " pixel color R: " + String(r) + " G: " + String(g) + " B: " + String(b));
-  #endif    /* defined(DEBUG) */
+  // #if defined(DEBUG)
+  //   Serial.println("[" + String(__func__) + "] Set " + String(led) + " pixel color R: " + String(r) + " G: " + String(g) + " B: " + String(b));
+  // #endif    /* defined(DEBUG) */
 
   pixels[led].red   = r;
   pixels[led].green = g;
   pixels[led].blue  = b;
   strip.setPixelColor(led, strip.Color(pixels[led].green, pixels[led].red, pixels[led].blue));
 
-  #if defined(DEBUG)
-    Serial.println("[" + String(__func__) + "] color is set");
-  #endif    /* defined(DEBUG) */
+  // #if defined(DEBUG)
+  //   Serial.println("[" + String(__func__) + "] color is set");
+  // #endif    /* defined(DEBUG) */
 }
 
 void show_triangle() {

@@ -1,6 +1,11 @@
-#include "settings_things.h"
-#include "rainbow.h"
 
+#include "settings_things.h"
+#include "network_things.h"
+#include "json.h"
+#include "all_modes.h"
+#include "pixels.h"
+
+const char* rainbow_prefs_file = "/rainbow.json";
 
 uint16_t        rainbow_master_delay;
 uint16_t        rainbow_max_change;

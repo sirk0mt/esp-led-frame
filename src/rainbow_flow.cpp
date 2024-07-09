@@ -1,6 +1,10 @@
 
 #include "settings_things.h"
-#include "rainbow_flow.h"
+#include "network_things.h"
+#include "json.h"
+#include "all_modes.h"
+
+const char* rainbow_flow_prefs_file = "/rainbow_flow.json"; 
 
 uint16_t    rainbow_flow_change_rate;
 

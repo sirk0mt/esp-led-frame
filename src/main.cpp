@@ -5,10 +5,15 @@
 #include <ESPmDNS.h>
 #include <Update.h>
 #include <Adafruit_NeoPixel.h>
-
+#include <LITTLEFS.h>
+#include <ArduinoJson.h>
 
 #include "settings_things.h"
+#include "pixels.h"
+#include "network_things.h"
+#include "website.h"
 
+#include "all_modes.h"
 
 wifi_mode_t current_wifi_state = WIFI_MODE_NULL;
 
@@ -18,8 +23,14 @@ void setup() {
   #endif    /* defined(DEBUG) */
 
   if (!LITTLEFS.begin(FORMAT_LITTLEFS_IF_FAILED)) {
-    Serial.println("LittleFS Mount Failed");
+    #if defined(DEBUG)
+      Serial.println("LittleFS Mount Failed");
+    #endif    /* defined(DEBUG) */
     return;
+  } else {
+    #if defined(DEBUG)
+      Serial.println("LittleFS Mounted");
+    #endif    /* defined(DEBUG) */
   }
 
   initialize_settings();

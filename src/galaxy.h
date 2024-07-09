@@ -3,7 +3,9 @@
 /* If first use this header, define all things */
 #define GALAXY_H
 
-const char* galaxy_prefs_file = "/galaxy.json"; 
+#include <Arduino.h>
+
+extern const char* galaxy_prefs_file; 
 
 extern uint16_t     galaxy_master_delay;        /* Value of delay between main loop */
 extern uint16_t     galaxy_min_del;             /* Minimum time of life LED workers */

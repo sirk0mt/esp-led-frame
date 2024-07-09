@@ -1,7 +1,35 @@
 #include "website.h"
 #include "settings_things.h"
+#include "network_things.h"
+#include "pixels.h"
+#include "json.h"
+
+#include "all_modes.h"
 
 uint16_t    ajax_current_pixel  = 0;
+
+void handleFileList() {
+    File root = LITTLEFS.open("/");
+    String fileList = "<html><body><h1>File List:</h1><ul>";
+    
+    File file = root.openNextFile();
+    while (file) {
+        fileList += "<li>" + String(file.name()) + " - " + String(file.size()) + " bytes</li>";
+        file = root.openNextFile();
+    }
+    fileList += "</ul></body></html>";
+    server.send(200, "text/html", fileList);
+}
+
+void handleFileDelete() {
+    String filePath = server.arg("file");
+    if (LITTLEFS.remove(filePath)) {
+        server.send(200, "text/plain", "File deleted successfully");
+    } else {
+        server.send(404, "text/plain", "Failed to delete file");
+    }
+}
+
 
 String get_color_order_checked_state(uint8_t radio_id) {
   if (radio_id == color_order) {
@@ -16,33 +44,12 @@ void redirect_to_root() {
   server.send(302, "text/plain", "");
 }
 
-void start_network_settings_server() {
-  server.on("/", HTTP_GET, [](){
-    server.sendHeader("Connection", "close");
-    server.send(200, "text/html", get_available_networks_html());
-  });
 
-  server.on("/saveNetwork", HTTP_POST, [](){
-    if (server.hasArg("ssid") && server.hasArg("password")) { // check if value parameter is present
-      // Save new credentials to SPIFFS
-      save_new_wifi_config(server.arg("ssid"), server.arg("password"));
-
-      server.send(200, "text/html", "restarting device");
-      handle_restart();
-    }
-    else {
-      server.send(200, "text/html", "Wrong parameters");
-    }
-  });
-
-  server.onNotFound(redirect_to_root);
-  server.begin();
-  #if defined(DEBUG)
-    Serial.println("Config server started");
-  #endif    /* defined(DEBUG) */
-}
 
 void start_main_server() {
+  server.on("/list", HTTP_GET, handleFileList);
+    server.on("/delete", HTTP_GET, handleFileDelete);
+    
     server.on("/", HTTP_GET, []() {
       server.sendHeader("Connection", "close");
       server.send(200, "text/html", 
