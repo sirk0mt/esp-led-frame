@@ -23,6 +23,171 @@ String get_centered_button(String id, String onclick, String label) {
           "</div>";
 }
 
+String html_header = 
+  "<head>"
+    "<title>LED PICTURE " + String(ver) + "</title>"
+    "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
+    "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
+    "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
+    "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
+  "</head>";
+
+String site_header = 
+  "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
+  "<ul class='nav nav-tabs' id='myTabs'>"
+    "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
+    "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
+    "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
+    "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
+  "</ul>";
+
+
+String radio_btn_html(String name, String id_val, uint8_t radio_id, String value) {
+  String check_state = "";
+  if (radio_id == color_order) {
+    check_state = "checked";
+  } else {
+    check_state = "";
+  }
+  return
+    "<label class='btn btn-secondary'>"
+      "<input type='radio' name='" + name + "' id='" + id_val + "' " + check_state + "> " + value + " "
+    "</label>";
+}
+
+String prefs_div() {
+  return
+    "<div class='tab-pane fade' id='preferences'>"
+      "<h3>System Preferences</h3><br>"
+      "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
+      "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
+      "<b>mDNS domain:</b>"
+      "<div class='input-group mb-3 col-md-4'>"
+        "<input type='text' class='form-control' id='domName' aria-describedby='domain' value='" + mdns_host_name + "'>"
+        "<div class='input-group-append'>"
+          "<span class='input-group-text' id='domain'>.local</span>"
+        "</div>"
+        + get_centered_button("set_mdns", "setDomain();", "save and reboot") +
+      "</div>"
+      "<br><br>"
+      "<b>Choose LED color order: <br>"
+      "<div class='btn-group btn-group-toggle' data-toggle='buttons'>"
+        + radio_btn_html("colOr", "order0", RGB_ORDER, "RGB") +
+        radio_btn_html("colOr", "order1", RBG_ORDER, "RBG") +
+        radio_btn_html("colOr", "order2", GRB_ORDER, "GRB") +
+        radio_btn_html("colOr", "order3", GBR_ORDER, "GBR") +
+        radio_btn_html("colOr", "order4", BRG_ORDER, "BRG") +
+        radio_btn_html("colOr", "order5", BGR_ORDER, "BGR") +
+      "</div>"
+      "<br><br>" + get_centered_button("res_bt", "restart();", "Restart device") + 
+      "<script>"
+        "function restart() {"
+          "fetch('/restart');"
+        "};"
+        "$(document).ready(function(){"
+          "$('input[type=\\'radio\\'][name=\\'colOr\\']').change(function() {"
+            "console.log('select changed to: ' + this.id);"
+          "});"
+        "});"
+        "function setDomain() {"
+          "var newName = document.getElementById('domName').value;"
+          "fetch('/setvalue?domname=' + newName, { method: 'POST' }).then(response => response.text());"
+          "restart();"
+        "};"
+      "</script>"
+    "</div>";
+}
+
+String update_div = 
+  "<div class='tab-pane fade' id='update'>"
+    "<h3>OTA Update</h3><br>"
+    "<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
+      "<div class='input-group mb-3'>"
+        "<input type='file' class='form-control' id='upFile' name='update' >"
+      "</div>"
+      "<input class='btn btn-info' type='submit' value='Update'>"
+    "</form>"
+    "<div id='prg'>progress: 0%</div>"
+    "<script>"
+      "$('form').submit(function(e){"
+        "e.preventDefault();"
+        "var form = $('#upload_form')[0];"
+        "var data = new FormData(form);"
+        "$.ajax({"
+          "url: '/update',"
+          "type: 'POST',"
+          "data: data,"
+          "contentType: false,"
+          "processData:false,"
+          "xhr: function() {"
+            "var xhr = new window.XMLHttpRequest();"
+            "xhr.upload.addEventListener('progress', function(evt) {"
+              "if (evt.lengthComputable) {"
+                "var per = evt.loaded / evt.total;"
+                "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+              "}"
+            "}, false);"
+            "return xhr;"
+          "},"
+          "success:function(d, s) {"
+            "console.log('success!')"
+          "},"
+          "error: function (a, b, c) {}"
+        "});"
+      "});"
+      "</script>"
+  "</div>";
+
+
+/* ToDo rewrite endpoints and need some cleanup */
+String main_scripts =
+  "<script>"
+    "function onLoad() {"
+      "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
+    "}"
+    "function fetchDataAndPopulate(apiEndpoint, contentDivId) {"
+      "$.get(apiEndpoint, function(data) {"
+        "const content = JSON.stringify(data, null, 2);"
+        "$(contentDivId).html(content);"
+      "});"
+    "}"
+    "$('#myTabs a').on('shown.bs.tab', function (e) {"
+      "const tabId = e.target.id;"
+      "if (tabId == 'network-tab') {"
+        "$('#network').html('Searching available networks...');"
+        "fetchDataAndPopulate('/changeNetwork', '#network');"
+      "}"
+    "});"
+    "function btnClick(clickedElement) {"
+      "console.log('Clicked:', clickedElement.id);"
+      "const modeSel = clickedElement.id.match(/^mode-(\\d+)$/);"
+      "if (modeSel) {"
+        "fetch('/setvalue?mode=' + parseInt(modeSel[1], 10), { method: 'POST' }).then(response => response.text());"
+        "fetchDataAndPopulate('/getVal?v=currModeS', '#curr-name');"
+        "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
+      "} else {"
+        "switch (clickedElement.id) {"
+          "case 'clear-btn':"
+            "fetch('/clear', { method: 'POST' })"
+              ".then(response => response.text());"
+            "console.log('done clear');"
+            "break;"
+          "case '2-btn':"
+            "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
+            "console.log('done 2');"
+            "break;"
+          "case '3-btn':"
+            "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
+            "console.log('done 3');"
+            "break;"
+          "default:"
+            "break;"
+        "}"
+      "}"
+    "}"
+  "</script>"
+;
+
 void handleFileList() {
     File root = LITTLEFS.open("/");
     String fileList = "<html><body><h1>File List:</h1><ul>";
@@ -46,198 +211,55 @@ void handleFileDelete() {
 }
 
 
-String get_color_order_checked_state(uint8_t radio_id) {
-  if (radio_id == color_order) {
-    return "checked";
-  } else {
-    return "";
-  }
-}
-
 void redirect_to_root() {
   server.sendHeader("Location", "http://" + server.client().localIP().toString());
   server.send(302, "text/plain", "");
 }
 
+/* ToDo maybe all subsites should be dynamic loaded like network settings */
+void website_handle_root() {
+  server.sendHeader("Connection", "close");
+  server.send(200, "text/html", 
+    "<html> " + html_header + "<body onload='onLoad()'>"
+    "<div class='container mt-5'>"
+      + site_header + 
+      "<div class='tab-content mt-3'>"
+        "<div class='tab-pane fade show active' id='modes'>"
+          "<h3>Modes</h3><hr>"
+          "<b>Current mode:</b> <div class='d-inline' id='curr-name'>" + get_curr_mode_name() + "</div>"
+          "<form class='text-center'>"
+            "<label>Change mode:</label><br>"
+            "<button type='button' class='btn btn-primary' id='mode-0' onclick='btnClick(this)'>Off</button>"
+            "<button type='button' class='btn btn-primary' id='mode-1' onclick='btnClick(this)'>Galaxy</button>"
+            "<button type='button' class='btn btn-primary' id='mode-2' onclick='btnClick(this)'>Selective</button>"
+            "<button type='button' class='btn btn-primary' id='mode-3' onclick='btnClick(this)'>Static</button>"
+            "<button type='button' class='btn btn-primary' id='mode-4' onclick='btnClick(this)'>Color flow</button>"
+            "<button type='button' class='btn btn-primary' id='mode-5' onclick='btnClick(this)'>Rainbow</button>"
+          "</form>"
+          "<h3>Mode settings:</h3>"
+          "<div class='text-center mb-3' id='mode-pref-content'></div>"
+          "<button type='button' class='btn btn-primary' id='clear-btn' onclick='btnClick(this)'>Clear strip</button>"
+        "</div>"
+        "<div class='tab-pane fade' id='network'></div>"
+        + prefs_div() 
+        + update_div + 
+      "</div>"
+      "<hr>"
+      "<div class='text-center mb-4'>"
+        "Compilation " + String(__DATE__) + " " + String(__TIME__) + 
+      "</div>"
+    "</div>"
+    + main_scripts + "</body></html>"
+  );
+}
 
 
 void start_main_server() {
   galaxy_init_endpoints();
-  
-      server.on("/", HTTP_GET, []() {
-      server.sendHeader("Connection", "close");
-      server.send(200, "text/html", 
-        "<html><head><title>LED PICTURE " + String(ver) + "</title>"
-          "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
-          "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
-          "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
-          "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
-        "</head><body onload='onLoad()'>"
-        "<div class='container mt-5'>"
-          "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
-          "<ul class='nav nav-tabs' id='myTabs'>"
-            "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
-            "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
-            "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
-            "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
-          "</ul>"
-          "<div class='tab-content mt-3'>"
-            "<div class='tab-pane fade show active' id='modes'>"
-              "<h3>Modes</h3><hr>"
-              "<b>Current mode:</b> <div class='d-inline' id='curr-name'>" + get_curr_mode_name() + "</div>"
-              "<form class='text-center'>"
-                "<label>Change mode:</label><br>"
-                "<button type='button' class='btn btn-primary' id='mode-0' onclick='btnClick(this)'>Off</button>"
-                "<button type='button' class='btn btn-primary' id='mode-1' onclick='btnClick(this)'>Galaxy</button>"
-                "<button type='button' class='btn btn-primary' id='mode-2' onclick='btnClick(this)'>Selective</button>"
-                "<button type='button' class='btn btn-primary' id='mode-3' onclick='btnClick(this)'>Static</button>"
-                "<button type='button' class='btn btn-primary' id='mode-4' onclick='btnClick(this)'>Color flow</button>"
-                "<button type='button' class='btn btn-primary' id='mode-5' onclick='btnClick(this)'>Rainbow</button>"
-              "</form>"
-              "<h3>Mode settings:</h3>"
-              "<div class='text-center mb-3' id='mode-pref-content'></div>"
-              "<button type='button' class='btn btn-primary' id='clear-btn' onclick='btnClick(this)'>Clear strip</button>"
-            "</div>"
-            "<div class='tab-pane fade' id='network'></div>"
-            "<div class='tab-pane fade' id='preferences'>"
-              "<h3>System Preferences</h3><br>"
-              "<b>Pixels in row: </b>" + String(pixels_in_row) + "<br>"
-              "<b>Pixels rows: </b>" + String(pixels_rows) + "<br>"
-              "<b>mDNS domain:</b>"
-              "<div class='input-group mb-3 col-md-4'>"
-                "<input type='text' class='form-control' id='domName' aria-describedby='domain' value='" + mdns_host_name + "'>"
-                "<div class='input-group-append'>"
-                  "<span class='input-group-text' id='domain'>.local</span>"
-                "</div>"
-                "<button type='button' class='btn btn-primary' onclick='setDomain();'>save and reboot</button>"
-              "</div>"
-              "<br><br>"
-              "<b>Choose LED color order: <br>"
-              "<div class='btn-group btn-group-toggle' data-toggle='buttons'>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order0' " + get_color_order_checked_state(0) + "> RGB"
-                "</label>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order1' " + get_color_order_checked_state(1) + "> RBG"
-                "</label>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order2' " + get_color_order_checked_state(2) + "> GRB"
-                "</label>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order3' " + get_color_order_checked_state(3) + "> GBR"
-                "</label>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order4' " + get_color_order_checked_state(4) + "> BRG"
-                "</label>"
-                "<label class='btn btn-secondary'>"
-                  "<input type='radio' name='colOr' id='order5' " + get_color_order_checked_state(5) + "> BGR"
-                "</label>"
-              "</div>"
-              "<br><br><button type='button' class='btn btn-primary' onclick='restart();'>Restart device</button>"
-              "<script>"
-                "function restart() {"
-                  "fetch('/restart');"
-                "};"
-                "$(document).ready(function(){"
-                    "$('input[type=\\'radio\\'][name=\\'colOr\\']').change(function() {"
-                      "console.log('select changed to: ' + this.id);"
-                    "});"
-                "});"
-                "function setDomain() {"
-                  "var newName = document.getElementById('domName').value;"
-                  "fetch('/setvalue?domname=' + newName, { method: 'POST' }).then(response => response.text());"
-                  "restart();"
-                "};"
-              "</script>"
-            "</div>"
-            "<div class='tab-pane fade' id='update'>"
-              "<h3>OTA Update</h3><br>"
-              "<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
-                "<div class='input-group mb-3'>"
-                  "<input type='file' class='form-control' id='upFile' name='update' >"
-                "</div>"
-                "<input class='btn btn-info' type='submit' value='Update'>"
-              "</form>"
-              "<div id='prg'>progress: 0%</div>"
-              "<script>"
-                "$('form').submit(function(e){"
-                  "e.preventDefault();"
-                  "var form = $('#upload_form')[0];"
-                  "var data = new FormData(form);"
-                  "$.ajax({"
-                    "url: '/update',"
-                    "type: 'POST',"
-                    "data: data,"
-                    "contentType: false,"
-                    "processData:false,"
-                    "xhr: function() {"
-                      "var xhr = new window.XMLHttpRequest();"
-                      "xhr.upload.addEventListener('progress', function(evt) {"
-                        "if (evt.lengthComputable) {"
-                          "var per = evt.loaded / evt.total;"
-                          "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
-                        "}"
-                      "}, false);"
-                      "return xhr;"
-                    "},"
-                    "success:function(d, s) {"
-                      "console.log('success!')"
-                    "},"
-                    "error: function (a, b, c) {}"
-                  "});"
-                "});"
-              "</script>"
-            "</div>"
-          "</div>"
-          "<hr><div class='text-center mb-4'>"
-            "Compilation " + String(__DATE__) + " " + String(__TIME__) + 
-          "</div>"
-        "</div>"
-        "<script>"
-          "function fetchDataAndPopulate(apiEndpoint, contentDivId) {"
-            "$.get(apiEndpoint, function(data) {"
-              "const content = JSON.stringify(data, null, 2);"
-              "$(contentDivId).html(content);"
-            "});"
-          "}"
-          "$('#myTabs a').on('shown.bs.tab', function (e) {"
-            "const tabId = e.target.id;"
-            "if (tabId == 'network-tab') {"
-              "$('#network').html('Searching available networks...');"
-              "fetchDataAndPopulate('/changeNetwork', '#network');"
-            "}"
-          "});"
-          "function onLoad() {"
-            "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
-          "}"
-          "function btnClick(clickedElement) {"
-            "console.log('Clicked:', clickedElement.id);"
-            "const modeSel = clickedElement.id.match(/^mode-(\\d+)$/);"
-            "if (modeSel) {"
-              "fetch('/setvalue?mode=' + parseInt(modeSel[1], 10), { method: 'POST' }).then(response => response.text());"
-              "fetchDataAndPopulate('/getVal?v=currModeS', '#curr-name');"
-              "fetchDataAndPopulate('/getVal?v=currModePref', '#mode-pref-content');"
-            "} else {"
-              "switch (clickedElement.id) {"
-                "case 'clear-btn':"
-                  "fetch('/clear', { method: 'POST' })"
-                    ".then(response => response.text());"
-                  "console.log('done clear');"
-                  "break;"
-                "case '2-btn':"
-                  "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
-                  "console.log('done 2');"
-                  "break;"
-                "case '3-btn':"
-                  "fetchDataAndPopulate('/api/general', '#mode-pref-content');"
-                  "console.log('done 3');"
-                  "break;"
-                "default:"
-                  "break;"
-              "}"
-            "}"
-          "}</script></body></html>");
-    });
+  server.on("/", website_handle_root);
+
+
+
     server.on("/changeNetwork", HTTP_GET, [](){
         server.sendHeader("Connection", "close");
         server.send(200, "text/html", network_page_html());

@@ -127,7 +127,7 @@ void change_strip_color_order(uint16_t col_order) {
     default:
       break;
   }
-  // ToDo - necessary?
+  // ToDo - move save to change handler
   // json_load_prefs_file(main_prefs_file);
   // main_json_doc["color_order"] = col_order;
   // json_save_prefs_file(main_prefs_file);
@@ -191,38 +191,6 @@ void initialize_settings() {
   rainbow_flow_change_degree    = 0;
   rainbow_flow_gradient_density = 10;
   rainbow_flow_master_delay     = 10;
-
-
-  #if defined(DEBUG)
-    Serial.println("-----------------------------------");
-    Serial.println("--- Settings readed from memory ---");
-    Serial.println("--- dev_settings ---");
-    Serial.println("pixels_in_row: " + String(pixels_in_row));
-    Serial.println("pixels_rows: " + String(pixels_rows));
-    Serial.println("mdns_host_name: " + String(mdns_host_name));
-    Serial.println("saved_ssid: " + String(saved_ssid));
-    Serial.println("saved_password: " + String(saved_password));
-    Serial.println("--- main_settings ---");
-    Serial.println("current_mode: " + String(current_mode));
-    Serial.println("--- galaxy_params ---");
-    Serial.println("galaxy_master_delay: " + String(galaxy_master_delay));
-    Serial.println("galaxy_min_del: " + String(galaxy_min_del));
-    Serial.println("galaxy_max_del: " + String(galaxy_max_del));
-    Serial.println("galaxy_led_workers: " + String(galaxy_led_workers));
-    Serial.println("--- static_params ---");
-    Serial.println("R: " + String(current_static_color.red));
-    Serial.println("G: " + String(current_static_color.green));
-    Serial.println("B: " + String(current_static_color.blue));
-    Serial.println("--- rainbow_params ---");
-    Serial.println("rainbow_curr_master_delay: " + String(rainbow_curr_master_delay));
-    Serial.println("rainbow_max_change: " + String(rainbow_max_change));
-    Serial.println("--- rainbow_flow_params ---");
-    Serial.println("rainbow_flow_change_rate: " + String(rainbow_flow_change_rate));
-    Serial.println("rainbow_flow_change_degree: " + String(rainbow_flow_change_degree));
-    Serial.println("rainbow_flow_gradient_density: " + String(rainbow_flow_gradient_density));
-    Serial.println("rainbow_flow_master_delay: " + String(rainbow_flow_master_delay));
-    Serial.println("-----------------------------------");
-  #endif    /* defined(DEBUG) */
 
   // <-- End of getting data from memory
 }

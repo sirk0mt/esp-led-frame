@@ -45,7 +45,8 @@ void setup() {
   resize_pixels_struct(num_of_pixels);
   randomSeed(analogRead(34));
   strip_initialize();
-  if (connect_saved_network()) {
+
+  if (connect_saved_network()) { /* trying to connect to saved network */
     start_main_server();
     initialize_starting_mode();
   } else {

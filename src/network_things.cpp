@@ -23,6 +23,7 @@ bool connect_saved_network() {
   #endif    /* defined(DEBUG) */
 
   WiFi.begin(saved_ssid.c_str(), saved_password.c_str());
+  /* Try to connect saved network 10 times*/
   while (WiFi.status() != WL_CONNECTED && attempts < 10) {
     delay(500);
     #if defined(DEBUG)
