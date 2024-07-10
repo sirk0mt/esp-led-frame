@@ -23,25 +23,6 @@ String get_centered_button(String id, String onclick, String label) {
           "</div>";
 }
 
-String html_header = 
-  "<head>"
-    "<title>LED PICTURE " + String(ver) + "</title>"
-    "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
-    "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
-    "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
-    "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
-  "</head>";
-
-String site_header = 
-  "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
-  "<ul class='nav nav-tabs' id='myTabs'>"
-    "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
-    "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
-    "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
-    "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
-  "</ul>";
-
-
 String radio_btn_html(String name, String id_val, uint8_t radio_id, String value) {
   String check_state = "";
   if (radio_id == color_order) {
@@ -220,9 +201,23 @@ void redirect_to_root() {
 void website_handle_root() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", 
-    "<html> " + html_header + "<body onload='onLoad()'>"
+  "<html> "
+    "<head>"
+      "<title>LED PICTURE " + String(ver) + "</title>"
+      "<link href='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css' rel='stylesheet'>"
+      "<script src='https://code.jquery.com/jquery-3.5.1.min.js'></script>"
+      "<script src='https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.1/dist/umd/popper.min.js'></script>"
+      "<script src='https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js'></script>"
+    "</head>"
+  "<body onload='onLoad()'>"
     "<div class='container mt-5'>"
-      + site_header + 
+      "<h1 class='text-center mb-4'>LED PICTURE " + String(ver) + "</h1>"
+      "<ul class='nav nav-tabs' id='myTabs'>"
+        "<li class='nav-item'><a class='nav-link active' id='modes-tab' data-toggle='tab' href='#modes'>Modes</a></li>"
+        "<li class='nav-item'><a class='nav-link' id='network-tab' data-toggle='tab' href='#network'>Network</a></li>"
+        "<li class='nav-item'><a class='nav-link' id='preferences-tab' data-toggle='tab' href='#preferences'>Preferences</a></li>"
+        "<li class='nav-item'><a class='nav-link' id='update-tab' data-toggle='tab' href='#update'>Update</a></li>"
+      "</ul>" 
       "<div class='tab-content mt-3'>"
         "<div class='tab-pane fade show active' id='modes'>"
           "<h3>Modes</h3><hr>"
