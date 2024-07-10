@@ -4,35 +4,20 @@
 #include "settings_things.h"
 #include "network_things.h"
 #include "pixels.h"
+#include "website.h"
 
 const char* galaxy_prefs_file = "/galaxy.json"; 
 
+// ToDo - może przenieść divy do ogólnego htmla
 String galaxy_html() { 
-  return  "<div class='row justify-content-center'>"
+  return  
+      "<div class='row justify-content-center'>"
         "<div class='col-auto text-center'>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='master_del' min='0' step='1' value='" + String(galaxy_master_delay) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Minimum delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='min_del' min='0' step='1' value='" + String(galaxy_min_del) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>Maximum delay:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='max_del' min='0' step='1' value='" + String(galaxy_max_del) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-maxDel' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><label for='exampleNumber'>LED workers:</label></div>"
-            "<div class='col-auto'><input type='number' class='form-control' id='led_workers' min='0' step='1' value='" + String(galaxy_led_workers) + "'></div>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-workers' onclick='galaxySetVal(this)'>Set</button></div>"
-          "</div>"
-          "<div class='form-row align-items-center mb-2'>"
-            "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-save' onclick='galaxySave()'>SAVE</button></div>"
-          "</div>"
+          + get_num_row_with_save_button("Master delay:", "master_del", 0, galaxy_master_delay, "bt-masterDel", "galaxySetVal(this)", "Set") +
+          get_num_row_with_save_button("Minimum delay:", "min_del", 0, galaxy_min_del, "bt-minDel", "galaxySetVal(this)", "Set") +
+          get_num_row_with_save_button("Maximum delay:", "max_del", 0, galaxy_max_del, "bt-maxDel", "galaxySetVal(this)", "Set") +
+          get_num_row_with_save_button("LED workers:", "led_workers", 0, galaxy_led_workers, "bt-workers", "galaxySetVal(this)", "Set") +
+          get_centered_button("bt-save", "galaxySave()", "SAVE") + 
         "</div>"
       "</div>"
       "<script>"
@@ -166,11 +151,6 @@ void galaxy_start() {
   galaxy_led_workers  = json_load_uint16(mode_json_doc, "led_workers");
   galaxy_curr_delay   = resize_array(galaxy_curr_delay,1,galaxy_led_workers);
 
-  // malloc dla każdej zmiennej
-}
-
-void galaxy_stop() {
-  // free dla każdej zmiennej
 }
 
 void galaxy_mode() {

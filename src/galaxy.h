@@ -5,7 +5,7 @@
 
 #include <Arduino.h>
 
-extern const char* galaxy_prefs_file; 
+extern const char*  galaxy_prefs_file; 
 
 extern uint16_t     galaxy_master_delay;        /* Value of delay between main loop */
 extern uint16_t     galaxy_min_del;             /* Minimum time of life LED workers */
@@ -26,8 +26,6 @@ void galaxy_init_defaults();
 void galaxy_init_endpoints();
 
 void galaxy_start();
-
-void galaxy_stop();
 
 /**
  * \brief               Main function of galaxy mode.

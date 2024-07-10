@@ -8,6 +8,21 @@
 
 uint16_t    ajax_current_pixel  = 0;
 
+String get_num_row_with_save_button(String label, String input_id,
+                  int min, int value, String bt_id, String onlick, String bt_label) {
+  return "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><label>" + label + "</label></div>"
+            "<div class='col-auto'><input type='number' class='form-control' id='" + input_id + "' min='" + String(min) + "' step='1' value='" + String(value) + "'></div>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='" + bt_id + "' onclick='" + onlick + "'>" + bt_label + "</button></div>"
+          "</div>";
+}
+
+String get_centered_button(String id, String onclick, String label) {
+  return "<div class='form-row align-items-center mb-2'>"
+            "<div class='col-auto'><button type='button' class='btn btn-primary' id='" + id + "' onclick='" + onclick + "'>" + label + "</button></div>"
+          "</div>";
+}
+
 void handleFileList() {
     File root = LITTLEFS.open("/");
     String fileList = "<html><body><h1>File List:</h1><ul>";
@@ -521,7 +536,6 @@ void handle_set_value() {  // ToDo - rewrite endpoints to settings things
     Serial.println("--- handle_set_value START---");
   #endif    /* defined(DEBUG) */
   if (server.hasArg("mode")) { // check if value parameter is present
-    uint16_t last_mode = current_mode;
     current_mode = server.arg("mode").toInt(); // update variable value
     #if defined(DEBUG)
       Serial.println("Change mode to: "+String(current_mode));
@@ -546,18 +560,6 @@ void handle_set_value() {  // ToDo - rewrite endpoints to settings things
     #if defined(DEBUG)
       Serial.println("Updated current_mode value: "+ String(current_mode));
     #endif    /* defined(DEBUG) */
-
-    switch (last_mode) {
-      case MODE_GALAXY:
-        galaxy_stop();
-        #if defined(DEBUG)
-          Serial.println("--- handle stop MODE_GALAXY---");
-        #endif    /* defined(DEBUG) */
-        break;
-    
-      default:
-        break;
-    }
 
     switch(current_mode) {
       case MODE_OFF:

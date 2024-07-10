@@ -12,6 +12,10 @@ extern uint16_t     ajax_current_pixel;             /* Current pixel for ajax fr
 
 extern const char*  auto_back_html;                 /* string to add in HTML to automatic redirect to previours page */
 
+String get_num_row_with_save_button(String label, String input_id,
+                  int min, int value, String bt_id, String onlick, String bt_label);
+
+String get_centered_button(String id, String onclick, String label);
 
 /**
  * \brief               Function that send redirect to root of device to TCP client
