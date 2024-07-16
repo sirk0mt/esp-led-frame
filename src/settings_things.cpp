@@ -201,9 +201,9 @@ void initialize_starting_mode() {
   #endif    /* defined(DEBUG) */
 
   switch(current_mode) {
-    case 0:
+    case MODE_OFF:
       break;
-    case 1: /* galaxy */
+    case MODE_GALAXY:
       galaxy_mode();
 
       #if defined(DEBUG)
@@ -211,7 +211,7 @@ void initialize_starting_mode() {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 3: /* static */
+    case MODE_STATIC:
       static_color_set();
 
       #if defined(DEBUG)
@@ -219,7 +219,7 @@ void initialize_starting_mode() {
       #endif    /* defined(DEBUG) */
 
       break;
-    case 4: /* rainbow */
+    case MODE_RAINBOW:
       rainbow_start();
 
       #if defined(DEBUG)

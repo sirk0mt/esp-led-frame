@@ -29,6 +29,7 @@ extern const char* static_params_file;
 extern color_struct current_static_color;   /* Current static mode color */
 extern boolean      static_color_changed;   /* If static color was chaged */
 
+String static_html();
 
 void static_init_defaults();
 

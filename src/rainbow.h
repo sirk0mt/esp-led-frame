@@ -63,6 +63,8 @@ extern color_ch_struct  rainbow_change;             /* store current random colo
 
 extern uint16_t         rainbow_curr_master_delay;  /* Value of current delay between algorithm changes smth */
 
+String rainbow_html();
+
 void rainbow_init_defaults();
 
 void rainbow_init_endpoints();

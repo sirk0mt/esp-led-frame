@@ -15,6 +15,8 @@ extern uint16_t     rainbow_flow_gradient_density;  /* Density of rainbow gradie
 
 extern uint16_t     rainbow_flow_master_delay;      /* Delay between animation cycles */
 
+String rainbow_flow_html();
+
 void rainbow_flow_init_defaults();
 
 void rainbow_flow_init_endpoints();

@@ -11,6 +11,31 @@ color_struct current_static_color;
 
 boolean static_color_changed = false;
 
+String static_html() { 
+  return 
+    "<input type='color' id='colorpicker' value='" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "'><br>"
+    "HEX: <div id='StaHEX' style='display: inline-block;'>" + rgb_to_hex(current_static_color.red, current_static_color.green, current_static_color.blue) + "</div><br>"
+    "R: <div id='Red' style='display: inline-block;'>" + current_static_color.red + "</div><br>"
+    "G: <div id='Green' style='display: inline-block;'>" + current_static_color.green + "</div><br>"
+    "B: <div id='Blue' style='display: inline-block;'>" + current_static_color.blue + "</div><br>"
+    "<button type='button' class='btn btn-primary' id='mode-5' onclick='setStaticColor()'>Save color</button>"
+    "<script>"
+      "var colorpicker = document.getElementById('colorpicker');"
+      "colorpicker.addEventListener('input', function(event) {"
+          "var selected_color = event.target.value;"
+          "var hexval = document.getElementById('colorpicker').value;"
+          "var hexint = parseInt(hexval.slice(1, 7), 16);"
+          "document.getElementById('Red').textContent = (hexint >> 16) & 255;"
+          "document.getElementById('Green').textContent = (hexint >> 8) & 255;"
+          "document.getElementById('Blue').textContent = hexint & 255;"
+          "fetch('/staticSet?hex=' + hexval.slice(1, 7), { method: 'POST' }).then(response => response.text());"
+      "});"
+      "function setStaticColor() {"
+        "fetch('/staticSet?save=0', { method: 'POST' }).then(response => response.text());"
+      "}"
+    "</script>";
+}
+
 void static_init_defaults() {
   current_static_color.red      = 20;
   mode_json_doc["r"]   = current_static_color.red;
@@ -56,13 +81,11 @@ void static_init_endpoints() {
 }
 
 void static_start() {
-  // malloc dla każdej zmiennej oraz load parametów
-
   static_color_set();
 }
 
 void static_stop() {
-  // free dla każdej zmiennej
+
 }
 
 void hex_to_rgb(String hex_color, struct color_struct *current_color) {

@@ -14,6 +14,35 @@ color_ch_struct rainbow_change;
 
 uint16_t        rainbow_curr_master_delay;
 
+String rainbow_html() {
+  return
+    "<div class='row justify-content-center'>"
+      "<div class='col-auto text-center'>"
+        "<div class='form-row align-items-center mb-2'>"
+          "<div class='col-auto'><label for='exampleNumber'>Master delay:</label></div>"
+          "<div class='col-auto'><input type='number' class='form-control' id='masterDel' min='0' step='1' value='" + String(rainbow_master_delay) + "'></div>"
+          "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-masterDel' onclick='setMasterDel()'>Set</button></div>"
+        "</div>"
+        "<div class='form-row align-items-center mb-2'>"
+          "<div class='col-auto'><label for='exampleNumber'>Max change value:</label></div>"
+          "<div class='col-auto'><input type='number' class='form-control' id='maxChange' min='0' step='1' value='" + String(rainbow_max_change) + "'></div>"
+          "<div class='col-auto'><button type='button' class='btn btn-primary' id='bt-minDel' onclick='setMaxChange()'>Set</button></div>"
+        "</div>"
+      "</div>"
+    "</div>"
+    "<script>"
+      "function setMasterDel() {"
+        "var newval = parseInt(document.getElementById('masterDel').value);"
+        "fetch('/rainbowSet?masterDel=' + newval, { method: 'POST' })"
+          ".then(response => response.text());"
+      "}"
+      "function setMaxChange() {"
+        "var newval = parseInt(document.getElementById('maxChange').value);"
+        "fetch('/rainbowSet?maxChange=' + newval, { method: 'POST' })"
+        ".then(response => response.text());"
+      "}"
+    "</script>";
+}
 
 void rainbow_init_defaults() {
   rainbow_master_delay          = 10;
@@ -60,8 +89,6 @@ void rainbow_init_endpoints() {
 }
 
 void rainbow_start() {
-  // malloc dla każdej zmiennej
-
   rainbow_change.red_change     = random(0, rainbow_max_change + 1);
   rainbow_change.red_current    = random(0, 255);
 
@@ -85,7 +112,7 @@ void rainbow_start() {
 }
 
 void rainbow_stop() {
-  // free dla każdej zmiennej
+  
 }
 
 void rainbow_mode() {

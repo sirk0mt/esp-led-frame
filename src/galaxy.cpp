@@ -8,43 +8,42 @@
 
 const char* galaxy_prefs_file = "/galaxy.json"; 
 
-// ToDo - może przenieść divy do ogólnego htmla
 String galaxy_html() { 
   return  
-      "<div class='row justify-content-center'>"
-        "<div class='col-auto text-center'>"
-          + get_num_row_with_save_button("Master delay:", "master_del", 0, galaxy_master_delay, "bt-masterDel", "galaxySetVal(this)", "Set") +
-          get_num_row_with_save_button("Minimum delay:", "min_del", 0, galaxy_min_del, "bt-minDel", "galaxySetVal(this)", "Set") +
-          get_num_row_with_save_button("Maximum delay:", "max_del", 0, galaxy_max_del, "bt-maxDel", "galaxySetVal(this)", "Set") +
-          get_num_row_with_save_button("LED workers:", "led_workers", 0, galaxy_led_workers, "bt-workers", "galaxySetVal(this)", "Set") +
-          get_centered_button("bt-save", "galaxySave()", "SAVE") + 
-        "</div>"
+    "<div class='row justify-content-center'>"
+      "<div class='col-auto text-center'>"
+        + get_num_row_with_save_button("Master delay:", "master_del", 0, galaxy_master_delay, "bt-masterDel", "galaxySetVal(this)", "Set") +
+        get_num_row_with_save_button("Minimum delay:", "min_del", 0, galaxy_min_del, "bt-minDel", "galaxySetVal(this)", "Set") +
+        get_num_row_with_save_button("Maximum delay:", "max_del", 0, galaxy_max_del, "bt-maxDel", "galaxySetVal(this)", "Set") +
+        get_num_row_with_save_button("LED workers:", "led_workers", 0, galaxy_led_workers, "bt-workers", "galaxySetVal(this)", "Set") +
+        get_centered_button("bt-save", "galaxySave()", "SAVE") + 
       "</div>"
-      "<script>"
-        "function galaxySetVal(clickedElement) {"
-          "switch (clickedElement.id) {"
-            "case 'bt-masterDel':"
-              "var paramId = 'master_del';"
-              "break;"
-            "case 'bt-minDel':"
-              "var paramId = 'min_del';"
-              "break;"
-            "case 'bt-maxDel':"
-              "var paramId = 'max_del';"
-              "break;"
-            "case 'bt-workers':"
-              "var paramId = 'led_workers';"
-              "break;"
-            "default:"
-              "var paramId = '';"
-          "}"
-          "var newval = parseInt(document.getElementById(paramId).value);"
-          "fetch('/galaxy/set?' + paramId + '=' + newval, { method: 'GET' }).then(response => response.text());"
+    "</div>"
+    "<script>"
+      "function galaxySetVal(clickedElement) {"
+        "switch (clickedElement.id) {"
+          "case 'bt-masterDel':"
+            "var paramId = 'master_del';"
+            "break;"
+          "case 'bt-minDel':"
+            "var paramId = 'min_del';"
+            "break;"
+          "case 'bt-maxDel':"
+            "var paramId = 'max_del';"
+            "break;"
+          "case 'bt-workers':"
+            "var paramId = 'led_workers';"
+            "break;"
+          "default:"
+            "var paramId = '';"
         "}"
-        "function galaxySave() {"
-          "fetch('/galaxy/save', { method: 'GET' }).then(response => response.text());"
-        "}"
-      "</script>";
+        "var newval = parseInt(document.getElementById(paramId).value);"
+        "fetch('/galaxy/set?' + paramId + '=' + newval, { method: 'GET' }).then(response => response.text());"
+      "}"
+      "function galaxySave() {"
+        "fetch('/galaxy/save', { method: 'GET' }).then(response => response.text());"
+      "}"
+    "</script>";
 }
 
 uint16_t    galaxy_master_delay;
