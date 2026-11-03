@@ -101,7 +101,7 @@ Są dwie drogi: z przeglądarki, bez instalowania czegokolwiek, albo z PlatformI
 
 Potrzebny jest komputer z Chrome, Edge albo Operą (Firefox i Safari nie obsługują portu szeregowego ze strony WWW) i kabel USB do płytki.
 
-1. **Pobierz firmware.** W repozytorium na GitHubie otwórz Actions → ostatni udany przebieg **CI** na wybranej gałęzi i w sekcji Artifacts pobierz `firmware-esp32dev`. Rozpakuj archiwum. Potrzebny jest z niego plik `firmware.factory.bin`. Pobieranie artefaktów wymaga zalogowania na GitHubie, a GitHub usuwa je po pewnym czasie (domyślnie po 90 dniach). Starsze wersje trzeba wtedy zbudować na nowo, np. ponownym uruchomieniem przebiegu CI.
+1. **Pobierz firmware.** Na stronie [Releases](https://github.com/sirk0mt/esp-led-frame/releases) pobierz z najnowszego wydania plik `esp-led-frame-<wersja>-esp32dev-factory.bin`. Niewydaną wersję z dowolnej gałęzi można pobrać z Actions → ostatni udany przebieg **CI** → Artifacts → `firmware-esp32dev` (plik `firmware.factory.bin` w archiwum). Artefakty wymagają zalogowania na GitHubie, a GitHub usuwa je po pewnym czasie (domyślnie po 90 dniach).
 2. **Otwórz webowy flasher Espressifa:** [espressif.github.io/esptool-js](https://espressif.github.io/esptool-js/).
 3. **Połącz się z płytką:** podłącz ją przez USB, kliknij „Connect” i wybierz jej port z listy. Jeśli połączenie się nie udaje, przytrzymaj przycisk BOOT na płytce w czasie łączenia.
 4. **Wgraj plik:** w polu adresu wpisz `0x0`, wybierz `firmware.factory.bin` i kliknij „Program”. Wgrywanie trwa około minuty.
@@ -109,11 +109,11 @@ Potrzebny jest komputer z Chrome, Edge albo Operą (Firefox i Safari nie obsług
 
 `firmware.factory.bin` to pełny obraz pamięci od adresu `0x0`: bootloader, tablica partycji i firmware w jednym pliku, więc nie trzeba podawać kilku adresów. Nie zawiera systemu plików, więc wgranie go na płytkę z wersją 2 zostawia ustawienia, sieć Wi-Fi i presety. Żeby zacząć od zera, kliknij przed wgraniem „Erase Flash”.
 
-Kolejne aktualizacje też nie wymagają narzędzi: plik `firmware.bin` z tego samego artefaktu wgrywa się z UI (Device → Firmware, rozdział [Aktualizacja firmware](#aktualizacja-firmware)). Do aktualizacji przez sieć nie używaj `firmware.factory.bin`: urządzenie go odrzuci.
+Kolejne aktualizacje też nie wymagają narzędzi: plik `esp-led-frame-<wersja>-esp32dev-ota.bin` z wydania (w artefakcie CI to `firmware.bin`) wgrywa się z UI (Device → Firmware, rozdział [Aktualizacja firmware](#aktualizacja-firmware)). Do aktualizacji przez sieć nie używaj pliku `factory`: urządzenie go odrzuci.
 
 Jeśli port płytki nie pojawia się na liście, komputer nie ma sterownika jej układu USB. Najczęściej to CP210x albo CH340, a nazwa układu jest zwykle nadrukowana obok złącza USB. Windows 10 i 11 zwykle instalują go same, a w przeciwnym razie trzeba go pobrać od producenta układu. Pomaga też inny kabel: część kabli USB służy tylko do ładowania.
 
-Artefakt `firmware-esp32dev-release` zawiera wersję bez konsoli szeregowej i bez logów debug. Do codziennego użytku obie działają tak samo.
+Pliki `esp32dev-release` (w CI artefakt `firmware-esp32dev-release`) zawierają wersję bez konsoli szeregowej i bez logów debug. Do codziennego użytku obie działają tak samo.
 
 ### Z PlatformIO
 

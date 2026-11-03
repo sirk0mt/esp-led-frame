@@ -194,7 +194,8 @@ Moduły tylko dla ESP32 (Wi-Fi, serwer, OTA, `LedOutput`, `Storage`) nie mają t
 `.github/workflows/ci.yml` przy każdym pushu i pull requeście:
 
 - kompiluje `esp32dev` i `esp32dev-release` i zapisuje jako artefakty `firmware.bin`, `firmware.factory.bin`, `bootloader.bin` i `partitions.bin`. `firmware.factory.bin` to pełny obraz flash do wgrania od `0x0`, np. webowym flasherem (README, „Z przeglądarki, bez PlatformIO”), a `firmware.bin` służy do aktualizacji OTA;
-- uruchamia `pio test -e native` na Linuksie.
+- uruchamia `pio test -e native` na Linuksie;
+- dla tagu `v*` (np. `v2.2.0`), gdy obie kompilacje i testy przejdą, tworzy wydanie na stronie Releases. Sprawdza, czy tag zgadza się z `kVersion` w `src/core/Version.h`, i dołącza pliki `esp-led-frame-<wersja>-<środowisko>-factory.bin` i `-ota.bin` dla obu środowisk oraz `SHA256SUMS.txt`. Opis wydania bierze z wiersza tej wersji w tabeli z rozdziału 9.
 
 CI używa PlatformIO 6.2.0 z pip i trzyma pakiety w cache zależnym od treści `platformio.ini`.
 
