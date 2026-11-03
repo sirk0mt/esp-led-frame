@@ -1,0 +1,295 @@
+/* LED frame web UI. No external resources: works in AP mode without internet. */
+
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --text: #1b1c1f;
+  --muted: #6a6d75;
+  --line: #dcdfe4;
+  --accent: #2f6fdf;
+  --accent-text: #ffffff;
+  --ok: #1f9d55;
+  --warn: #c98a00;
+  --bad: #d64545;
+  --radius: 10px;
+  --page: 72rem;  /* page width; the effects page uses two columns from 62rem */
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #121316;
+    --surface: #1c1e22;
+    --text: #e9eaee;
+    --muted: #979aa3;
+    --line: #2e3137;
+    --accent: #5b8ff0;
+    --accent-text: #0d1220;
+    --ok: #3cc477;
+    --warn: #e0a826;
+    --bad: #f06a6a;
+    color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+h1 { font-size: 1.1rem; margin: 0; flex: 1; }
+h2 { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em;
+     color: var(--muted); margin: 1.5rem 0 .6rem; }
+
+button, input, select { font: inherit; color: inherit; }
+
+svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: currentColor; stroke-width: 2;
+      stroke-linecap: round; flex: none; }
+
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* --- Top bar ---------------------------------------------------------------- */
+
+.bar {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  padding: .6rem 1rem .7rem;
+}
+.bar-row { display: flex; align-items: center; gap: .75rem; max-width: var(--page); margin: 0 auto; }
+
+.link { display: inline-flex; align-items: center; gap: .35rem; font-size: .8rem; color: var(--muted); }
+.link .dot { width: .55rem; height: .55rem; border-radius: 50%; background: var(--warn); }
+.link[data-state="online"] .dot { background: var(--ok); }
+.link[data-state="offline"] .dot { background: var(--bad); }
+
+.power {
+  display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer;
+}
+.power[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+
+.bri { display: flex; align-items: center; gap: .6rem; max-width: var(--page); margin: .5rem auto 0; color: var(--muted); }
+.bri input { flex: 1; }
+.bri output { width: 2.8rem; text-align: right; font-variant-numeric: tabular-nums; font-size: .85rem; }
+
+/* --- Layout ------------------------------------------------------------------- */
+
+/* Page tabs under the brightness slider; the status bar is fixed at the bottom, so
+   the page ends above it. */
+.tabs { display: flex; gap: .25rem; max-width: var(--page); margin: .55rem auto -.7rem; }
+.tabs a { padding: .45rem .9rem .55rem; color: var(--muted); text-decoration: none; font-weight: 500;
+          border-bottom: 2px solid transparent; }
+.tabs a:hover { color: var(--text); }
+.tabs a[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); }
+
+main { max-width: var(--page); margin: 0 auto; padding: 0 1rem 5rem; }
+.page[hidden] { display: none; }
+
+/* Effects: preview, tiles and settings in one column; on a wide screen the tiles on
+   the left and the preview with the effect settings on the right, so the settings of
+   the chosen effect are in view without scrolling. */
+.effects-page { display: grid; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 62rem) {
+  .effects-page { grid-template-columns: minmax(0, 1fr) 24rem; grid-template-rows: auto 1fr;
+                  grid-template-areas: "tiles preview" "tiles settings"; column-gap: 1.5rem; align-items: start; }
+  .preview-area { grid-area: preview; }
+  .tiles-area { grid-area: tiles; }
+  .settings-area { grid-area: settings; }
+}
+
+.notice { color: var(--muted); }
+
+/* --- Effect tiles --------------------------------------------------------------- */
+
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .6rem; }
+
+.tile {
+  min-height: 4rem; padding: .7rem .8rem; text-align: left; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+}
+.tile:hover { border-color: var(--muted); }
+.tile[aria-checked="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.tile small { display: block; color: var(--muted); font-size: .75rem; margin-top: .2rem; }
+
+/* --- Parameter panel ------------------------------------------------------------ */
+
+.params { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.params:empty { display: none; }
+
+.param { display: grid; grid-template-columns: 7.5rem 1fr; align-items: center; gap: .75rem;
+         padding: .7rem .9rem; border-top: 1px solid var(--line); }
+.param:first-child { border-top: 0; }
+.param > span { color: var(--muted); font-size: .9rem; }
+.param .row { display: flex; align-items: center; gap: .6rem; min-width: 0; }
+.param .row input[type="range"] { flex: 1; min-width: 0; }
+.param output { width: 3rem; text-align: right; font-variant-numeric: tabular-nums; font-size: .85rem; }
+
+input[type="range"] { accent-color: var(--accent); height: 1.5rem; }
+
+select {
+  padding: .4rem .6rem; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg); max-width: 100%;
+}
+
+input[type="color"] {
+  width: 3.5rem; height: 2rem; padding: 2px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); cursor: pointer;
+}
+
+/* Toggle switch on a checkbox */
+.switch { appearance: none; width: 2.6rem; height: 1.5rem; border-radius: 1rem; margin: 0;
+          background: var(--line); position: relative; cursor: pointer; transition: background .15s; }
+.switch::after { content: ""; position: absolute; top: .2rem; left: .2rem; width: 1.1rem; height: 1.1rem;
+                 border-radius: 50%; background: #fff; transition: transform .15s; }
+.switch:checked { background: var(--accent); }
+.switch:checked::after { transform: translateX(1.1rem); }
+
+/* Palette list with preview strips */
+.palettes { display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: .45rem; }
+.palette {
+  padding: .35rem .45rem .45rem; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); text-align: left; cursor: pointer; font-size: .8rem;
+}
+.palette[aria-checked="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.palette i { display: block; height: .8rem; border-radius: 3px; margin-top: .25rem; }
+
+.widget-error { color: var(--bad); font-size: .9rem; }
+
+/* --- LED grid: live preview and paint ------------------------------------------- */
+
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+                margin: 1.5rem 0 .6rem; }
+.section-head h2 { margin: 0; }
+
+.grid-box { background: #0b0c0e; border: 1px solid var(--line); border-radius: var(--radius);
+            padding: .6rem; display: flex; flex-direction: column; align-items: center; }
+.grid-box[hidden] { display: none; }
+canvas.grid { display: block; max-width: 100%; }
+canvas.paint { touch-action: none; cursor: crosshair; }  /* no page scroll while drawing */
+
+.hint { color: var(--muted); font-size: .85rem; margin: .4rem 0 0; }
+.hint:empty { display: none; }
+.grid-box .hint { color: #9a9aa2; }
+
+.paint-tools { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .6rem; }
+.tool {
+  padding: .4rem .8rem; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--surface); cursor: pointer;
+}
+.tool[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+#widget:not(:empty) { margin-bottom: .75rem; }
+
+/* --- Presets -------------------------------------------------------------------------- */
+
+.presets { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .5rem; }
+.presets > .hint { grid-column: 1 / -1; }  /* the empty list message spans the grid */
+.preset { display: flex; align-items: stretch; background: var(--surface); border: 1px solid var(--line);
+          border-radius: var(--radius); overflow: hidden; }
+.preset button { border: 0; background: none; cursor: pointer; }
+.preset .apply { flex: 1; min-width: 0; padding: .6rem .8rem; text-align: left; overflow-wrap: anywhere; }
+.preset .apply:hover { background: var(--bg); }
+.preset .apply small { display: block; color: var(--muted); font-size: .75rem; margin-top: .15rem; }
+.preset .icon { width: 2.4rem; color: var(--muted); border-left: 1px solid var(--line); }
+.preset .icon:hover { color: var(--text); background: var(--bg); }
+.preset-save { display: flex; gap: .5rem; margin-top: .6rem; }
+.preset-save input { flex: 1; min-width: 0; padding: .45rem .6rem; border-radius: 6px;
+                     border: 1px solid var(--line); background: var(--surface); }
+.preset-save button { padding: .45rem .9rem; border-radius: 6px; border: 1px solid var(--accent);
+                      background: var(--accent); color: var(--accent-text); cursor: pointer; }
+.preset-save button:disabled { opacity: .6; }
+#presets > .form-status { margin-top: .4rem; }
+
+/* --- Device settings ---------------------------------------------------------------- */
+
+.subtabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1.5rem 0 0; }
+.subtabs a { padding: .4rem .85rem; border-radius: 999px; border: 1px solid var(--line); color: var(--text);
+             text-decoration: none; background: var(--surface); font-size: .9rem; }
+.subtabs a[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.card[hidden] { display: none; }
+#device .card > h3 { display: none; }  /* the tab names the group */
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+        padding: .9rem; margin-top: .75rem; }
+.card h3 { margin: 0 0 .6rem; font-size: 1rem; }
+.card form + .form-grid { margin-top: .9rem; padding-top: .9rem; border-top: 1px solid var(--line); }
+
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .75rem; }
+.form-grid + .form-grid { margin-top: .75rem; }
+.field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.field > span { color: var(--muted); font-size: .85rem; }
+.field > small { color: var(--muted); font-size: .75rem; }
+.field[hidden] { display: none; }
+.field .row { display: flex; align-items: center; gap: .5rem; }
+.field .row input { flex: 1; min-width: 0; }
+.field input[type="text"], .field input[type="password"], .field input[type="number"] {
+  padding: .45rem .6rem; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); width: 100%;
+}
+.field input[type="file"] { max-width: 100%; }
+
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-top: .9rem; }
+.card button { padding: .45rem .9rem; border-radius: 6px; border: 1px solid var(--line);
+               background: var(--bg); cursor: pointer; }
+.card button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
+.card button.danger { color: var(--bad); border-color: var(--bad); }
+.card button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.card button:disabled { opacity: .6; cursor: default; }
+
+.form-status { margin: 0; font-size: .85rem; color: var(--muted); }
+
+.schedule:empty::before { content: "No times yet."; display: block; padding: .6rem 0; color: var(--muted); }
+.schedule-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; padding: .6rem 0;
+                border-bottom: 1px solid var(--line); }
+.schedule-row input[type="time"] { padding: .35rem .5rem; border-radius: 6px; border: 1px solid var(--line);
+                                   background: var(--bg); }
+.schedule-row .days { display: flex; flex-wrap: wrap; gap: .35rem; }
+.schedule-row .days label { display: flex; align-items: center; gap: .15rem; font-size: .85rem; }
+.form-status[data-kind="ok"] { color: var(--ok); }
+.form-status[data-kind="error"] { color: var(--bad); }
+
+.wifi-state { margin: 0 0 .75rem; color: var(--muted); }
+.networks { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: .4rem; margin-top: .75rem; }
+.networks:empty { display: none; }
+.card .network { text-align: left; }
+.network small { display: block; color: var(--muted); font-size: .75rem; }
+
+progress { width: 100%; height: .6rem; margin-top: .75rem; accent-color: var(--accent); }
+progress[hidden] { display: none; }
+
+dl.info { display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1rem; margin: 0; font-size: .9rem; }
+dl.info dt { color: var(--muted); }
+dl.info dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 30rem) {
+  dl.info { grid-template-columns: 1fr; }
+  dl.info dd { margin-bottom: .4rem; }
+}
+
+/* --- Status bar ---------------------------------------------------------------- */
+
+.status { position: fixed; left: 0; right: 0; bottom: 0; z-index: 2;
+          background: var(--surface); border-top: 1px solid var(--line); font-size: .8rem; }
+.status details { max-width: var(--page); margin: 0 auto; }
+.status summary { list-style: none; cursor: pointer; padding: .5rem 1rem; color: var(--muted);
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.status summary::-webkit-details-marker { display: none; }
+.status summary::before { content: "▴ "; }
+.status details[open] summary::before { content: "▾ "; }
+.status .status-line[data-kind="warn"] { color: var(--warn); }
+.status dl.info { max-height: 50vh; overflow: auto; padding: 0 1rem .75rem; }
+
+/* --- Toast ---------------------------------------------------------------------- */
+
+.toast {
+  position: fixed; left: 50%; bottom: 3rem; z-index: 3; transform: translateX(-50%); max-width: calc(100% - 2rem);
+  padding: .6rem 1rem; border-radius: 8px; background: var(--text); color: var(--bg); font-size: .9rem;
+}
+
+@media (max-width: 30rem) {
+  .param { grid-template-columns: 1fr; gap: .35rem; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+}
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

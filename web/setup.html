@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>LED frame setup</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<h1 style="margin:1.2rem 0 .3rem">LED frame setup</h1>
+<p id="ap" class="hint"></p>
+<form id="f" class="card">
+  <h3>Wi-Fi network</h3>
+  <div id="nets" class="networks"><p class="hint">Looking for networks…</p></div>
+  <div class="form-grid" style="margin-top:.75rem">
+    <label class="field"><span>Network name</span><input id="ssid" maxlength="32" autocomplete="off" required></label>
+    <label class="field"><span>Password</span><input id="pw" type="password" maxlength="64" autocomplete="new-password"><small>Empty: keeps the saved password, or an open network</small></label>
+    <label class="field"><span>Device name</span><input id="host" maxlength="32" autocomplete="off"><small>Address: http://<b id="hn"></b>.local</small></label>
+  </div>
+  <div class="actions"><button class="primary">Connect</button><button type="button" id="scan">Scan again</button></div>
+  <p id="msg" class="form-status"></p>
+</form>
+<p class="hint">The frame leaves this setup network as soon as it joins yours. Then connect this device to the same network and open the address above. <a href="/">Full controls</a></p>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const get = (p) => fetch(p, { cache: "no-store" }).then((r) => r.json());
+const post = (p, b) => fetch(p, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(b) })
+  .then(async (r) => { const j = await r.json(); if (!r.ok) throw new Error(j.error || r.status); return j; });
+const say = (text, kind = "") => { $("msg").textContent = text; $("msg").dataset.kind = kind; };
+let hostname = "", savedSsid = "";
+
+async function scan() {
+  $("scan").disabled = true;
+  try {
+    await post("/api/wifi/scan", {});
+    let r = await get("/api/wifi/scan");
+    for (let i = 0; r.scanning && i < 20; ++i) {
+      await new Promise((ok) => setTimeout(ok, 750));
+      r = await get("/api/wifi/scan");
+    }
+    $("nets").replaceChildren(...r.networks.map((n) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "network";
+      b.innerHTML = "<span></span><small></small>";
+      b.firstChild.textContent = n.ssid;
+      b.lastChild.textContent = `${n.rssi} dBm${n.secure ? " · secured" : " · open"}`;
+      b.onclick = () => { $("ssid").value = n.ssid; $("pw").focus(); };
+      return b;
+    }));
+    if (!r.networks.length) $("nets").textContent = "No networks found.";
+  } catch {
+    $("nets").textContent = "Scan failed.";
+  }
+  $("scan").disabled = false;
+}
+
+// After saving, the device tries the network for up to 15 s. Success switches its
+// access point off, so a lost connection means it worked.
+async function watch(ssid) {
+  for (let i = 0; i < 30; ++i) {
+    await new Promise((ok) => setTimeout(ok, 1000));
+    let info;
+    try { info = await get("/api/info"); } catch { break; }
+    if (info.wifi.mode === "connected") break;
+    if (i > 2 && info.wifi.mode === "ap" && !info.wifi.retrying) {
+      return say(`Could not join “${ssid}”. Check the password and try again.`, "error");
+    }
+  }
+  say(`Joined “${ssid}”. Connect this device to it and open http://${$("host").value}.local`, "ok");
+}
+
+$("f").onsubmit = async (e) => {
+  e.preventDefault();
+  const ssid = $("ssid").value, pw = $("pw").value, host = $("host").value;
+  if (pw && pw.length < 8) return say("The password needs 8–64 characters.", "error");
+  if (!/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(host)) return say("Device name: lowercase letters, digits and '-'.", "error");
+  say("Connecting…");
+  try {
+    // An empty password keeps the saved one for the same network (no field), and
+    // means an open network for another one ("").
+    const wifi = pw || ssid !== savedSsid ? { ssid, password: pw } : { ssid };
+    await post("/api/config", { wifi, hostname: host });
+    if (host !== hostname) {
+      await post("/api/restart", {});  // A new name applies after a restart.
+      return say(`Restarting to join “${ssid}”. Then open http://${host}.local on that network.`, "ok");
+    }
+    watch(ssid);
+  } catch (err) {
+    say(err.message, "error");
+  }
+};
+$("scan").onclick = scan;
+$("host").oninput = () => ($("hn").textContent = $("host").value);
+
+get("/api/info").then((i) => {
+  if (i.wifi.mode === "ap") $("ap").textContent = `Connected to the frame's own network “${i.wifi.apName}”.`;
+});
+get("/api/config").then((c) => {
+  hostname = c.hostname;
+  $("host").value = hostname;
+  $("hn").textContent = hostname;
+  savedSsid = c.wifi.ssid;
+  $("ssid").value = savedSsid;
+});
+scan();
+</script>
+</body>
+</html>
