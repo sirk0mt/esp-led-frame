@@ -674,6 +674,8 @@ PresetRoute parsePresetPath(const char* path, uint8_t& id) {
 size_t writeInfo(const SystemInfo& info, char* out, size_t capacity) {
   JsonDocument doc;
   doc["version"] = info.version;
+  doc["variant"] = info.variant;
+  doc["repo"] = info.repo;
   doc["buildDate"] = info.buildDate;
   doc["uptime"] = info.uptimeS;
   doc["freeHeap"] = info.freeHeap;

@@ -2,7 +2,7 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.2.1** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
+Wersja firmware: **2.3.0** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
 
 ## Spis treści
 
@@ -204,6 +204,7 @@ Słowa ze spacjami podaje się w cudzysłowie: `wifi "Moja sieć" "tajne hasło"
 
 Zbuduj firmware: `pio run -e esp32dev`. Plik powstaje w `.pio/build/esp32dev/firmware.bin`. Stan, konfiguracja, presety i obraz `paint` zostają.
 
+- **Nowa wersja z GitHuba:** Device → Firmware, „Check for a new version”. Gdy na stronie Releases jest nowsza wersja, strona podaje link do pliku `…-ota.bin` dla tej płytki. Pobierz go i wgraj formularzem poniżej. Urządzenie niczego nie pobiera ani nie instaluje samo.
 - **Z przeglądarki:** Device → Firmware, wybierz `firmware.bin` i „Upload firmware”. Strona przeładuje się po restarcie urządzenia. Plik może pochodzić z własnej kompilacji albo z artefaktu CI ([Z przeglądarki, bez PlatformIO](#z-przeglądarki-bez-platformio)).
 - **Z wiersza poleceń:** `curl -F firmware=@.pio/build/esp32dev/firmware.bin http://ledframe.local/api/ota`. W Windows PowerShell użyj `curl.exe`. Z hasłem OTA dodaj `-u ota:HASLO`.
 - **Z PlatformIO:** `pio run -e esp32dev-ota -t upload`. Z hasłem ustaw najpierw zmienną środowiskową `PLATFORMIO_UPLOAD_FLAGS=--auth=HASLO`.

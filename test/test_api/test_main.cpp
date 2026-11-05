@@ -504,6 +504,8 @@ void test_preset_paths() {
 void test_write_info_and_scan() {
   ledframe::SystemInfo info;
   info.version = "2.0.0-dev";
+  info.variant = "esp32dev";
+  info.repo = "owner/repo";
   info.uptimeS = 12;
   info.ledCount = 150;
   info.maxLeds = 1024;
@@ -515,6 +517,8 @@ void test_write_info_and_scan() {
   std::strcpy(info.wifi.ip, "192.168.4.1");
   parseOutput(ledframe::writeInfo(info, buffer, sizeof(buffer)));
   TEST_ASSERT_EQUAL_STRING("2.0.0-dev", doc["version"].as<const char*>());
+  TEST_ASSERT_EQUAL_STRING("esp32dev", doc["variant"].as<const char*>());
+  TEST_ASSERT_EQUAL_STRING("owner/repo", doc["repo"].as<const char*>());
   TEST_ASSERT_EQUAL_INT(150, doc["leds"].as<int>());
   TEST_ASSERT_EQUAL_INT(1024, doc["maxLeds"].as<int>());
   TEST_ASSERT_TRUE(doc["testPattern"].as<bool>());

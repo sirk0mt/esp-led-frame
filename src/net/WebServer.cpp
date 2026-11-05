@@ -398,6 +398,8 @@ void getInfo(AsyncWebServerRequest* request) {
   const StateSnapshot state = app->snapshot();
   SystemInfo info;
   info.version = kVersion;
+  info.variant = kFirmwareVariant;
+  info.repo = kGithubRepo;
   info.buildDate = kBuildDate;
   info.uptimeS = millis() / 1000;
   info.freeHeap = ESP.getFreeHeap();

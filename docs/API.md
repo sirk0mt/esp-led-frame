@@ -1,6 +1,6 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.2.1. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.0. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
 
@@ -369,7 +369,7 @@ Invoke-RestMethod "$DEV/api/info" | ConvertTo-Json -Depth 4
 ```
 
 ```json
-{"version":"2.2.0","buildDate":"Nov  3 2026 20:54:25","uptime":360,"freeHeap":146364,
+{"version":"2.3.0","variant":"esp32dev","repo":"sirk0mt/esp-led-frame","buildDate":"Nov  3 2026 20:54:25","uptime":360,"freeHeap":146364,
  "minFreeHeap":101992,"leds":150,"maxLeds":1024,"testPattern":false,"ledPin":2,
  "ledPins":[2,4,5,13,14,15,16,17,18,19,21,22,23,25,26,27,32,33],
  "engine":{"targetFps":50,"fps":50,"shownFps":0,"renderUsAvg":2,"renderUsMax":30,"showUsAvg":0},
@@ -379,6 +379,7 @@ Invoke-RestMethod "$DEV/api/info" | ConvertTo-Json -Depth 4
 ```
 
 - **`version`** i **`buildDate`** to wersja firmware i chwila kompilacji.
+- **`variant`** (od 2.3.0) to wariant firmware, czyli środowisko PlatformIO, z którego go zbudowano (`esp32dev` albo `esp32dev-release`), a **`repo`** to repozytorium GitHub z wydaniami. Interfejs WWW używa ich do sprawdzenia nowej wersji ([Aktualizacja firmware](#aktualizacja-firmware)).
 - **`uptime`** to czas od startu w sekundach.
 - **`freeHeap`** to wolna pamięć RAM w bajtach, a **`minFreeHeap`** najmniejsza wolna pamięć od startu.
 - **`leds`** to liczba diod w bieżącym układzie (`layout.width × layout.height`).
@@ -564,6 +565,8 @@ websocat ws://ledframe.local/ws
 ```
 
 ## Aktualizacja firmware
+
+Urządzenie samo nie sprawdza ani nie pobiera nowych wersji. W interfejsie WWW (Device → Firmware) przycisk „Check for a new version” pyta API GitHuba z przeglądarki (`GET https://api.github.com/repos/<repo>/releases/latest`) i porównuje tag najnowszego wydania z `version` z `GET /api/info`. Gdy wydanie jest nowsze, strona podaje link do pliku `esp-led-frame-<wersja>-<variant>-ota.bin` i do opisu wydania. Pobrany plik wgrywa się formularzem poniżej, czyli przez `POST /api/ota`. Przeglądarka potrzebuje do tego dostępu do internetu, a GitHub przyjmuje bez logowania 60 zapytań na godzinę z jednego adresu IP.
 
 ### `POST /api/ota`
 

@@ -145,6 +145,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 | `MAX_LEDS` | `[common] max_leds` | największa liczba diod; od niej zależą rozmiary płócien i slotów efektów |
 | `LOG_LEVEL` | środowisko | 4 (debug) w `esp32dev`, 3 (info) w `esp32dev-release` |
 | `LEDFRAME_CONSOLE` | `esp32dev` | konsola szeregowa |
+| `LEDFRAME_VARIANT` | `esp32dev`, `esp32dev-release` | wariant firmware w `GET /api/info`. Interfejs WWW wskazuje na jego podstawie plik `esp-led-frame-<wersja>-<wariant>-ota.bin` nowszego wydania. `esp32dev-ota` dziedziczy `esp32dev` |
 | `FASTLED_RMT_MEM_BLOCKS_NETWORK_MODE=2` | `[esp32_base]` | większy bufor sterownika RMT przy działającym Wi-Fi ([IDEAS.md](IDEAS.md#wyjście-na-diody-odporne-na-wi-fi)) |
 | `-Wall -Wextra` | `build_src_flags` | ostrzeżenia tylko dla kodu w `src/`; ostrzeżenia z FastLED i frameworka nie są nowymi ostrzeżeniami projektu |
 
@@ -195,7 +196,7 @@ Moduły tylko dla ESP32 (Wi-Fi, serwer, OTA, `LedOutput`, `Storage`) nie mają t
 
 - kompiluje `esp32dev` i `esp32dev-release` i zapisuje jako artefakty `firmware.bin`, `firmware.factory.bin`, `bootloader.bin` i `partitions.bin`. `firmware.factory.bin` to pełny obraz flash do wgrania od `0x0`, np. webowym flasherem (README, „Z przeglądarki, bez PlatformIO”), a `firmware.bin` służy do aktualizacji OTA;
 - uruchamia `pio test -e native` na Linuksie;
-- dla tagu `v*` (np. `v2.2.0`), gdy obie kompilacje i testy przejdą, tworzy wydanie na stronie Releases. Sprawdza, czy tag zgadza się z `kVersion` w `src/core/Version.h`, i dołącza pliki `esp-led-frame-<wersja>-<środowisko>-factory.bin` i `-ota.bin` dla obu środowisk oraz `SHA256SUMS.txt`. Opis wydania bierze z wiersza tej wersji w tabeli z rozdziału 9.
+- dla tagu `v*` (np. `v2.2.0`), gdy obie kompilacje i testy przejdą, tworzy wydanie na stronie Releases. Sprawdza, czy tag zgadza się z `kVersion` w `src/core/Version.h`, i dołącza pliki `esp-led-frame-<wersja>-<środowisko>-factory.bin` i `-ota.bin` dla obu środowisk oraz `SHA256SUMS.txt`. Opis wydania bierze z wiersza tej wersji w tabeli z rozdziału 9. Do plików `-ota.bin` linkuje sprawdzanie nowej wersji w interfejsie WWW (`web/ui/settings.js`), więc zmiana ich nazw wymaga zmiany także tam.
 
 CI używa PlatformIO 6.2.0 z pip i trzyma pakiety w cache zależnym od treści `platformio.ini`.
 
@@ -221,6 +222,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.1.0 | korekcja gamma domyślnie włączona, nieliniowy suwak jasności, podgląd efektów w terminalu, efekty `plasma`, `noise`, `twinkle`, `breathe`, `rain`, `starfield`, `ripples` |
 | 2.2.0 | efekty `metaballs`, `swirl`, `candle`, czas z NTP, harmonogram, karty w UI i pasek informacji, wybór pinu danych w UI |
 | 2.2.1 | poprawka DNS: serwery DNS IPv6 z ogłoszeń routera (RDNSS), nieosiągalne bez adresu IPv6, są zastępowane serwerami IPv4 z DHCP, więc znów działa czas z NTP i harmonogram. Log połączenia Wi-Fi pokazuje bramę i serwery DNS |
+| 2.3.0 | sprawdzanie nowej wersji na GitHubie w interfejsie WWW (Device → Firmware) z linkiem do pliku `-ota.bin` dla wariantu płytki, pola `variant` i `repo` w `GET /api/info` |
 
 ### Gałęzie i wydania
 
