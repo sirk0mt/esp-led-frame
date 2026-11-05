@@ -1,6 +1,6 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.2.0. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.2.1. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
 
@@ -387,7 +387,7 @@ Invoke-RestMethod "$DEV/api/info" | ConvertTo-Json -Depth 4
 - **`maxLeds`** to limit `layout.width × layout.height` (stała kompilacji `MAX_LEDS`).
 - **`testPattern`** mówi, czy diody pokazują teraz wzór testowy.
 - **`ledPin`** to GPIO, na którym od startu działa pasek, a **`ledPins`** to lista pinów, które można ustawić w `ledPin` konfiguracji.
-- **`time`** (od 2.2.0): `synced` mówi, czy zegar urządzenia zna czas. Zna go po synchronizacji z serwerem NTP, a także po programowym restarcie (np. po OTA), bo zegar ESP32 go przetrzymuje. `sntp` mówi, czy synchronizacja z serwerem działa: `false` w trybie AP i przed połączeniem z siecią. Bez znanego czasu pól `local` i `weekday` nie ma (`{"synced":false,"sntp":true}`). Potem `local` to czas lokalny w strefie `timezone` z konfiguracji (`RRRR-MM-DD GG:MM:SS`), a `weekday` to dzień tygodnia od 0 (poniedziałek) do 6 (niedziela).
+- **`time`** (od 2.2.0): `synced` mówi, czy zegar urządzenia zna czas. Zna go po synchronizacji z serwerem NTP, a także po programowym restarcie (np. po OTA), bo zegar ESP32 go przetrzymuje. `sntp` mówi, czy synchronizacja z serwerem działa: `false` w trybie AP i przed połączeniem z siecią. Nazwę serwera NTP rozwiązują serwery DNS z DHCP. Gdy router ogłasza też serwery DNS IPv6 (RDNSS), urządzenie przywraca serwery IPv4, bo bez adresu IPv6 nie może z nich korzystać. Bez znanego czasu pól `local` i `weekday` nie ma (`{"synced":false,"sntp":true}`). Potem `local` to czas lokalny w strefie `timezone` z konfiguracji (`RRRR-MM-DD GG:MM:SS`), a `weekday` to dzień tygodnia od 0 (poniedziałek) do 6 (niedziela).
 - **`wifi.mode`** to `connecting`, `connected` albo `ap`. `rssi` (siła sygnału w dBm) jest tylko w trybie `connected`. W trybie AP pojawiają się też `apName`, `apClients` (liczba połączonych urządzeń) i `retrying`, czyli czy urządzenie właśnie próbuje połączyć się z zapisaną siecią.
 - **`resetReason`** i **`lastCrash`** opisuje rozdział [Diagnostyka awarii](#diagnostyka-awarii).
 

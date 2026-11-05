@@ -2,7 +2,7 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.2.0** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
+Wersja firmware: **2.2.1** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
 
 ## Spis treści
 
@@ -244,6 +244,7 @@ Kasuje to też zapisaną sieć Wi-Fi i hasło OTA. Żeby tylko zapomnieć sieć 
 | Pojedyncze diody na chwilę mają zły kolor, zwłaszcza przy otwartym podglądzie na żywo | Zakłócenia sygnału przy ruchu Wi-Fi albo za słaby sygnał 3,3 V. Pomaga konwerter poziomów, inny pin niż GPIO 2 i wyłączenie podglądu. Opis przyczyny: [docs/IDEAS.md](docs/IDEAS.md). |
 | Obraz jest ciemniejszy, niż powinien | Limit prądu przyciemnia jasne obrazy. Sprawdź wartość w Device → LEDs (0 wyłącza limit). |
 | Harmonogram nie działa | Urządzenie nie zna czasu: pasek informacji pokazuje „time not synchronized”. Czas jest dostępny tylko po połączeniu z siecią z dostępem do internetu. |
+| Czas się nie synchronizuje, choć urządzenie jest w sieci | Serwer NTP wymaga działającego DNS. Log startu (konsola szeregowa) pokazuje w wierszu `gateway …, DNS …` serwery DNS otrzymane z routera. Jeśli pierwszy z nich nie odpowiada, popraw ustawienia DHCP w routerze. Serwery DNS IPv6, które router ogłasza osobno, urządzenie samo zastępuje serwerami IPv4, bo bez adresu IPv6 nie może z nich korzystać. |
 | Strona pokazuje „Too many open pages” | Urządzenie obsługuje naraz 4 otwarte strony. Zamknij nieużywane karty. |
 | Urządzenie się zrestartowało | Pasek informacji → „Last restart”. Po awarii jest tam też zadanie i adresy z coredumpu ([docs/API.md](docs/API.md#diagnostyka-awarii)). |
 
