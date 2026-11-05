@@ -7,7 +7,7 @@
 
 namespace ledframe {
 
-inline constexpr char kVersion[] = "2.2.0";
+inline constexpr char kVersion[] = "2.2.1";
 inline constexpr char kBuildDate[] = __DATE__ " " __TIME__;
 
 }  // namespace ledframe

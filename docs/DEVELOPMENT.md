@@ -50,7 +50,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 | `Palettes`, `Gamma` | palety i korekcja kolorów wybranych na ekranie |
 | `State`, `Config`, `Presets`, `Schedule` | dane zapisywane w plikach, z serializacją JSON jako czystymi funkcjami |
 | `Storage` | zapis i odczyt plików LittleFS: atomowo, z opóźnieniem, strumieniowo |
-| `WifiManager` | stacja z limitem czasu, tryb AP z DNS captive portalu, ponowne łączenie, mDNS, skan |
+| `WifiManager` | stacja z limitem czasu, tryb AP z DNS captive portalu, ponowne łączenie, mDNS, skan. Serwery DNS IPv6 z ogłoszeń routera (RDNSS), nieosiągalne bez adresu IPv6, zastępuje serwerami IPv4 z DHCP |
 | `WebServer`, `ApiJson` | trasy HTTP i parsowanie oraz budowanie JSON API |
 | `WsHub`, `WsProtocol` | WebSocket `/ws`: rozgłaszanie stanu, wiadomości `paint` i podglądu |
 | `Ota` | `POST /api/ota` i ArduinoOTA |
@@ -220,3 +220,13 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.0.1 | mniej pamięci RAM, strumieniowy zapis plików, efekty w stałych slotach, dokładne FPS, ustawienia ditheringu i korekcji gamma (domyślnie wyłączonej) |
 | 2.1.0 | korekcja gamma domyślnie włączona, nieliniowy suwak jasności, podgląd efektów w terminalu, efekty `plasma`, `noise`, `twinkle`, `breathe`, `rain`, `starfield`, `ripples` |
 | 2.2.0 | efekty `metaballs`, `swirl`, `candle`, czas z NTP, harmonogram, karty w UI i pasek informacji, wybór pinu danych w UI |
+| 2.2.1 | poprawka DNS: serwery DNS IPv6 z ogłoszeń routera (RDNSS), nieosiągalne bez adresu IPv6, są zastępowane serwerami IPv4 z DHCP, więc znów działa czas z NTP i harmonogram. Log połączenia Wi-Fi pokazuje bramę i serwery DNS |
+
+### Gałęzie i wydania
+
+- **`main`** zawiera tylko scalone zmiany, które przeszły CI i zostały sprawdzone na płytce.
+- **Każda zmiana ma własną gałąź** od aktualnego `main`: `fix/<opis>` dla poprawek, `feature/<opis>` dla nowych funkcji i efektów.
+- **Gałąź sama ustala swoją wersję:** podnosi `kVersion` w `src/core/Version.h` i oczekiwaną wartość w `test_core`, dopisuje wiersz do tabeli powyżej i poprawia numer wersji w README oraz na początku [API.md](API.md). Wiersz tabeli staje się opisem wydania na GitHubie.
+- **Najpierw poprawki, potem funkcje:** gdy czekają obie, najpierw scala się poprawkę, a gałąź funkcji zaczyna się od `main` z tą poprawką (albo jest na nią przenoszona przez `git rebase main`), żeby numery wersji szły po kolei.
+- **Scalanie przez pull request** do `main` po zielonym CI (obie kompilacje i testy natywne), zwykłym merge (`git merge --no-ff`), więc każda zmiana zostaje w historii jako osobna gałąź.
+- **Wydanie:** po scaleniu tag `v<wersja>` na `main` (np. `git tag v2.3.0 && git push origin v2.3.0`) uruchamia zadanie `release` w CI.

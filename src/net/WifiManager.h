@@ -54,6 +54,7 @@ class WifiManager {
   void stopAccessPoint();
   void startApRetry(uint32_t nowMs);
   void onConnected();
+  void keepIpv4Dns(uint32_t nowMs);
   void publish(uint32_t nowMs, bool force);
 
   // Loop task only.
@@ -71,6 +72,9 @@ class WifiManager {
   uint32_t lastRetryMs_ = 0;  // last try of the station in AP mode, or the AP start
   uint32_t lastPublishMs_ = 0;
   char apName_[20] = "";
+  uint32_t dhcpDns_[2] = {};  // IPv4 DNS servers from DHCP at the last connection, 0 = none
+  uint32_t nextDnsCheckMs_ = 0;
+  bool dnsRestoreLogged_ = false;  // keepIpv4Dns() logged since the last connection
 
   // Shared with other tasks, guarded by mutex_.
   SemaphoreHandle_t mutex_ = nullptr;

@@ -128,6 +128,8 @@ void WifiManager::tick(uint32_t nowMs) {
         LOG_W(kTag, "connection lost, reconnecting");
         mode_ = WifiMode::kConnecting;
         deadlineMs_ = nowMs + kReconnectTimeoutMs;
+      } else {
+        keepIpv4Dns(nowMs);
       }
       break;
     case WifiMode::kAccessPoint:
@@ -336,12 +338,47 @@ void WifiManager::startApRetry(uint32_t nowMs) {
   lastRetryMs_ = nowMs;
 }
 
+// lwIP also takes DNS servers from IPv6 router advertisements (RDNSS) and replaces
+// those from DHCP with them. Arduino does not enable IPv6 on the station, so without
+// a global IPv6 address these servers are unreachable and every name lookup (NTP)
+// fails. The DHCP servers are then put back.
+void WifiManager::keepIpv4Dns(uint32_t nowMs) {
+  constexpr uint32_t kDnsCheckMs = 2000;
+  if (static_cast<int32_t>(nowMs - nextDnsCheckMs_) < 0 || dhcpDns_[0] == 0) {
+    return;
+  }
+  nextDnsCheckMs_ = nowMs + kDnsCheckMs;
+  if ((WiFi.dnsIP(0).type() != IPv6 && WiFi.dnsIP(1).type() != IPv6) ||
+      WiFi.STA.hasGlobalIPv6()) {
+    return;
+  }
+  // Routers repeat their advertisements every few seconds: only the first is news.
+  if (!dnsRestoreLogged_) {
+    dnsRestoreLogged_ = true;
+    LOG_I(kTag, "IPv6 DNS %s unreachable without IPv6, back to %s (repeats are debug logs)",
+          WiFi.dnsIP(0).toString().c_str(), IPAddress(dhcpDns_[0]).toString().c_str());
+  } else {
+    LOG_D(kTag, "IPv6 DNS from the router again, back to %s",
+          IPAddress(dhcpDns_[0]).toString().c_str());
+  }
+  WiFi.STA.dnsIP(0, IPAddress(dhcpDns_[0]));
+  WiFi.STA.dnsIP(1, IPAddress(dhcpDns_[1]));  // 0 clears the second server
+}
+
 void WifiManager::onConnected() {
   stopAccessPoint();
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   mode_ = WifiMode::kConnected;
   LOG_I(kTag, "connected to '%s', IP %s", ssid_, WiFi.localIP().toString().c_str());
+  // NTP needs DNS: a dead server from DHCP shows here.
+  LOG_I(kTag, "gateway %s, DNS %s, %s", WiFi.gatewayIP().toString().c_str(),
+        WiFi.dnsIP(0).toString().c_str(), WiFi.dnsIP(1).toString().c_str());
+  for (uint8_t i = 0; i < 2; ++i) {
+    const IPAddress dns = WiFi.dnsIP(i);
+    dhcpDns_[i] = dns.type() == IPv4 ? static_cast<uint32_t>(dns) : 0;
+  }
+  dnsRestoreLogged_ = false;
   if (!mdnsStarted_) {
     mdnsStarted_ = MDNS.begin(hostname_);
     if (mdnsStarted_) {
