@@ -114,6 +114,8 @@ PresetRoute parsePresetPath(const char* path, uint8_t& id);
 
 struct SystemInfo {
   const char* version = "";
+  const char* variant = "";  // build variant: the release file esp-led-frame-<version>-<variant>-ota.bin
+  const char* repo = "";     // GitHub repository "owner/name" with the releases
   const char* buildDate = "";
   uint32_t uptimeS = 0;
   uint32_t freeHeap = 0;

@@ -57,6 +57,34 @@ function status() {
   return h("p", { class: "form-status", role: "status" });
 }
 
+// "v2.3.0", "2.3.0-rc.1" -> { nums: [2, 3, 0], pre: "rc.1" }; null for anything else.
+function versionParts(text) {
+  const match = /^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/i.exec(text || "");
+  return match ? { nums: match.slice(1, 4).map(Number), pre: match[4] || "" } : null;
+}
+
+// Positive when a is newer than b, 0 when equal, null when either is not a version.
+// A pre-release comes before its release; pre-releases compare as text.
+function compareVersions(a, b) {
+  const x = versionParts(a);
+  const y = versionParts(b);
+  if (!x || !y) {
+    return null;
+  }
+  for (let i = 0; i < 3; ++i) {
+    if (x.nums[i] !== y.nums[i]) {
+      return x.nums[i] - y.nums[i];
+    }
+  }
+  if (x.pre === y.pre) {
+    return 0;
+  }
+  if (!x.pre || !y.pre) {
+    return x.pre ? -1 : 1;
+  }
+  return x.pre < y.pre ? -1 : 1;
+}
+
 // Runs a request, shows "Saving…", then the result or the device's error message.
 async function submit(button, out, action, done = "Saved") {
   button.disabled = true;
@@ -453,9 +481,80 @@ export async function mountSettings(container, api) {
     updateStatus.dataset.kind = "";
     xhr.send(form);
   });
+  // New version on GitHub: the browser asks the GitHub API itself (it allows requests
+  // from any page); the device never connects to GitHub and nothing is downloaded or
+  // installed by itself. A newer release gets a link to its file for this build
+  // variant, which is then uploaded with the form below.
+  const releaseState = h("p", { class: "form-status", role: "status" });
+  const releaseLinks = h("div", { class: "actions", hidden: true });
+  const checkButton = h("button", { type: "button" }, "Check for a new version");
+  const showRelease = (text, kind = "") => {
+    releaseState.textContent = text;
+    releaseState.dataset.kind = kind;
+  };
+  checkButton.addEventListener("click", async () => {
+    checkButton.disabled = true;
+    releaseLinks.hidden = true;
+    releaseLinks.replaceChildren();
+    showRelease("Asking GitHub…");
+    try {
+      let response;
+      try {
+        response = await fetch(`https://api.github.com/repos/${info.repo}/releases/latest`,
+                               { headers: { Accept: "application/vnd.github+json" }, cache: "no-store" });
+      } catch {
+        throw new Error("Cannot reach GitHub from this browser. Is it connected to the internet?");
+      }
+      if (response.status === 404) {
+        throw new Error("No release is published on GitHub yet.");
+      }
+      if (response.status === 403 || response.status === 429) {
+        throw new Error("GitHub limits requests from this network; try again in an hour.");
+      }
+      if (!response.ok) {
+        throw new Error(`GitHub answered HTTP ${response.status}.`);
+      }
+      const release = await response.json();
+      const latest = String(release.tag_name || "").replace(/^v/i, "");
+      const order = compareVersions(latest, info.version);
+      if (order === null) {
+        throw new Error(`The latest release tag “${release.tag_name}” is not a version.`);
+      }
+      if (order <= 0) {
+        showRelease(`Installed ${info.version} is the latest release.`, "ok");
+        return;
+      }
+      const name = `esp-led-frame-${latest}-${info.variant}-ota.bin`;
+      const asset = (release.assets || []).find((a) => a.name === name);
+      if (asset) {
+        showRelease(`Version ${latest} is available (installed ${info.version}). `
+                    + "Download the file, then upload it below.", "ok");
+        releaseLinks.append(h("a", { href: asset.browser_download_url, rel: "noopener" }, `Download ${name}`));
+      } else {
+        showRelease(`Version ${latest} is available (installed ${info.version}), `
+                    + `but the release has no file for this build (${info.variant}).`, "error");
+      }
+      if (release.html_url) {
+        releaseLinks.append(h("a", { href: release.html_url, target: "_blank", rel: "noopener" },
+                              "Release notes on GitHub"));
+      }
+      releaseLinks.hidden = false;
+    } catch (error) {
+      showRelease(error.message, "error");
+    } finally {
+      checkButton.disabled = false;
+    }
+  });
+
   const updateCard = card(
     "Firmware update",
-    h("p", { class: "hint" }, "Upload .pio/build/esp32dev/firmware.bin. Settings and the picture are kept."),
+    ...(info.repo ? [
+      h("div", { class: "actions" }, checkButton, releaseState),
+      releaseLinks,
+    ] : []),
+    h("p", { class: "hint" },
+      "Upload a release file (…-ota.bin) or your own .pio/build/esp32dev/firmware.bin. "
+      + "Settings and the picture are kept."),
     h("div", { class: "form-grid" }, field("Firmware file", file), authRow),
     h("div", { class: "actions" }, uploadButton, updateStatus),
     progress,
