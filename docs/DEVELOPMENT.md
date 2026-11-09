@@ -29,7 +29,7 @@ Dokument dla osób, które zmieniają firmware albo interfejs WWW. Obsługę urz
 | `src/generated/` | pliki generowane przy kompilacji (interfejs WWW), poza repozytorium |
 | `web/` | interfejs WWW: HTML, CSS i moduły ES |
 | `test/` | testy natywne Unity, po jednym katalogu na zestaw |
-| `scripts/` | `embed_web.py` (wbudowanie `web/`), `native_env.py` (poprawki środowiska testów), `show_effect.py` (podgląd efektów w terminalu) |
+| `scripts/` | `embed_web.py` (wbudowanie `web/`), `native_env.py` (poprawki środowiska testów), `show_effect.py` (podgląd efektów w terminalu), `release_notes.sh` (opis wydania w CI) |
 | `platformio.ini` | środowiska, wersje platformy i bibliotek, flagi kompilacji |
 | `partitions.csv` | tablica partycji flash |
 | `.github/workflows/ci.yml` | CI |
@@ -196,9 +196,17 @@ Moduły tylko dla ESP32 (Wi-Fi, serwer, OTA, `LedOutput`, `Storage`) nie mają t
 
 - kompiluje `esp32dev` i `esp32dev-release` i zapisuje jako artefakty `firmware.bin`, `firmware.factory.bin`, `bootloader.bin` i `partitions.bin`. `firmware.factory.bin` to pełny obraz flash do wgrania od `0x0`, np. webowym flasherem (README, „Z przeglądarki, bez PlatformIO”), a `firmware.bin` służy do aktualizacji OTA;
 - uruchamia `pio test -e native` na Linuksie;
-- dla tagu `v*` (np. `v2.2.0`), gdy obie kompilacje i testy przejdą, tworzy wydanie na stronie Releases. Sprawdza, czy tag zgadza się z `kVersion` w `src/core/Version.h`, i dołącza pliki `esp-led-frame-<wersja>-<środowisko>-factory.bin` i `-ota.bin` dla obu środowisk oraz `SHA256SUMS.txt`. Opis wydania bierze z wiersza tej wersji w tabeli z rozdziału 9. Do plików `-ota.bin` linkuje sprawdzanie nowej wersji w interfejsie WWW (`web/ui/settings.js`), więc zmiana ich nazw wymaga zmiany także tam.
+- dla tagu `v*` (np. `v2.2.0`), gdy obie kompilacje i testy przejdą, tworzy wydanie na stronie Releases. Sprawdza, czy tag zgadza się z `kVersion` w `src/core/Version.h`, i dołącza pliki `esp-led-frame-<wersja>-<środowisko>-factory.bin` i `-ota.bin` dla obu środowisk oraz `SHA256SUMS.txt`. Do plików `-ota.bin` linkuje sprawdzanie nowej wersji w interfejsie WWW (`web/ui/settings.js`), więc zmiana ich nazw wymaga zmiany także tam.
 
 CI używa PlatformIO 6.2.0 z pip i trzyma pakiety w cache zależnym od treści `platformio.ini`.
+
+**Opis wydania** pisze `scripts/release_notes.sh`. Wszystko liczy od poprzedniego tagu `v*` w historii:
+
+- **Zmiany:** każdy wiersz tabeli wersji z rozdziału 9 nowszy od poprzedniego tagu, aż do wydawanej wersji, od najnowszego. Trafiają tu też wersje, które nie dostały własnego tagu. Brak wiersza wydawanej wersji daje ostrzeżenie w przebiegu CI.
+- **Commity od poprzedniego tagu:** tytuły commitów bez commitów scalających, z linkami, oraz link do porównania obu tagów na GitHubie.
+- **Pliki:** tabela plików wydania.
+
+Pierwsze wydanie, bez wcześniejszego tagu, dostaje wszystkie wiersze i commity. Opis trafia też do podsumowania przebiegu CI. Podgląd przed utworzeniem tagu: `bash scripts/release_notes.sh v2.3.1 HEAD` (w Git Bash na Windows). Skrypt czyta tabelę wersji z podanego commita, nie z drzewa roboczego.
 
 ## 8. Zasady kodu
 
@@ -228,7 +236,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 
 - **`main`** zawiera tylko scalone zmiany, które przeszły CI i zostały sprawdzone na płytce.
 - **Każda zmiana ma własną gałąź** od aktualnego `main`: `fix/<opis>` dla poprawek, `feature/<opis>` dla nowych funkcji i efektów.
-- **Gałąź sama ustala swoją wersję:** podnosi `kVersion` w `src/core/Version.h` i oczekiwaną wartość w `test_core`, dopisuje wiersz do tabeli powyżej i poprawia numer wersji w README oraz na początku [API.md](API.md). Wiersz tabeli staje się opisem wydania na GitHubie.
+- **Gałąź sama ustala swoją wersję:** podnosi `kVersion` w `src/core/Version.h` i oczekiwaną wartość w `test_core`, dopisuje wiersz do tabeli powyżej i poprawia numer wersji w README oraz na początku [API.md](API.md). Wiersz tabeli staje się częścią opisu wydania na GitHubie, a tytuły commitów trafiają do listy zmian od poprzedniego tagu ([rozdział 7](#7-ci)), więc powinny mówić, co się zmienia.
 - **Najpierw poprawki, potem funkcje:** gdy czekają obie, najpierw scala się poprawkę, a gałąź funkcji zaczyna się od `main` z tą poprawką (albo jest na nią przenoszona przez `git rebase main`), żeby numery wersji szły po kolei.
 - **Scalanie przez pull request** do `main` po zielonym CI (obie kompilacje i testy natywne), zwykłym merge (`git merge --no-ff`), więc każda zmiana zostaje w historii jako osobna gałąź.
 - **Wydanie:** po scaleniu tag `v<wersja>` na `main` (np. `git tag v2.3.0 && git push origin v2.3.0`) uruchamia zadanie `release` w CI.
