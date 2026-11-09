@@ -15,10 +15,12 @@
 #include <freertos/semphr.h>
 #include <freertos/task.h>
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
 
+#include "app/RollbackGuard.h"
 #include "app/StateSnapshot.h"
 #include "core/WallTime.h"
 #include "effects/Command.h"
@@ -122,6 +124,15 @@ class App {
   void beginOta();
   void cancelOta();
   void flushNow();
+
+  // Rollback after an update (RollbackGuard.h). A firmware started for the first time
+  // after an update is pending: a reset before it is confirmed starts the previous
+  // firmware again. The Arduino loop task confirms it after RollbackGuard::kKeepAfterMs
+  // of normal work, or rolls it back itself when the render task made no progress
+  // until RollbackGuard::kGiveUpMs. confirmFirmware() confirms it at once and does nothing for a
+  // firmware already confirmed; call it before a restart and before another update,
+  // which writes over the previous firmware. Thread-safe.
+  void confirmFirmware(const char* reason);
 
  private:
   enum class MessageType : uint8_t {
@@ -235,6 +246,14 @@ class App {
 
   // Render task only: when the engine gets the wall time again (once per second).
   uint32_t nextWallTimeMs_ = 0;
+
+  // Rollback: checkFirmware() at start, updateRollback() in the Arduino loop task.
+  void checkFirmware();
+  void updateRollback();
+  std::atomic<bool> firmwarePending_{false};  // running firmware not confirmed yet
+  volatile uint32_t renderBeats_ = 0;         // increased by the render task every loop
+  uint32_t nextRollbackCheckMs_ = 0;          // Arduino loop task only
+  RollbackGuard rollbackGuard_;               // Arduino loop task only
 
   // Arduino loop task only.
   void updateStatusOverride();

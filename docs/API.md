@@ -1,6 +1,6 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.1. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.2. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
 
@@ -604,6 +604,18 @@ Przebieg:
 | 500 | błąd zapisu do flash |
 
 Zerwanie połączenia w trakcie przerywa aktualizację, a urządzenie wraca do pracy na dotychczasowym firmware.
+
+### Wycofanie nieudanej aktualizacji
+
+Od 2.3.2 nowy firmware po aktualizacji (`POST /api/ota` albo ArduinoOTA) jest najpierw na próbie:
+
+- Zostaje na stałe po 30 s normalnej pracy (zadanie renderowania działa) albo wcześniej, gdy urządzenie dostanie polecenie restartu (`POST /api/restart`, konsola) albo kolejną aktualizację.
+- Jeśli urządzenie zrestartuje się wcześniej z innego powodu (awaria, watchdog, zanik zasilania, przycisk EN), bootloader uruchamia poprzedni firmware.
+- Jeśli zadanie renderowania stoi i firmware nie zostało zatwierdzone przez 2 min, urządzenie samo wycofuje aktualizację i uruchamia się ponownie.
+- Wycofanie nie dotyka stanu, konfiguracji, presetów ani obrazu `paint`.
+- Konsola szeregowa przy starcie pokazuje partycję (`firmware in app0`). Firmware na próbie loguje `new firmware in app1, kept after 30 s of normal work`, a potem `new firmware kept (...)`. Po wycofaniu: `the update in app1 did not work and was rolled back`. `GET /api/info` pokazuje wtedy poprzednią wersję w `version`, a `resetReason` to przyczyna restartu, np. `panic` po awarii albo `software` po wycofaniu przez samo urządzenie.
+
+Dlatego po aktualizacji nie odłączaj zasilania przez pierwsze 30 s, bo urządzenie wróci do poprzedniej wersji. Firmware wgrany przez USB (`pio run -t upload`, plik `factory` z webowego flashera) nie jest na próbie i nie jest wycofywany.
 
 ### ArduinoOTA (espota)
 

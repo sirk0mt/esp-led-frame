@@ -10,7 +10,7 @@ void setUp() {}
 void tearDown() {}
 
 void test_version_is_v2_dev() {
-  TEST_ASSERT_EQUAL_STRING("2.3.1", ledframe::kVersion);
+  TEST_ASSERT_EQUAL_STRING("2.3.2", ledframe::kVersion);
   TEST_ASSERT_TRUE(std::strlen(ledframe::kBuildDate) > 0);
 }
 

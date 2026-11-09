@@ -1,6 +1,7 @@
 #include "app/App.h"
 
 #include <Arduino.h>
+#include <esp_ota_ops.h>
 #include <esp_random.h>
 #include <esp_sntp.h>
 #include <esp_timer.h>
@@ -117,6 +118,7 @@ void App::begin() {
   Serial.begin(kSerialBaud);
   LOG_I(kTag, "esp-led-frame %s (built %s)", kVersion, kBuildDate);
   captureCrashReport();
+  checkFirmware();
   const EffectRegistry& registry = EffectRegistry::global();
   LOG_I(kTag, "%u effects registered", static_cast<unsigned>(registry.size()));
   registry.logIssues();
@@ -189,12 +191,16 @@ void App::loop() {
   wsHub.tick(millis());
   ota.tick();
   persist();
+  updateRollback();
   if (flushRequested_) {
     flushRequested_ = false;
     storage.flushAll();
   }
   if (restartRequested_ && static_cast<int32_t>(millis() - restartAtMs_) >= 0) {
     storage.flushAll();  // Pending state and presets reach the flash first.
+    // A restart asked for over HTTP or the console shows the firmware works; without
+    // this the restart would start the previous firmware again.
+    confirmFirmware("restart requested");
     LOG_I(kTag, "restarting");
     ESP.restart();
   }
@@ -204,6 +210,67 @@ void App::loop() {
 void App::requestRestart(uint32_t delayMs) {
   restartAtMs_ = millis() + delayMs;
   restartRequested_ = true;
+}
+
+// The bootloader starts a new firmware once as "pending verify" and goes back to the
+// previous one when the device resets before the firmware is confirmed. Arduino
+// would confirm it right away; verifyRollbackLater() in main.cpp leaves that to
+// updateRollback().
+void App::checkFirmware() {
+  const esp_partition_t* running = esp_ota_get_running_partition();
+  esp_ota_img_states_t state = ESP_OTA_IMG_UNDEFINED;
+  if (running != nullptr && esp_ota_get_state_partition(running, &state) == ESP_OK &&
+      state == ESP_OTA_IMG_PENDING_VERIFY) {
+    firmwarePending_ = true;
+    LOG_I(kTag,
+          "new firmware in %s, kept after %u s of normal work "
+          "(a reset before that brings back the previous one)",
+          running->label, static_cast<unsigned>(RollbackGuard::kKeepAfterMs / 1000));
+  } else if (running != nullptr) {
+    LOG_I(kTag, "firmware in %s", running->label);
+  }
+  // Partition of an update that was undone. A later update into it clears this.
+  const esp_partition_t* invalid = esp_ota_get_last_invalid_partition();
+  if (invalid != nullptr && invalid != running) {
+    LOG_W(kTag, "the update in %s did not work and was rolled back", invalid->label);
+  }
+}
+
+// Once per second: keeps or undoes a pending firmware when RollbackGuard says so.
+void App::updateRollback() {
+  if (!firmwarePending_ || static_cast<int32_t>(millis() - nextRollbackCheckMs_) < 0) {
+    return;
+  }
+  nextRollbackCheckMs_ = millis() + 1000;
+  switch (rollbackGuard_.update(millis(), renderBeats_)) {
+    case RollbackGuard::Action::kWait:
+      return;
+    case RollbackGuard::Action::kKeep:
+      confirmFirmware("running normally");
+      return;
+    case RollbackGuard::Action::kRollBack:
+      // Another task may have kept it in the meantime (restart, update).
+      if (firmwarePending_.exchange(false)) {
+        LOG_E(kTag, "render task stopped, rolling the update back");
+        storage.flushAll();
+        // Restarts into the previous firmware; returns only on an error.
+        const esp_err_t result = esp_ota_mark_app_invalid_rollback_and_reboot();
+        LOG_E(kTag, "cannot roll back: %s", esp_err_to_name(result));
+      }
+      return;
+  }
+}
+
+void App::confirmFirmware(const char* reason) {
+  if (!firmwarePending_.exchange(false)) {
+    return;
+  }
+  const esp_err_t result = esp_ota_mark_app_valid_cancel_rollback();
+  if (result == ESP_OK) {
+    LOG_I(kTag, "new firmware kept (%s)", reason);
+  } else {
+    LOG_E(kTag, "cannot keep the new firmware: %s", esp_err_to_name(result));
+  }
 }
 
 Config App::config() const {
@@ -739,6 +806,7 @@ void App::renderTaskEntry(void* arg) {
 void App::renderTask() {
   statsWindowStartMs_ = millis();
   for (;;) {
+    renderBeats_ = renderBeats_ + 1;  // Progress for the rollback check (RollbackGuard).
     // 1. Wait for the next frame. A message wakes the task earlier: it is applied
     //    at once, between two frames, and the frame still comes on schedule.
     bool changed = false;

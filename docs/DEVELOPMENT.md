@@ -42,7 +42,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 
 | Moduł | Zadanie |
 |---|---|
-| `App` | tworzy moduły, uruchamia zadanie renderowania, przyjmuje komendy z innych zadań, zapisuje pliki, obsługuje konsolę i harmonogram |
+| `App` | tworzy moduły, uruchamia zadanie renderowania, przyjmuje komendy z innych zadań, zapisuje pliki, obsługuje konsolę i harmonogram, zatwierdza firmware po aktualizacji (`RollbackGuard`) |
 | `EffectEngine` | aktywny efekt, parametry wszystkich efektów, przejścia, harmonogram klatek, statystyki. Nie zna FreeRTOS ani sprzętu |
 | `EffectRegistry` | lista efektów, które rejestrują się same makrem `REGISTER_EFFECT` |
 | `Canvas`, `Layout` | płótno logiczne (wiersz po wierszu od lewego górnego rogu) i odwzorowanie na fizyczną kolejność diod |
@@ -182,6 +182,7 @@ Skutki:
 | Zestawy | Co sprawdzają |
 |---|---|
 | `test_core`, `test_canvas`, `test_layout`, `test_palettes`, `test_output` | wersja i limity, płótno, odwzorowanie układu, palety i gamma, kolejność kolorów i wyjście |
+| `test_rollback` | kiedy firmware na próbie po aktualizacji zostaje na stałe (`app/RollbackGuard.h`) |
 | `test_registry`, `test_params`, `test_engine` | rejestr efektów, parametry i ich przycinanie, silnik (przejścia, harmonogram klatek, statystyki) |
 | `test_effects` i `test_<efekt>` | efekty: `test_effects` dla `solid`, `rainbow`, `galaxy`, `color-flow`, `paint` i `status`, a pozostałe mają osobne zestawy |
 | `test_state_json`, `test_file_format`, `test_presets`, `test_schedule` | stan, konfiguracja i presety w JSON, zgodność formatu plików ze starszymi wersjami, harmonogram |
@@ -232,6 +233,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.2.1 | poprawka DNS: serwery DNS IPv6 z ogłoszeń routera (RDNSS), nieosiągalne bez adresu IPv6, są zastępowane serwerami IPv4 z DHCP, więc znów działa czas z NTP i harmonogram. Log połączenia Wi-Fi pokazuje bramę i serwery DNS |
 | 2.3.0 | sprawdzanie nowej wersji na GitHubie w interfejsie WWW (Device → Firmware) z linkiem do pliku `-ota.bin` dla wariantu płytki, pola `variant` i `repo` w `GET /api/info` |
 | 2.3.1 | poprawka bezpieczeństwa: żądania HTTP, uzgodnienie WebSocketu i aktualizacja firmware ze strony innej niż urządzenie (nagłówek `Origin`) dostają `403`, więc obca strona otwarta w przeglądarce w tej samej sieci nie zmieni stanu, konfiguracji ani firmware |
+| 2.3.2 | wycofanie nieudanej aktualizacji: nowy firmware po OTA zostaje na stałe po 30 s normalnej pracy, a reset wcześniej (awaria, ciągłe restarty) przywraca poprzedni. Firmware, którego zadanie renderowania stoi, wycofuje się samo po 2 min. Restart na żądanie i kolejna aktualizacja zatwierdzają go od razu |
 
 ### Gałęzie i wydania
 
