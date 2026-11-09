@@ -82,7 +82,10 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Full history and tags: the release notes list the changes since the previous tag.
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Check tag against Version.h
         run: |
@@ -107,25 +110,11 @@ jobs:
           done
           (cd dist && sha256sum *.bin > SHA256SUMS.txt)
 
+      # Version table rows and commits since the previous tag, then the files.
       - name: Write release notes
         run: |
-          changes=$(grep -E "^\| ${VERSION} \|" docs/DEVELOPMENT.md | cut -d'|' -f3 | sed 's/^ *//; s/ *$//')
-          cat > notes.md <<EOF
-          ## Zmiany
-
-          ${changes:-Zobacz docs/DEVELOPMENT.md, rozdział 9.}
-
-          ## Pliki
-
-          | Plik | Do czego |
-          |---|---|
-          | \`esp-led-frame-${VERSION}-esp32dev-factory.bin\` | pełny obraz do wgrania przez USB od adresu \`0x0\` (pierwsza instalacja, webowy flasher) |
-          | \`esp-led-frame-${VERSION}-esp32dev-ota.bin\` | aktualizacja z UI (Device → Firmware) |
-          | \`esp-led-frame-${VERSION}-esp32dev-release-*.bin\` | to samo bez konsoli szeregowej i bez logów debug |
-          | \`SHA256SUMS.txt\` | sumy kontrolne |
-
-          Instrukcja wgrywania: README, rozdział „Z przeglądarki, bez PlatformIO”.
-          EOF
+          bash scripts/release_notes.sh "${GITHUB_REF_NAME}" > notes.md
+          cat notes.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Create release
         env:
