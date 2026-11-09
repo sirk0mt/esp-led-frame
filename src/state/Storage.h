@@ -56,6 +56,8 @@ class Storage {
   void tick(uint32_t nowMs);
   void flushAll();
   bool pending() const;
+  // True when tick(nowMs) would write a file.
+  bool due(uint32_t nowMs) const;
 
  private:
   struct Deferred {

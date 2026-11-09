@@ -2,7 +2,7 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.3.3** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
+Wersja firmware: **2.3.4** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
 
 ## Spis treści
 
@@ -135,6 +135,7 @@ Pliki `esp32dev-release` (w CI artefakt `firmware-esp32dev-release`) zawierają 
 | `esp32dev` | firmware z logami debug i konsolą szeregową, wgrywane przez USB (domyślne) |
 | `esp32dev-ota` | to samo firmware, wgrywane przez sieć (ArduinoOTA) |
 | `esp32dev-release` | firmware bez logów debug i bez konsoli szeregowej |
+| `esp32dev-ledcheck` | diagnostyka: jak `esp32dev`, a w konsoli co 10 s liczba klatek uszkodzonych w drodze do diod ([DEVELOPMENT.md](docs/DEVELOPMENT.md#flagi)) |
 | `native` | testy na komputerze, bez płytki |
 
 ## Pierwsza konfiguracja Wi-Fi
@@ -243,7 +244,7 @@ Kasuje to też zapisaną sieć Wi-Fi i hasło OTA. Żeby tylko zapomnieć sieć 
 | Strona pokazuje `403: host name is not this device` | Urządzenie otwarto pod nazwą DNS, która nie jest jego nazwą, np. `lights.lan`. Urządzenie odpowiada tylko pod adresem IP, `localhost` i swoją nazwą z domeną lokalną, np. `ledframe.local` albo `ledframe.lan`. Chroni to przed atakiem DNS rebinding ([API.md](docs/API.md)). Użyj adresu IP albo nadaj urządzeniu nazwę zgodną z nazwą w routerze. |
 | Kolory są zamienione, np. czerwony świeci na zielono | Device → LEDs: „Show test pattern” i zmieniaj „Color order”, aż pierwsza dioda będzie biała, a kolejne trzy części: czerwona, zielona i niebieska. |
 | Obraz jest odwrócony, przesunięty albo co drugi wiersz idzie w złą stronę | Device → LEDs: narożnik startowy, obrót, wężyk (Serpentine) i odbicia. Wzór testowy pokazuje, gdzie zaczyna się pasek. |
-| Pojedyncze diody na chwilę mają zły kolor, zwłaszcza przy otwartym podglądzie na żywo | Zakłócenia sygnału przy ruchu Wi-Fi albo za słaby sygnał 3,3 V. Pomaga konwerter poziomów, inny pin niż GPIO 2 i wyłączenie podglądu. Opis przyczyny: [docs/IDEAS.md](docs/IDEAS.md). |
+| Pojedyncze diody na chwilę mają zły kolor | Do wersji 2.3.3 psuł je zapis ustawień do pamięci flash, np. po zmianie w UI. Od 2.3.4 zapis czeka na przerwę między klatkami, a w pomiarze sam ruch Wi-Fi nie psuje klatek. Jeśli objaw zostaje, przyczyną jest zwykle za słaby sygnał 3,3 V: pomaga konwerter poziomów 3,3 → 5 V i inny pin niż GPIO 2. Środowisko `esp32dev-ledcheck` pokazuje w konsoli, czy klatki wychodzą z ESP32 poprawnie. |
 | Obraz jest ciemniejszy, niż powinien | Limit prądu przyciemnia jasne obrazy. Sprawdź wartość w Device → LEDs (0 wyłącza limit). |
 | Harmonogram nie działa | Urządzenie nie zna czasu: pasek informacji pokazuje „time not synchronized”. Czas jest dostępny tylko po połączeniu z siecią z dostępem do internetu. |
 | Czas się nie synchronizuje, choć urządzenie jest w sieci | Serwer NTP wymaga działającego DNS. Log startu (konsola szeregowa) pokazuje w wierszu `gateway …, DNS …` serwery DNS otrzymane z routera. Jeśli pierwszy z nich nie odpowiada, popraw ustawienia DHCP w routerze. Serwery DNS IPv6, które router ogłasza osobno, urządzenie samo zastępuje serwerami IPv4, bo bez adresu IPv6 nie może z nich korzystać. |

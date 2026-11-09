@@ -1,6 +1,6 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.3. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.4. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
 
