@@ -152,6 +152,28 @@ bool isDeviceHost(const char* host, const char* apAddress, const char* hostname)
 // letter case. "null", other hosts, other ports and anything with a path fail.
 bool isSameOrigin(const char* origin, const char* host);
 
+// Guard against DNS rebinding: a site whose name first points to its own server and
+// then to the device is, for the browser, the same origin as the device, so
+// isSameOrigin() passes it. The browser still sends that site's name as Host, so the
+// device answers only under a name nobody outside the local network can own. host is
+// the Host header; a port and one trailing dot are ignored, letter
+// case too. Device names:
+//   - an IPv4 address, or an IPv6 address in brackets;
+//   - "localhost" (an SSH tunnel or port forward on the user's own computer);
+//   - hostname itself, or hostname followed by a domain that ends in one of the
+//     local-only domains local, lan, home, home.arpa, internal, intranet, localdomain,
+//     corp, private or box, e.g. "ledframe.local", "ledframe.lan", "ledframe.fritz.box".
+// "ledframe.example.com" is not one: anyone can register a public domain and name a
+// subdomain after the default hostname.
+bool isDeviceName(const char* host, const char* hostname);
+
+// The two guards above for one request. Returns nullptr when the request may pass,
+// otherwise the reason for a 403: a Host header that is not a device name, or an
+// Origin header of another site. Every request is checked, not only those that look
+// like a browser's: over plain HTTP browsers send no Sec-Fetch-* headers, and a
+// same-origin GET has no Origin either. An empty Host passes: browsers always send one.
+const char* refuseRequest(const char* origin, const char* host, const char* hostname);
+
 // POST /api/test-pattern: {"on": bool}.
 bool parseTestPattern(const char* body, size_t length, bool& on, ApiError& error);
 

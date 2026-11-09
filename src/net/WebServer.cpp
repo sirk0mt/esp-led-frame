@@ -459,7 +459,7 @@ void captivePortal(AsyncWebServerRequest* request, ArMiddlewareNext next) {
     next();
     return;
   }
-  const bool device = isDeviceHost(request->host().c_str(), kApAddress, app->config().hostname);
+  const bool device = isDeviceHost(request->host().c_str(), kApAddress, app->hostname());
   // Debug builds log every request in AP mode: what a phone asks shows why its
   // captive portal check passes or fails.
   LOG_D(kTag, "AP %s %s%s%s", request->client()->remoteIP().toString().c_str(),
@@ -471,24 +471,37 @@ void captivePortal(AsyncWebServerRequest* request, ArMiddlewareNext next) {
   next();
 }
 
-// --- Cross-site requests ---------------------------------------------------------
-// A page on another site could otherwise switch the LEDs, change the Wi-Fi network or
-// open /ws through the browser of someone in the same network: a POST with a text/plain
-// body and a WebSocket handshake need no CORS preflight. Browsers send Origin with
-// both, so a request whose Origin is not the device itself is refused. The web UI
-// (same origin) and clients without Origin (curl, scripts) are not affected.
+// --- Requests from other sites -------------------------------------------------------
+// A web page open in the browser of someone in the same network must not control the
+// device (refuseRequest() in ApiJson):
+//   - CSRF and cross-site WebSocket: a POST with a text/plain body and a WebSocket
+//     handshake need no CORS preflight, so the Origin header must be the device itself;
+//   - DNS rebinding: a site whose name later points to the device is the same origin
+//     for the browser, so the Host header must be a name of the device, for every
+//     request: over plain HTTP a browser cannot be told from curl by its headers.
 // Middlewares run after the body is received, so POST /api/ota checks this itself
 // before it writes to the flash (Ota.cpp).
 
-void sameOriginOnly(AsyncWebServerRequest* request, ArMiddlewareNext next) {
+void deviceOnly(AsyncWebServerRequest* request, ArMiddlewareNext next) {
   const AsyncWebHeader* origin = request->getHeader("Origin");
-  if (origin == nullptr || isSameOrigin(origin->value().c_str(), request->host().c_str())) {
+  const char* refusal = refuseRequest(origin != nullptr ? origin->value().c_str() : nullptr,
+                                      request->host().c_str(), app->hostname());
+  if (refusal == nullptr) {
     next();
     return;
   }
-  LOG_W(kTag, "%s refused: origin %s, host %s", request->url().c_str(), origin->value().c_str(),
-        request->host().c_str());
-  sendError(request, 403, "cross-origin request refused");
+  LOG_W(kTag, "%s refused: %s (origin %s, host %s)", request->url().c_str(), refusal,
+        origin != nullptr ? origin->value().c_str() : "-", request->host().c_str());
+  if (request->url().startsWith("/api/") || request->url() == "/ws") {
+    sendError(request, 403, refusal);
+    return;
+  }
+  // A page opened under another name: say how to reach the device.
+  char text[192];
+  std::snprintf(text, sizeof(text),
+                "403: %s.\nOpen the device by its IP address or as http://%s.local/\n", refusal,
+                app->hostname());
+  request->send(403, "text/plain; charset=utf-8", text);
 }
 
 void notFound(AsyncWebServerRequest* request) {
@@ -504,7 +517,7 @@ void notFound(AsyncWebServerRequest* request) {
 void WebServer::begin(App& target, WsHub& hub, Ota& ota) {
   app = &target;
   server.addMiddleware(captivePortal);   // Runs before every handler.
-  server.addMiddleware(sameOriginOnly);  // After the redirect of foreign hosts in AP mode.
+  server.addMiddleware(deviceOnly);      // After the redirect of foreign hosts in AP mode.
   hub.attach(server, target);
   ota.attach(server, target);
   using M = AsyncURIMatcher;

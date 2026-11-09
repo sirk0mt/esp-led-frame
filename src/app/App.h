@@ -86,6 +86,9 @@ class App {
   bool applyConfig(const Config& next);
   // GPIO driving the strip since start; config().ledPin differs until a restart.
   uint8_t ledPin() const;
+  // Hostname in use since start (mDNS <hostname>.local, the web server's name checks);
+  // config().hostname differs until a restart. Thread-safe: set once in begin().
+  const char* hostname() const { return hostname_; }
 
   // Thread-safe. Local time from the system clock in the configured time zone;
   // known is false until SNTP synchronized the clock.
@@ -254,6 +257,9 @@ class App {
   volatile uint32_t renderBeats_ = 0;         // increased by the render task every loop
   uint32_t nextRollbackCheckMs_ = 0;          // Arduino loop task only
   RollbackGuard rollbackGuard_;               // Arduino loop task only
+
+  // Set in begin() before the network starts, read-only afterwards.
+  char hostname_[Config::kHostnameMax + 1] = {};
 
   // Arduino loop task only.
   void updateStatusOverride();

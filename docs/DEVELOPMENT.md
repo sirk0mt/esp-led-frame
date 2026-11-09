@@ -234,6 +234,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.3.0 | sprawdzanie nowej wersji na GitHubie w interfejsie WWW (Device → Firmware) z linkiem do pliku `-ota.bin` dla wariantu płytki, pola `variant` i `repo` w `GET /api/info` |
 | 2.3.1 | poprawka bezpieczeństwa: żądania HTTP, uzgodnienie WebSocketu i aktualizacja firmware ze strony innej niż urządzenie (nagłówek `Origin`) dostają `403`, więc obca strona otwarta w przeglądarce w tej samej sieci nie zmieni stanu, konfiguracji ani firmware |
 | 2.3.2 | wycofanie nieudanej aktualizacji: nowy firmware po OTA zostaje na stałe po 30 s normalnej pracy, a reset wcześniej (awaria, ciągłe restarty) przywraca poprzedni. Firmware, którego zadanie renderowania stoi, wycofuje się samo po 2 min. Restart na żądanie i kolejna aktualizacja zatwierdzają go od razu |
+| 2.3.3 | poprawka bezpieczeństwa: ochrona przed DNS rebinding. Urządzenie odpowiada tylko pod swoimi nazwami (adres IP, `localhost`, nazwa urządzenia z domeną lokalną, np. `ledframe.local`, `ledframe.lan`), a pod każdą inną nazwą w nagłówku `Host` daje `403`, więc strona, której domena wskazuje urządzenie, nie odczyta ani nie zmieni jego ustawień |
 
 ### Gałęzie i wydania
 

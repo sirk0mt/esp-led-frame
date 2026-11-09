@@ -788,6 +788,126 @@ bool isSameOrigin(const char* origin, const char* host) {
   return false;
 }
 
+namespace {
+
+// Domains that only exist in local networks: special-use names (RFC 6762, RFC 8375),
+// the name ICANN keeps for private use (.internal), and names home routers use that
+// are not top-level domains on the internet (fritz.box, .lan, .home, ...).
+constexpr const char* kLocalDomains[] = {"local", "lan", "home", "home.arpa", "internal",
+                                         "intranet", "localdomain", "corp", "private", "box"};
+
+bool equalsIgnoreCase(const char* a, const char* b, size_t length) {
+  for (size_t i = 0; i < length; ++i) {
+    if (std::tolower(static_cast<unsigned char>(a[i])) !=
+        std::tolower(static_cast<unsigned char>(b[i]))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+// Four decimal numbers 0..255 separated by dots.
+bool isIpv4(const char* text, size_t length) {
+  int parts = 0;
+  size_t i = 0;
+  while (i < length) {
+    size_t digits = 0;
+    int value = 0;
+    while (i < length && text[i] >= '0' && text[i] <= '9' && digits < 4) {
+      value = value * 10 + (text[i] - '0');
+      ++digits;
+      ++i;
+    }
+    if (digits == 0 || digits > 3 || value > 255) {
+      return false;
+    }
+    ++parts;
+    if (i == length) {
+      break;
+    }
+    if (text[i] != '.' || parts == 4) {
+      return false;
+    }
+    ++i;
+    if (i == length) {
+      return false;  // trailing dot
+    }
+  }
+  return parts == 4;
+}
+
+}  // namespace
+
+bool isDeviceName(const char* host, const char* hostname) {
+  if (host == nullptr || hostname == nullptr) {
+    return false;
+  }
+  size_t length = std::strlen(host);
+  if (length > 2 && host[0] == '[') {
+    // IPv6 literal, with or without a port: "[fe80::1]" or "[fe80::1]:80".
+    const char* end = std::strchr(host, ']');
+    return end != nullptr && (end[1] == '\0' || end[1] == ':');
+  }
+  // Port: the part after the last colon, digits only.
+  const char* colon = std::strrchr(host, ':');
+  if (colon != nullptr) {
+    for (const char* c = colon + 1; *c != '\0'; ++c) {
+      if (*c < '0' || *c > '9') {
+        return false;
+      }
+    }
+    length = static_cast<size_t>(colon - host);
+  }
+  if (length > 0 && host[length - 1] == '.') {
+    --length;  // "ledframe.local." is the same name
+  }
+  if (length == 0) {
+    return false;
+  }
+  if (isIpv4(host, length)) {
+    return true;
+  }
+  if (length == 9 && equalsIgnoreCase(host, "localhost", 9)) {
+    return true;
+  }
+  const size_t nameLength = std::strlen(hostname);
+  if (nameLength == 0 || length < nameLength || !equalsIgnoreCase(host, hostname, nameLength)) {
+    return false;
+  }
+  if (length == nameLength) {
+    return true;
+  }
+  if (host[nameLength] != '.') {
+    return false;
+  }
+  // hostname + "." + something that ends in a local domain: "ledframe.lan" or
+  // "ledframe.fritz.box", where the domain is the whole rest or its last labels.
+  const char* rest = host + nameLength + 1;
+  const size_t restLength = length - nameLength - 1;
+  for (const char* domain : kLocalDomains) {
+    const size_t domainLength = std::strlen(domain);
+    if (restLength == domainLength && equalsIgnoreCase(rest, domain, domainLength)) {
+      return true;
+    }
+    if (restLength > domainLength && rest[restLength - domainLength - 1] == '.' &&
+        equalsIgnoreCase(rest + restLength - domainLength, domain, domainLength)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+const char* refuseRequest(const char* origin, const char* host, const char* hostname) {
+  const bool hasHost = host != nullptr && host[0] != '\0';
+  if (hasHost && !isDeviceName(host, hostname)) {
+    return "host name is not this device";
+  }
+  if (!isSameOrigin(origin, host)) {
+    return "cross-origin request refused";
+  }
+  return nullptr;
+}
+
 bool parseTestPattern(const char* body, size_t length, bool& on, ApiError& error) {
   error = ApiError{};
   JsonDocument doc;
