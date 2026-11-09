@@ -223,6 +223,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.2.0 | efekty `metaballs`, `swirl`, `candle`, czas z NTP, harmonogram, karty w UI i pasek informacji, wybór pinu danych w UI |
 | 2.2.1 | poprawka DNS: serwery DNS IPv6 z ogłoszeń routera (RDNSS), nieosiągalne bez adresu IPv6, są zastępowane serwerami IPv4 z DHCP, więc znów działa czas z NTP i harmonogram. Log połączenia Wi-Fi pokazuje bramę i serwery DNS |
 | 2.3.0 | sprawdzanie nowej wersji na GitHubie w interfejsie WWW (Device → Firmware) z linkiem do pliku `-ota.bin` dla wariantu płytki, pola `variant` i `repo` w `GET /api/info` |
+| 2.3.1 | poprawka bezpieczeństwa: żądania HTTP, uzgodnienie WebSocketu i aktualizacja firmware ze strony innej niż urządzenie (nagłówek `Origin`) dostają `403`, więc obca strona otwarta w przeglądarce w tej samej sieci nie zmieni stanu, konfiguracji ani firmware |
 
 ### Gałęzie i wydania
 

@@ -471,6 +471,26 @@ void captivePortal(AsyncWebServerRequest* request, ArMiddlewareNext next) {
   next();
 }
 
+// --- Cross-site requests ---------------------------------------------------------
+// A page on another site could otherwise switch the LEDs, change the Wi-Fi network or
+// open /ws through the browser of someone in the same network: a POST with a text/plain
+// body and a WebSocket handshake need no CORS preflight. Browsers send Origin with
+// both, so a request whose Origin is not the device itself is refused. The web UI
+// (same origin) and clients without Origin (curl, scripts) are not affected.
+// Middlewares run after the body is received, so POST /api/ota checks this itself
+// before it writes to the flash (Ota.cpp).
+
+void sameOriginOnly(AsyncWebServerRequest* request, ArMiddlewareNext next) {
+  const AsyncWebHeader* origin = request->getHeader("Origin");
+  if (origin == nullptr || isSameOrigin(origin->value().c_str(), request->host().c_str())) {
+    next();
+    return;
+  }
+  LOG_W(kTag, "%s refused: origin %s, host %s", request->url().c_str(), origin->value().c_str(),
+        request->host().c_str());
+  sendError(request, 403, "cross-origin request refused");
+}
+
 void notFound(AsyncWebServerRequest* request) {
   if (request->url().startsWith("/api/")) {
     sendError(request, 404, "not found");
@@ -483,7 +503,8 @@ void notFound(AsyncWebServerRequest* request) {
 
 void WebServer::begin(App& target, WsHub& hub, Ota& ota) {
   app = &target;
-  server.addMiddleware(captivePortal);  // Runs before every handler.
+  server.addMiddleware(captivePortal);   // Runs before every handler.
+  server.addMiddleware(sameOriginOnly);  // After the redirect of foreign hosts in AP mode.
   hub.attach(server, target);
   ota.attach(server, target);
   using M = AsyncURIMatcher;

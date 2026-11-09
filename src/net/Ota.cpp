@@ -71,6 +71,15 @@ void onUpload(AsyncWebServerRequest* request, const String& /*filename*/, size_t
     }
     upload = Upload{};
     upload.owner = request;
+    // The server middleware refuses cross-site requests only after the whole body
+    // arrived, when the image would already be in the flash (WebServer.cpp).
+    const AsyncWebHeader* origin = request->getHeader("Origin");
+    if (origin != nullptr && !isSameOrigin(origin->value().c_str(), request->host().c_str())) {
+      upload.status = 403;
+      upload.error = "cross-origin request refused";
+      LOG_W(kTag, "update rejected: %s", upload.error);
+      return;
+    }
     if (!authorized(request)) {
       upload.status = 401;
       upload.error = "wrong or missing OTA password";

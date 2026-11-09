@@ -762,6 +762,32 @@ bool isDeviceHost(const char* host, const char* apAddress, const char* hostname)
   return true;
 }
 
+bool isSameOrigin(const char* origin, const char* host) {
+  if (origin == nullptr || origin[0] == '\0') {
+    return true;
+  }
+  if (host == nullptr || host[0] == '\0') {
+    return false;
+  }
+  static const char* const kSchemes[] = {"http://", "https://"};
+  for (const char* scheme : kSchemes) {
+    const size_t schemeLength = std::strlen(scheme);
+    if (std::strlen(origin) != schemeLength + std::strlen(host)) {
+      continue;
+    }
+    bool same = true;
+    for (size_t i = 0; origin[i] != '\0' && same; ++i) {
+      const char expected = i < schemeLength ? scheme[i] : host[i - schemeLength];
+      same = std::tolower(static_cast<unsigned char>(origin[i])) ==
+             std::tolower(static_cast<unsigned char>(expected));
+    }
+    if (same) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool parseTestPattern(const char* body, size_t length, bool& on, ApiError& error) {
   error = ApiError{};
   JsonDocument doc;
