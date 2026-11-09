@@ -71,12 +71,14 @@ void onUpload(AsyncWebServerRequest* request, const String& /*filename*/, size_t
     }
     upload = Upload{};
     upload.owner = request;
-    // The server middleware refuses cross-site requests only after the whole body
-    // arrived, when the image would already be in the flash (WebServer.cpp).
+    // The server middleware refuses requests from other sites only after the whole
+    // body arrived, when the image would already be in the flash (WebServer.cpp).
     const AsyncWebHeader* origin = request->getHeader("Origin");
-    if (origin != nullptr && !isSameOrigin(origin->value().c_str(), request->host().c_str())) {
+    const char* refusal = refuseRequest(origin != nullptr ? origin->value().c_str() : nullptr,
+                                        request->host().c_str(), app->hostname());
+    if (refusal != nullptr) {
       upload.status = 403;
-      upload.error = "cross-origin request refused";
+      upload.error = refusal;
       LOG_W(kTag, "update rejected: %s", upload.error);
       return;
     }

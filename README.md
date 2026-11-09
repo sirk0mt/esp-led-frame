@@ -2,7 +2,7 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.3.2** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
+Wersja firmware: **2.3.3** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
 
 ## Spis treści
 
@@ -240,6 +240,7 @@ Kasuje to też zapisaną sieć Wi-Fi i hasło OTA. Żeby tylko zapomnieć sieć 
 | Matryca pokazuje czerwony trójkąt | Urządzenie nie ma sieci albo nie może się z nią połączyć i działa we własnej sieci `LedFrame-XXXX`. Skonfiguruj Wi-Fi jak w rozdziale [Pierwsza konfiguracja Wi-Fi](#pierwsza-konfiguracja-wi-fi). |
 | Telefon po połączeniu z `LedFrame-XXXX` nie otwiera żadnej strony, nawet `http://192.168.4.1/setup.html` | Wyłącz na chwilę VPN i ochronę sieci publicznych (np. „Bezpieczne Wi-Fi” w Samsungu) albo użyj komputera. Przyczyna tego przypadku nie jest jeszcze wyjaśniona. |
 | `http://ledframe.local` nie działa | System albo przeglądarka nie obsługuje adresów `.local` (część telefonów z Androidem). Użyj adresu IP z routera albo z logu startu. Nowa nazwa urządzenia działa dopiero po restarcie. |
+| Strona pokazuje `403: host name is not this device` | Urządzenie otwarto pod nazwą DNS, która nie jest jego nazwą, np. `lights.lan`. Urządzenie odpowiada tylko pod adresem IP, `localhost` i swoją nazwą z domeną lokalną, np. `ledframe.local` albo `ledframe.lan`. Chroni to przed atakiem DNS rebinding ([API.md](docs/API.md)). Użyj adresu IP albo nadaj urządzeniu nazwę zgodną z nazwą w routerze. |
 | Kolory są zamienione, np. czerwony świeci na zielono | Device → LEDs: „Show test pattern” i zmieniaj „Color order”, aż pierwsza dioda będzie biała, a kolejne trzy części: czerwona, zielona i niebieska. |
 | Obraz jest odwrócony, przesunięty albo co drugi wiersz idzie w złą stronę | Device → LEDs: narożnik startowy, obrót, wężyk (Serpentine) i odbicia. Wzór testowy pokazuje, gdzie zaczyna się pasek. |
 | Pojedyncze diody na chwilę mają zły kolor, zwłaszcza przy otwartym podglądzie na żywo | Zakłócenia sygnału przy ruchu Wi-Fi albo za słaby sygnał 3,3 V. Pomaga konwerter poziomów, inny pin niż GPIO 2 i wyłączenie podglądu. Opis przyczyny: [docs/IDEAS.md](docs/IDEAS.md). |

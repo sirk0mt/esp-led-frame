@@ -172,6 +172,7 @@ void App::begin() {
   }
 
   // Wi-Fi last: it is non-blocking, and the render task already shows the effect.
+  std::memcpy(hostname_, config.hostname, sizeof(hostname_));
   wifi.begin(config.hostname, config.wifiSsid, config.wifiPassword);
   webServer.begin(*this, wsHub, ota);  // After WiFi.mode(): the TCP stack must be running.
   ota.beginArduinoOta(*this, config.hostname, config.otaPassword);

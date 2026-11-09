@@ -1,10 +1,18 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.2. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.3. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
 
-Od 2.3.1 żądanie z przeglądarki ze strony innej niż samo urządzenie (nagłówek `Origin` różny od `http://` + nagłówek `Host`) dostaje `403`, także uzgadnianie WebSocketu i `POST /api/ota`. Dzięki temu obca strona otwarta w przeglądarce kogoś z tej sieci nie zmieni urządzenia. Interfejs WWW urządzenia i klienci bez nagłówka `Origin` (curl, PowerShell, skrypty) działają bez zmian.
+Obca strona otwarta w przeglądarce kogoś z tej sieci nie może sterować urządzeniem. Dwie reguły dotyczą każdego żądania, także uzgadniania WebSocketu i `POST /api/ota`, które jest odrzucane przed zapisem do flash:
+
+- **Nazwa urządzenia** (od 2.3.3): nagłówek `Host` musi być jedną z nazw urządzenia, inaczej odpowiedź to `403 {"error":"host name is not this device"}`. Chroni to przed DNS rebinding, czyli stroną, której domena po chwili wskazuje adres urządzenia. Dozwolone nazwy:
+  - adres IPv4, np. `192.168.0.14`, albo adres IPv6 w nawiasach;
+  - `localhost`, np. przy tunelu SSH;
+  - nazwa urządzenia (`hostname`, domyślnie `ledframe`) sama albo z domeną lokalną: `ledframe.local`, `ledframe.lan`, `ledframe.home`, `ledframe.home.arpa`, `ledframe.internal`, `ledframe.fritz.box`, a ogólnie dowolna domena kończąca się na `local`, `lan`, `home`, `home.arpa`, `internal`, `intranet`, `localdomain`, `corp`, `private` albo `box`.
+
+  Port i końcowa kropka nie mają znaczenia, wielkość liter też. Nazwa z publiczną domeną, np. `ledframe.example.com`, oraz nazwa DNS bez nazwy urządzenia na początku, np. `lights.lan`, nie działają, także z curl. Użyj adresu IP albo zmień nazwę urządzenia (`hostname`) tak, żeby pasowała. Strona otwarta pod inną nazwą dostaje krótki tekst z adresem urządzenia. Żądanie bez nagłówka `Host` (HTTP/1.0) przechodzi, bo przeglądarki zawsze go wysyłają.
+- **Ta sama strona** (od 2.3.1): żądanie z nagłówkiem `Origin` innym niż `http://` + nagłówek `Host` dostaje `403 {"error":"cross-origin request refused"}`. Chroni to przed CSRF. Interfejs WWW urządzenia i klienci bez nagłówka `Origin` (curl, PowerShell, skrypty) działają bez zmian.
 
 ## Spis treści
 
@@ -89,7 +97,7 @@ Odpowiedzi mają nagłówek `Content-Type: application/json; charset=utf-8`, wi�
 | 201 | Utworzono preset |
 | 202 | Skan Wi-Fi uruchomiony |
 | 400 | Błędne dane, treść `{"error":"..."}` |
-| 403 | Żądanie ze strony innej niż urządzenie (nagłówek `Origin`) |
+| 403 | Nazwa w nagłówku `Host` nie jest nazwą urządzenia albo żądanie przyszło ze strony innej niż urządzenie (nagłówek `Origin`) |
 | 404 | Nieznany adres albo preset |
 | 409 | Brak aktywnego efektu albo pełna lista presetów |
 | 413 | Za duże body |
@@ -599,7 +607,7 @@ Przebieg:
 | 200 | obraz zapisany, restart za 1 s |
 | 400 | brak pliku, obraz niepełny albo nie jest firmware ESP32. Diody wracają do pracy |
 | 401 | złe albo brakujące hasło OTA, z nagłówkiem `WWW-Authenticate: Basic`. Żądanie z nagłówkiem `X-Requested-With` (tak wysyła interfejs WWW) dostaje 401 bez `WWW-Authenticate`, bo inaczej przeglądarka pokazuje własne okno logowania i wstrzymuje żądanie |
-| 403 | żądanie ze strony innej niż urządzenie (nagłówek `Origin`), odrzucone przed zapisem do flash |
+| 403 | nazwa w nagłówku `Host` nie jest nazwą urządzenia albo żądanie przyszło ze strony innej niż urządzenie (nagłówek `Origin`); odrzucone przed zapisem do flash |
 | 409 | trwa inna aktualizacja |
 | 500 | błąd zapisu do flash |
 

@@ -498,6 +498,93 @@ void test_same_origin() {
   TEST_ASSERT_FALSE(ledframe::isSameOrigin("http://192.168.0.14", nullptr));
 }
 
+void test_device_name() {
+  const char* device[] = {"192.168.0.14",
+                          "192.168.0.14:80",
+                          "192.168.4.1",
+                          "10.0.0.255:8080",
+                          "[fe80::1]",
+                          "[fe80::1]:80",
+                          "localhost",
+                          "LOCALHOST:8080",
+                          "ledframe",
+                          "ledframe:80",
+                          "ledframe.local",
+                          "LedFrame.LOCAL",
+                          "ledframe.local.",
+                          "ledframe.local:80",
+                          "ledframe.lan",
+                          "ledframe.home",
+                          "ledframe.home.arpa",
+                          "ledframe.internal",
+                          "ledframe.localdomain",
+                          "ledframe.fritz.box",
+                          "ledframe.office.lan",
+                          "ledframe.box",
+                          "ledframe.",
+                          "192.168.0.14."};
+  for (const char* host : device) {
+    TEST_ASSERT_TRUE_MESSAGE(ledframe::isDeviceName(host, "ledframe"), host);
+  }
+  // Names anyone can own on the internet, other devices and malformed values.
+  const char* foreign[] = {"evil.example",
+                           "evil.example:80",
+                           "ledframe.evil.com",
+                           "ledframe.local.evil.com",
+                           "ledframe.lan.evil.com",
+                           "ledframe.arpa",
+                           "ledframe.boxes",
+                           "ledframe.xlan",
+                           "ledframes.local",
+                           "led.local",
+                           "otherframe.local",
+                           "lights.lan",
+                           "ledframe.local:abc",
+                           "192.168.0",
+                           "192.168.0.256",
+                           "1234.1.1.1",
+                           "192.168.0.14.evil.com",
+                           "localhost.evil.com",
+                           "[fe80::1",
+                           ".local",
+                           ":80",
+                           ""};
+  for (const char* host : foreign) {
+    TEST_ASSERT_FALSE_MESSAGE(ledframe::isDeviceName(host, "ledframe"), host);
+  }
+  TEST_ASSERT_FALSE(ledframe::isDeviceName(nullptr, "ledframe"));
+  TEST_ASSERT_FALSE(ledframe::isDeviceName("ledframe.local", nullptr));
+  TEST_ASSERT_FALSE(ledframe::isDeviceName(".local", ""));
+  // Another hostname: its own names pass, the default one does not.
+  TEST_ASSERT_TRUE(ledframe::isDeviceName("kitchen.local", "kitchen"));
+  TEST_ASSERT_FALSE(ledframe::isDeviceName("ledframe.local", "kitchen"));
+}
+
+void test_refuse_request() {
+  using ledframe::refuseRequest;
+  // The web UI under a device name, with or without Origin (same-origin GET has none),
+  // and curl or scripts with the IP address.
+  TEST_ASSERT_NULL(refuseRequest("http://ledframe.local", "ledframe.local", "ledframe"));
+  TEST_ASSERT_NULL(refuseRequest(nullptr, "192.168.0.14", "ledframe"));
+  TEST_ASSERT_NULL(refuseRequest(nullptr, "ledframe.lan", "ledframe"));
+  // No Host header at all (HTTP/1.0 clients): browsers always send one.
+  TEST_ASSERT_NULL(refuseRequest(nullptr, "", "ledframe"));
+  TEST_ASSERT_NULL(refuseRequest(nullptr, nullptr, "ledframe"));
+  // DNS rebinding: same origin for the browser, but the name is not the device's;
+  // a same-origin GET without Origin too.
+  TEST_ASSERT_EQUAL_STRING("host name is not this device",
+                           refuseRequest("http://evil.example", "evil.example", "ledframe"));
+  TEST_ASSERT_EQUAL_STRING("host name is not this device",
+                           refuseRequest(nullptr, "evil.example", "ledframe"));
+  TEST_ASSERT_EQUAL_STRING("host name is not this device",
+                           refuseRequest(nullptr, "ledframe.example.com", "ledframe"));
+  // CSRF: the device's name, a page of another site.
+  TEST_ASSERT_EQUAL_STRING("cross-origin request refused",
+                           refuseRequest("http://evil.example", "192.168.0.14", "ledframe"));
+  TEST_ASSERT_EQUAL_STRING("cross-origin request refused",
+                           refuseRequest("http://evil.example", "", "ledframe"));
+}
+
 void test_parse_test_pattern() {
   ledframe::ApiError error;
   bool on = false;
@@ -707,6 +794,8 @@ int main() {
   RUN_TEST(test_parse_test_pattern);
   RUN_TEST(test_captive_portal_hosts);
   RUN_TEST(test_same_origin);
+  RUN_TEST(test_device_name);
+  RUN_TEST(test_refuse_request);
   RUN_TEST(test_write_info_and_scan);
   RUN_TEST(test_small_buffers);
   RUN_TEST(test_size_query_matches_output);
