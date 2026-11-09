@@ -468,6 +468,36 @@ void test_captive_portal_hosts() {
   TEST_ASSERT_FALSE(ledframe::isDeviceHost(".local", ap, ""));
 }
 
+void test_same_origin() {
+  // No Origin header: curl, scripts and other non-browser clients.
+  TEST_ASSERT_TRUE(ledframe::isSameOrigin(nullptr, "192.168.0.14"));
+  TEST_ASSERT_TRUE(ledframe::isSameOrigin("", "192.168.0.14"));
+  // The web UI served by the device itself.
+  const char* same[][2] = {{"http://192.168.0.14", "192.168.0.14"},
+                           {"http://ledframe.local", "ledframe.local"},
+                           {"HTTP://LedFrame.Local", "ledframe.local"},
+                           {"http://192.168.4.1:8080", "192.168.4.1:8080"},
+                           {"https://ledframe.local", "ledframe.local"}};
+  for (const auto& pair : same) {
+    TEST_ASSERT_TRUE_MESSAGE(ledframe::isSameOrigin(pair[0], pair[1]), pair[0]);
+  }
+  // Pages of other sites, sandboxed pages and malformed values.
+  const char* other[][2] = {{"http://evil.example", "192.168.0.14"},
+                            {"null", "192.168.0.14"},
+                            {"http://192.168.0.14:8080", "192.168.0.14"},
+                            {"http://192.168.0.14", "192.168.0.14:8080"},
+                            {"http://192.168.0.140", "192.168.0.14"},
+                            {"http://192.168.0.14/", "192.168.0.14"},
+                            {"ftp://192.168.0.14", "192.168.0.14"},
+                            {"192.168.0.14", "192.168.0.14"},
+                            {"http://ledframe.local.evil.example", "ledframe.local"},
+                            {"http://192.168.0.14", ""}};
+  for (const auto& pair : other) {
+    TEST_ASSERT_FALSE_MESSAGE(ledframe::isSameOrigin(pair[0], pair[1]), pair[0]);
+  }
+  TEST_ASSERT_FALSE(ledframe::isSameOrigin("http://192.168.0.14", nullptr));
+}
+
 void test_parse_test_pattern() {
   ledframe::ApiError error;
   bool on = false;
@@ -676,6 +706,7 @@ int main() {
   RUN_TEST(test_preset_paths);
   RUN_TEST(test_parse_test_pattern);
   RUN_TEST(test_captive_portal_hosts);
+  RUN_TEST(test_same_origin);
   RUN_TEST(test_write_info_and_scan);
   RUN_TEST(test_small_buffers);
   RUN_TEST(test_size_query_matches_output);

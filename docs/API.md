@@ -1,8 +1,10 @@
 # API urządzenia esp-led-frame v2
 
-Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.0. Przy polach dodanych później podana jest wersja, od której działają.
+Interfejs REST na porcie 80 i WebSocket `/ws`. Wszystkie odpowiedzi API są w JSON (`Content-Type: application/json`), poza `GET /api/paint`. Przykłady używają adresu `ledframe.local`. W trybie AP adres to `192.168.4.1`. Opis dotyczy firmware 2.3.1. Przy polach dodanych później podana jest wersja, od której działają.
 
 API nie ma uwierzytelniania, poza opcjonalnym hasłem do aktualizacji firmware. Każdy w tej samej sieci może zmieniać stan i konfigurację.
+
+Od 2.3.1 żądanie z przeglądarki ze strony innej niż samo urządzenie (nagłówek `Origin` różny od `http://` + nagłówek `Host`) dostaje `403`, także uzgadnianie WebSocketu i `POST /api/ota`. Dzięki temu obca strona otwarta w przeglądarce kogoś z tej sieci nie zmieni urządzenia. Interfejs WWW urządzenia i klienci bez nagłówka `Origin` (curl, PowerShell, skrypty) działają bez zmian.
 
 ## Spis treści
 
@@ -87,6 +89,7 @@ Odpowiedzi mają nagłówek `Content-Type: application/json; charset=utf-8`, wi�
 | 201 | Utworzono preset |
 | 202 | Skan Wi-Fi uruchomiony |
 | 400 | Błędne dane, treść `{"error":"..."}` |
+| 403 | Żądanie ze strony innej niż urządzenie (nagłówek `Origin`) |
 | 404 | Nieznany adres albo preset |
 | 409 | Brak aktywnego efektu albo pełna lista presetów |
 | 413 | Za duże body |
@@ -596,6 +599,7 @@ Przebieg:
 | 200 | obraz zapisany, restart za 1 s |
 | 400 | brak pliku, obraz niepełny albo nie jest firmware ESP32. Diody wracają do pracy |
 | 401 | złe albo brakujące hasło OTA, z nagłówkiem `WWW-Authenticate: Basic`. Żądanie z nagłówkiem `X-Requested-With` (tak wysyła interfejs WWW) dostaje 401 bez `WWW-Authenticate`, bo inaczej przeglądarka pokazuje własne okno logowania i wstrzymuje żądanie |
+| 403 | żądanie ze strony innej niż urządzenie (nagłówek `Origin`), odrzucone przed zapisem do flash |
 | 409 | trwa inna aktualizacja |
 | 500 | błąd zapisu do flash |
 

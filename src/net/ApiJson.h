@@ -143,6 +143,15 @@ size_t writeInfo(const SystemInfo& info, char* out, size_t capacity);
 // is redirected to the setup page in AP mode.
 bool isDeviceHost(const char* host, const char* apAddress, const char* hostname);
 
+// Guard against cross-site requests (CSRF) and cross-site WebSocket hijacking: a web
+// page on another site may not change the device through the visitor's browser.
+// origin is the Origin header (nullptr when absent), host the Host header. Without
+// an Origin header the request did not come from a cross-site browser page (curl,
+// scripts), so it passes. With one, it passes only when the page came from the
+// device itself: "http://" or "https://" followed by exactly the Host header, in any
+// letter case. "null", other hosts, other ports and anything with a path fail.
+bool isSameOrigin(const char* origin, const char* host);
+
 // POST /api/test-pattern: {"on": bool}.
 bool parseTestPattern(const char* body, size_t length, bool& on, ApiError& error);
 

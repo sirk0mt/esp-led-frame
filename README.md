@@ -2,7 +2,7 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.3.0** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
+Wersja firmware: **2.3.1** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
 
 ## Spis treści
 
