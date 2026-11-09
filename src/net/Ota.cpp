@@ -86,6 +86,10 @@ void onUpload(AsyncWebServerRequest* request, const String& /*filename*/, size_t
       LOG_W(kTag, "update rejected: %s", upload.error);
       return;
     }
+    // The new image goes to the other partition, where the previous firmware is. A
+    // running firmware still on trial would have nothing to roll back to, and an
+    // update that reaches it works, so it is kept first (App::confirmFirmware()).
+    app->confirmFirmware("another update started");
     if (!Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH)) {
       fail(500, Update.errorString());
       return;
@@ -187,6 +191,8 @@ void Ota::beginArduinoOta(App& target, const char* hostname, const char* passwor
   ArduinoOTA.setMdnsEnabled(false);  // WifiManager runs mDNS for <hostname>.local.
   ArduinoOTA.onStart([]() {
     LOG_I(kTag, "ArduinoOTA update started");
+    // Called after Update.begin() but before the first write: see onUpload().
+    app->confirmFirmware("another update started");
     app->beginOta();
     app->flushNow();  // ArduinoOTA blocks the loop task until it is done.
   });
