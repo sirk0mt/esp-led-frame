@@ -61,6 +61,27 @@ class LedOutput : public IFrameSink {
   uint16_t activeCount_ = 0;
   uint8_t pin_ = kDefaultLedPin;
   ColorOrder order_ = kDefaultColorOrder;
+
+#if defined(LEDFRAME_LED_CHECK)
+  // Diagnostic build (-DLEDFRAME_LED_CHECK): a pulse counter (PCNT) on the data pin
+  // counts the rising edges the strip received. Every WS2812B bit starts with one, so
+  // a correct frame of n LEDs has exactly 24 * n; any other number is a corrupted
+  // frame. checkFrame() runs at the start of show() for the frame sent before.
+  void checkFrame();
+  void logCheck(uint32_t nowMs);
+  void* counter_ = nullptr;     // pcnt_unit_handle_t
+  bool checkFailed_ = false;    // the counter could not start
+  int lastCount_ = 0;           // counter at the start of the previous frame
+  uint16_t lastLeds_ = 0;       // LEDs sent in the previous frame, 0 = not counted
+  uint32_t checkFrames_ = 0;    // frames checked since the last log
+  uint32_t badFrames_ = 0;
+  uint32_t totalFrames_ = 0;    // since start
+  uint32_t totalBad_ = 0;
+  uint32_t earlyReturns_ = 0;   // show() returned before the frame was out
+  int minEdges_ = 0;
+  int maxEdges_ = 0;
+  uint32_t nextLogMs_ = 0;
+#endif
 };
 
 }  // namespace ledframe

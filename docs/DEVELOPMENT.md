@@ -62,6 +62,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 - **Pozostałe zadania** wysyłają komendy (`effects/Command.h`) przez kolejkę FreeRTOS: pętla Arduino (konsola, zapis plików, `WifiManager::tick()` co 10 ms) i zadanie AsyncTCP (obsługa HTTP i WebSocket). Pełna kolejka daje w API `503`.
 - **Komendy są stosowane między klatkami**, nigdy w trakcie rysowania. Komenda budzi zadanie od razu, więc nie czeka na następną klatkę.
 - **Termin klatki ustala tylko silnik** z dokładnością do mikrosekund, więc 60 FPS to dokładnie 60 klatek na sekundę. Po przestoju silnik zaczyna od bieżącej chwili, bez serii zaległych klatek.
+- **Zapis do flash czeka na przerwę między klatkami.** W czasie operacji na flash cache procesora jest wyłączony na obu rdzeniach. Przerwanie RMT, które dosyła dane do diod, nie jest w IRAM (`CONFIG_RMT_TX_ISR_CACHE_SAFE` jest wyłączone w frameworku), więc czeka razem z nim. Klatka wysyłana w tym czasie dochodzi uszkodzona: RMT powtarza stare dane, w pomiarze nawet 28 000 bitów zamiast 3600. Dlatego każdy zapis plików i stanu firmware (`App::FlashWrite`) zatrzymuje zadanie `render` między dwiema klatkami (`FastLED.show()` wraca dopiero po wysłaniu klatki) i wznawia je po zapisie. Animacja stoi wtedy przez 3–4 klatki zamiast pokazać uszkodzoną. Nowy kod, który pisze do flash (LittleFS, NVS, `esp_ota_*`) poza aktualizacją firmware, musi robić to w `FlashWrite`.
 - **Migawka stanu** (`StateSnapshot`) jest publikowana przez zadanie `render` pod muteksem. API i WebSocket czytają kopię przez `App::snapshot()`. Jej `version` rośnie przy każdej zmianie, a `WsHub` rozgłasza nowy stan najwyżej co 50 ms.
 
 ### Droga klatki
@@ -145,6 +146,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 | `MAX_LEDS` | `[common] max_leds` | największa liczba diod; od niej zależą rozmiary płócien i slotów efektów |
 | `LOG_LEVEL` | środowisko | 4 (debug) w `esp32dev`, 3 (info) w `esp32dev-release` |
 | `LEDFRAME_CONSOLE` | `esp32dev` | konsola szeregowa |
+| `LEDFRAME_LED_CHECK` | `esp32dev-ledcheck` | diagnostyka: licznik impulsów (PCNT) na pinie danych liczy zbocza narastające, które dotarły do diod. Poprawna klatka *n* diod ma ich dokładnie 24·*n*. Co 10 s log `LED check: … frames, … bad`. Służy do pomiaru błędnych klatek, np. przy zmianach wyjścia na diody albo przydziału rdzeni; nie trafia do wydań |
 | `LEDFRAME_VARIANT` | `esp32dev`, `esp32dev-release` | wariant firmware w `GET /api/info`. Interfejs WWW wskazuje na jego podstawie plik `esp-led-frame-<wersja>-<wariant>-ota.bin` nowszego wydania. `esp32dev-ota` dziedziczy `esp32dev` |
 | `FASTLED_RMT_MEM_BLOCKS_NETWORK_MODE=2` | `[esp32_base]` | większy bufor sterownika RMT przy działającym Wi-Fi ([IDEAS.md](IDEAS.md#wyjście-na-diody-odporne-na-wi-fi)) |
 | `-Wall -Wextra` | `build_src_flags` | ostrzeżenia tylko dla kodu w `src/`; ostrzeżenia z FastLED i frameworka nie są nowymi ostrzeżeniami projektu |
@@ -235,6 +237,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.3.1 | poprawka bezpieczeństwa: żądania HTTP, uzgodnienie WebSocketu i aktualizacja firmware ze strony innej niż urządzenie (nagłówek `Origin`) dostają `403`, więc obca strona otwarta w przeglądarce w tej samej sieci nie zmieni stanu, konfiguracji ani firmware |
 | 2.3.2 | wycofanie nieudanej aktualizacji: nowy firmware po OTA zostaje na stałe po 30 s normalnej pracy, a reset wcześniej (awaria, ciągłe restarty) przywraca poprzedni. Firmware, którego zadanie renderowania stoi, wycofuje się samo po 2 min. Restart na żądanie i kolejna aktualizacja zatwierdzają go od razu |
 | 2.3.3 | poprawka bezpieczeństwa: ochrona przed DNS rebinding. Urządzenie odpowiada tylko pod swoimi nazwami (adres IP, `localhost`, nazwa urządzenia z domeną lokalną, np. `ledframe.local`, `ledframe.lan`), a pod każdą inną nazwą w nagłówku `Host` daje `403`, więc strona, której domena wskazuje urządzenie, nie odczyta ani nie zmieni jego ustawień |
+| 2.3.4 | poprawka migotania: zapis plików (stan, presety, konfiguracja, obraz `paint`) i stanu firmware czeka na przerwę między klatkami, więc nie psuje klatki wysyłanej do diod. W pomiarze 93 uszkodzone klatki na 115 zapisów przed poprawką, 0 po niej. Diagnostyczne środowisko `esp32dev-ledcheck` liczy uszkodzone klatki |
 
 ### Gałęzie i wydania
 

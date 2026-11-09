@@ -147,6 +147,7 @@ class App {
     kOtaMode,  // value 1: LEDs off and rendering paused; 0: resume
     kDither,   // value 1: on, 0: off
     kGamma,    // value 1: on, 0: off
+    kFlashWrite,  // no value: wakes the render task so it pauses for a flash write
   };
 
   struct Message {
@@ -249,6 +250,29 @@ class App {
 
   // Render task only: when the engine gets the wall time again (once per second).
   uint32_t nextWallTimeMs_ = 0;
+
+  // Flash writes and the LEDs. While the flash is written the CPU cache is off on both
+  // cores, and the RMT interrupt that feeds the strip (not in IRAM) waits for it: a
+  // frame being sent comes out corrupted. FlashWrite waits until the render task is
+  // between two frames (FastLED.show() returns once a frame is out) and keeps it there
+  // until the write is done; one or two frames are skipped instead. Any task, one
+  // writer at a time; the render task itself must not use it.
+  class FlashWrite {
+   public:
+    explicit FlashWrite(App& app) : app_(app) { app_.beginFlashWrite(); }
+    ~FlashWrite() { app_.endFlashWrite(); }
+    FlashWrite(const FlashWrite&) = delete;
+    FlashWrite& operator=(const FlashWrite&) = delete;
+
+   private:
+    App& app_;
+  };
+  void beginFlashWrite();
+  void endFlashWrite();
+  void pauseForFlashWrite();                  // render task
+  SemaphoreHandle_t flashLock_ = nullptr;     // one writer at a time
+  SemaphoreHandle_t renderPaused_ = nullptr;  // given by the render task once it waits
+  volatile bool flashWriting_ = false;
 
   // Rollback: checkFirmware() at start, updateRollback() in the Arduino loop task.
   void checkFirmware();

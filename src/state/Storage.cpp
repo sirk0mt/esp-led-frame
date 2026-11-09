@@ -207,6 +207,15 @@ void Storage::flushAll() {
   }
 }
 
+bool Storage::due(uint32_t nowMs) const {
+  for (uint8_t i = 0; i < fileCount_; ++i) {
+    if (files_[i].pending && static_cast<int32_t>(nowMs - files_[i].dueMs) >= 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool Storage::pending() const {
   for (uint8_t i = 0; i < fileCount_; ++i) {
     if (files_[i].pending) {

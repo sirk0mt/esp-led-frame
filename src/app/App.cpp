@@ -48,6 +48,9 @@ constexpr uint32_t kRenderStackBytes = 6144;
 constexpr UBaseType_t kRenderPriority = 3;
 constexpr BaseType_t kRenderCore = 1;
 constexpr uint32_t kStatsWindowMs = 1000;
+// Longest wait for the render task to pause for a flash write. It waits for messages
+// at most one frame (100 ms at the lowest FPS), and a message wakes it at once.
+constexpr uint32_t kRenderPauseWaitMs = 200;
 constexpr uint32_t kWallTimeIntervalMs = 1000;  // the engine's wall time
 constexpr uint32_t kClockCheckMs = 1000;        // time zone and SNTP start
 constexpr uint32_t kScheduleCheckMs = 1000;     // on/off schedule
@@ -131,7 +134,10 @@ void App::begin() {
   queue_ = xQueueCreate(kQueueLength, sizeof(Message));
   paintQueue_ = xQueueCreate(kPaintQueueLength, sizeof(PaintOp));
   mutex_ = xSemaphoreCreateMutex();
-  if (queue_ == nullptr || paintQueue_ == nullptr || mutex_ == nullptr) {
+  flashLock_ = xSemaphoreCreateMutex();
+  renderPaused_ = xSemaphoreCreateBinary();
+  if (queue_ == nullptr || paintQueue_ == nullptr || mutex_ == nullptr || flashLock_ == nullptr ||
+      renderPaused_ == nullptr) {
     LOG_E(kTag, "cannot create queue or mutex");
     return;
   }
@@ -195,10 +201,10 @@ void App::loop() {
   updateRollback();
   if (flushRequested_) {
     flushRequested_ = false;
-    storage.flushAll();
+    flushNow();
   }
   if (restartRequested_ && static_cast<int32_t>(millis() - restartAtMs_) >= 0) {
-    storage.flushAll();  // Pending state and presets reach the flash first.
+    flushNow();  // Pending state and presets reach the flash first.
     // A restart asked for over HTTP or the console shows the firmware works; without
     // this the restart would start the previous firmware again.
     confirmFirmware("restart requested");
@@ -253,7 +259,7 @@ void App::updateRollback() {
       // Another task may have kept it in the meantime (restart, update).
       if (firmwarePending_.exchange(false)) {
         LOG_E(kTag, "render task stopped, rolling the update back");
-        storage.flushAll();
+        flushNow();
         // Restarts into the previous firmware; returns only on an error.
         const esp_err_t result = esp_ota_mark_app_invalid_rollback_and_reboot();
         LOG_E(kTag, "cannot roll back: %s", esp_err_to_name(result));
@@ -266,11 +272,53 @@ void App::confirmFirmware(const char* reason) {
   if (!firmwarePending_.exchange(false)) {
     return;
   }
-  const esp_err_t result = esp_ota_mark_app_valid_cancel_rollback();
+  esp_err_t result = ESP_OK;
+  {
+    FlashWrite write(*this);  // The app state lives in the flash (otadata).
+    result = esp_ota_mark_app_valid_cancel_rollback();
+  }
   if (result == ESP_OK) {
     LOG_I(kTag, "new firmware kept (%s)", reason);
   } else {
     LOG_E(kTag, "cannot keep the new firmware: %s", esp_err_to_name(result));
+  }
+}
+
+// Asks the render task to stop between two frames and waits until it does. A render
+// task stuck elsewhere does not block the write for long: after kRenderPauseWaitMs the
+// write goes ahead and may corrupt a frame.
+void App::beginFlashWrite() {
+  if (flashLock_ == nullptr) {
+    return;
+  }
+  xSemaphoreTake(flashLock_, portMAX_DELAY);
+  if (renderTask_ == nullptr) {
+    return;  // Before the render task starts nothing is sent to the strip.
+  }
+  xSemaphoreTake(renderPaused_, 0);  // A late answer to an earlier write.
+  flashWriting_ = true;
+  Message message;
+  message.type = MessageType::kFlashWrite;
+  postMessage(message);  // Wakes it at once; a full queue wakes it anyway.
+  if (xSemaphoreTake(renderPaused_, pdMS_TO_TICKS(kRenderPauseWaitMs)) != pdTRUE) {
+    LOG_W(kTag, "render task did not pause, writing the flash anyway");
+  }
+}
+
+void App::endFlashWrite() {
+  if (flashLock_ == nullptr) {
+    return;
+  }
+  flashWriting_ = false;
+  xSemaphoreGive(flashLock_);
+}
+
+// Render task, between two frames: no frame is being sent now (FastLED.show() returns
+// once it is out), and none is started until the flash write is done.
+void App::pauseForFlashWrite() {
+  xSemaphoreGive(renderPaused_);
+  while (flashWriting_) {
+    vTaskDelay(1);
   }
 }
 
@@ -459,6 +507,10 @@ void App::cancelOta() {
 }
 
 void App::flushNow() {
+  if (!storage.pending()) {
+    return;
+  }
+  FlashWrite write(*this);
   storage.flushAll();
 }
 
@@ -597,7 +649,10 @@ void App::persist() {
     savedPaintVersion_ = paintVersion;
     storage.schedule(paintSlot_, now, kPaintSaveDelayMs);  // Each stroke pushes the write.
   }
-  storage.tick(now);
+  if (storage.due(now)) {
+    FlashWrite write(*this);
+    storage.tick(now);
+  }
 }
 
 bool App::produceState(void* context, IByteWriter& out) {
@@ -817,6 +872,9 @@ void App::renderTask() {
         changed |= handle(message);
       } while (xQueueReceive(queue_, &message, 0) == pdTRUE);
     }
+    if (flashWriting_) {
+      pauseForFlashWrite();  // Between two frames, until the flash write is done.
+    }
     updatePaint();  // After the commands: a new layout resizes the picture first.
     if (static_cast<int32_t>(millis() - nextWallTimeMs_) >= 0) {
       nextWallTimeMs_ = millis() + kWallTimeIntervalMs;
@@ -914,6 +972,8 @@ bool App::handle(const Message& message) {
     case MessageType::kGamma:
       engine_->setGamma(message.value != 0);  // The engine draws the frame again.
       return false;                           // config_ already holds the new setting.
+    case MessageType::kFlashWrite:
+      return false;  // Only wakes the task; renderTask() pauses after the messages.
     case MessageType::kOtaMode:
       otaMode_ = message.value != 0;
       if (otaMode_) {
