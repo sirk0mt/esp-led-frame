@@ -24,7 +24,9 @@
 // the trail of the old drop keeps fading out below the matrix edge meanwhile.
 //
 // With colors = random every drop has its own rainbow hue: a hash of its column and
-// the step it started in.
+// the step it started in. The color is taken from the rainbow palette once, when the
+// drop starts: read every frame, the palette in flash cost time depending on where the
+// build placed it (docs/ADDING_EFFECT.md, section 5).
 //   speed    rows per second a drop falls
 //   density  chance in % that an empty column starts a drop in one step
 //   colors   color: every drop in the color parameter; random: a random hue per drop
@@ -107,6 +109,7 @@ struct Drop {
   uint32_t started;  // step count when the drop started, one row above the matrix
   uint16_t column;
   bool alive;
+  CRGB rainbow;  // the drop's color for colors = random
 };
 
 class RainEffect : public Effect {
@@ -157,7 +160,7 @@ class RainEffect : public Effect {
     const uint32_t frameNoise = hash(seed_ ^ (ctx.nowMs * 0x27D4EB2Du));
     for (const Drop& drop : drops_) {
       if (drop.alive) {
-        draw(canvas, drop, phase, randomColors ? dropColor(drop) : color, frameNoise);
+        draw(canvas, drop, phase, randomColors ? drop.rainbow : color, frameNoise);
       }
     }
     return true;
@@ -189,6 +192,7 @@ class RainEffect : public Effect {
         drop.started = stepCount_;
         drop.column = column;
         drop.alive = true;
+        drop.rainbow = dropColor(drop);
         setBusy(column, true);
         return;
       }
@@ -222,8 +226,8 @@ class RainEffect : public Effect {
     }
   }
 
-  // Random hue of a drop from its column and start step. Rainbow palette colors are
-  // made for LEDs, so they need no user color correction.
+  // Random color of a drop from its column and start step, taken when the drop starts.
+  // Rainbow palette colors are made for LEDs, so they need no user color correction.
   CRGB dropColor(const Drop& drop) const {
     const uint8_t hue =
         static_cast<uint8_t>(hash(seed_ ^ (static_cast<uint32_t>(drop.column) * 0x9E3779B9u) ^
