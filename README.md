@@ -19,7 +19,7 @@ Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812
 
 ## Funkcje
 
-- **19 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
+- **20 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
 - **Interfejs WWW wbudowany w firmware:**
   - włącznik i jasność w górnym pasku;
   - karty **Effects** (kafelki efektów, ustawienia efektu, podgląd na żywo), **Presets** i **Device** (ustawienia urządzenia);
@@ -54,6 +54,7 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `breathe` | Breathe | jeden kolor, który powoli jaśnieje i ciemnieje | Colors (kolor albo paleta), Color, Period, Min level, Palette |
 | `rainbow` | Rainbow | przesuwający się gradient z palety pod wybranym kątem | Speed, Angle, Density, Palette |
 | `plasma` | Plasma | nakładające się fale sinusoidalne (klasyczna plazma) | Speed, Scale, Palette |
+| `distortion-waves` | Distortion waves | czerwone, zielone i niebieskie fale zniekształcone kręgami rozchodzącymi się od trzech wędrujących środków | Speed, Scale, Zoom, Alt, Colors (RGB, paleta według barwy albo według jasności), Palette |
 | `metaballs` | Metaballs | miękkie plamy, które łączą się i rozdzielają | Speed, Count, Palette |
 | `radial-rainbow` | Radial rainbow | pierścienie z palety od środka albo do środka | Speed, Density, Direction, Palette |
 | `swirl` | Swirl | spirala z palety obracająca się wokół środka | Speed, Twist, Direction, Palette |
@@ -74,6 +75,8 @@ Palety: `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `cloud` i `custom
 `colored-bursts` to efekt „Colored Bursts” z projektu [WLED](https://github.com/wled/WLED) (autor ldirko, zmiany Andrew Tuline) napisany od nowa dla tego firmware, z tymi samymi ustawieniami. Linie są wygładzone i mają miękką poświatę o szerokości **Width**, a ich końce przesuwają się o ułamki piksela, więc na małej matrycy nie skaczą od piksela do piksela.
 
 `black-hole` to efekt „Black Hole” z WLED (autor Stepko, zmiany Andrew Tuline), również napisany od nowa, z ustawieniami jak w WLED. Opcji „Solid” odpowiada **Colors** = `color`. Gwiazdy przesuwają się o ułamki piksela i są miękkimi punktami o promieniu **Size** (nowe ustawienie), więc na małej matrycy płynnie suną zamiast skakać.
+
+`distortion-waves` to efekt „Distortion Waves” z WLED (autor ldirko, przeniesienie do WLED blazoncek, poprawki dedehai), również napisany od nowa. **Speed** zmienia tempo całego obrazu (10 to tempo WLED, 0 zatrzymuje obraz), a nie tylko ruch środków jak w WLED. Domyślnej palecie WLED (oryginalne kolory) odpowiada **Colors** = `rgb`, a opcji „Fill” **Colors** = `fill`. Czas i kąty są liczone dokładniej niż w WLED, więc przy małej prędkości obraz płynie zamiast zmieniać się skokami.
 
 Obraz `paint` jest zapisywany osobno i zostaje po zmianie efektu i po restarcie.
 

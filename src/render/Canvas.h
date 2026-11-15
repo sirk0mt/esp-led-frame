@@ -37,6 +37,10 @@ class Canvas {
   void clear();
   // Dims every pixel by amount/256 of its brightness (FastLED fadeToBlackBy).
   void fadeToBlackBy(uint8_t amount);
+  // Blurs rows, then columns (FastLED blur2d, WLED Segment::blur2D): every pixel keeps
+  // (255 - amount)/256 of itself and passes amount/512 to each neighbor; amount 0 does
+  // nothing. With smear every pixel keeps all of itself, so the picture gets brighter.
+  void blur(uint8_t amount, bool smear = false);
 
   CRGB* data() { return pixels_; }
   const CRGB* data() const { return pixels_; }

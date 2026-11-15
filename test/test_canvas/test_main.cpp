@@ -116,6 +116,46 @@ void test_fade_to_black() {
   expectColor(CRGB::Black, canvas[5]);
 }
 
+void test_blur_spreads_light_to_neighbors() {
+  TEST_ASSERT_TRUE(canvas.resize(5, 3));
+  canvas.at(2, 1) = CRGB(200, 0, 0);
+  canvas.blur(0);
+  expectColor(CRGB(200, 0, 0), canvas.at(2, 1));
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(1, 1).r);
+
+  canvas.blur(64);
+  const int center = canvas.at(2, 1).r;
+  TEST_ASSERT_TRUE(center < 200);
+  TEST_ASSERT_TRUE(canvas.at(1, 1).r > 0);  // row neighbor
+  TEST_ASSERT_TRUE(canvas.at(2, 0).r > 0);  // column neighbor
+  TEST_ASSERT_TRUE(canvas.at(1, 0).r > 0);  // diagonal, from both passes
+  TEST_ASSERT_TRUE(canvas.at(1, 0).r < canvas.at(1, 1).r);
+  TEST_ASSERT_TRUE(canvas.at(1, 1).r < center);
+  TEST_ASSERT_EQUAL_UINT8(canvas.at(1, 1).r, canvas.at(3, 1).r);  // symmetric
+  TEST_ASSERT_EQUAL_UINT8(canvas.at(2, 0).r, canvas.at(2, 2).r);
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(0, 1).r);  // one pass reaches one pixel
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(2, 1).g);  // channels stay apart
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(1, 1).b);
+}
+
+void test_blur_with_smear_keeps_the_pixel() {
+  TEST_ASSERT_TRUE(canvas.resize(5, 3));
+  canvas.at(2, 1) = CRGB(200, 100, 0);
+  canvas.blur(64, true);
+  expectColor(CRGB(200, 100, 0), canvas.at(2, 1));
+  TEST_ASSERT_TRUE(canvas.at(1, 1).r > 0);
+  TEST_ASSERT_TRUE(canvas.at(1, 1).r > canvas.at(1, 1).g);
+}
+
+void test_blur_stays_within_size() {
+  TEST_ASSERT_TRUE(canvas.resize(4, 2));
+  canvas.data()[8] = CRGB::Blue;  // just past the canvas
+  canvas.fill(CRGB::White);
+  canvas.blur(200, true);
+  expectColor(CRGB::Blue, canvas.data()[8]);
+  expectColor(CRGB::White, canvas.at(3, 1));  // full pixels stay full when smeared
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_default_canvas_is_empty);
@@ -126,5 +166,8 @@ int main() {
   RUN_TEST(test_fill_and_clear);
   RUN_TEST(test_fill_stays_within_size);
   RUN_TEST(test_fade_to_black);
+  RUN_TEST(test_blur_spreads_light_to_neighbors);
+  RUN_TEST(test_blur_with_smear_keeps_the_pixel);
+  RUN_TEST(test_blur_stays_within_size);
   return UNITY_END();
 }

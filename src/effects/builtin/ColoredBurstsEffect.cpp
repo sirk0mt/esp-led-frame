@@ -227,43 +227,6 @@ void drawDot(Canvas& canvas, Point p, const CRGB& color) {
   }
 }
 
-// One blur pass along a row or a column (FastLED blur1d, as WLED blur2D): every pixel
-// keeps keep/256 of itself and passes seep/256 to each neighbor. With smear it keeps
-// all of itself. Works on one color channel at a time: the bytes of the channel lie
-// 3 * stride apart (CRGB is r, g, b).
-void blurLine(CRGB* first, int count, int stride, uint8_t keep, uint8_t seep) {
-  const int step = 3 * stride;
-  for (int channel = 0; channel < 3; ++channel) {
-    uint8_t* value = &first->raw[channel];
-    uint8_t carry = 0;
-    for (int i = 0; i < count; ++i, value += step) {
-      const uint8_t part = scale8(*value, seep);
-      *value = qadd8(scale8(*value, keep), carry);
-      if (i > 0) {
-        value[-step] = qadd8(value[-step], part);
-      }
-      carry = part;
-    }
-  }
-}
-
-void blur(Canvas& canvas, uint8_t amount, bool smear) {
-  if (amount == 0) {
-    return;
-  }
-  const uint8_t keep = smear ? 255 : static_cast<uint8_t>(255 - amount);
-  const uint8_t seep = amount >> 1;
-  CRGB* pixels = canvas.data();
-  const int width = canvas.width();
-  const int height = canvas.height();
-  for (int y = 0; y < height; ++y) {
-    blurLine(pixels + y * width, width, 1, keep, seep);
-  }
-  for (int x = 0; x < width; ++x) {
-    blurLine(pixels + x, height, width, keep, seep);
-  }
-}
-
 class ColoredBurstsEffect : public Effect {
  public:
   void begin(FrameContext& ctx) override {
@@ -316,7 +279,7 @@ class ColoredBurstsEffect : public Effect {
       }
     }
 
-    blur(canvas, static_cast<uint8_t>(ctx.params[kBlur]), smear);
+    canvas.blur(static_cast<uint8_t>(ctx.params[kBlur]), smear);
   }
 
   uint32_t stepTimeMs_ = 0;  // clock of the line ends: kStepMs per step, from begin()
