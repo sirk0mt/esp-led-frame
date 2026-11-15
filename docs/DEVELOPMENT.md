@@ -238,6 +238,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.3.2 | wycofanie nieudanej aktualizacji: nowy firmware po OTA zostaje na stałe po 30 s normalnej pracy, a reset wcześniej (awaria, ciągłe restarty) przywraca poprzedni. Firmware, którego zadanie renderowania stoi, wycofuje się samo po 2 min. Restart na żądanie i kolejna aktualizacja zatwierdzają go od razu |
 | 2.3.3 | poprawka bezpieczeństwa: ochrona przed DNS rebinding. Urządzenie odpowiada tylko pod swoimi nazwami (adres IP, `localhost`, nazwa urządzenia z domeną lokalną, np. `ledframe.local`, `ledframe.lan`), a pod każdą inną nazwą w nagłówku `Host` daje `403`, więc strona, której domena wskazuje urządzenie, nie odczyta ani nie zmieni jego ustawień |
 | 2.3.4 | poprawka migotania: zapis plików (stan, presety, konfiguracja, obraz `paint`) i stanu firmware czeka na przerwę między klatkami, więc nie psuje klatki wysyłanej do diod. W pomiarze 93 uszkodzone klatki na 115 zapisów przed poprawką, 0 po niej. Diagnostyczne środowisko `esp32dev-ledcheck` liczy uszkodzone klatki |
+| 2.4.0 | efekt `colored-bursts` przeniesiony z WLED (Colored Bursts): linie z palety rozchodzące się z jednego punktu, ze smugami, rozmyciem i opcjami Gradient, Smear i Dots. W odróżnieniu od WLED linie są wygładzone, z miękką poświatą (Width) i końcami w ułamkach piksela, więc na małej matrycy płynnie suną zamiast skakać |
 
 ### Gałęzie i wydania
 
