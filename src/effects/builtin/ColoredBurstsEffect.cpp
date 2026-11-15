@@ -43,12 +43,15 @@
 #include <cmath>
 
 #include "effects/EffectRegistry.h"
+#include "render/SoftDraw.h"
 
 namespace {
 
 using ledframe::Canvas;
 using ledframe::Effect;
 using ledframe::FrameContext;
+using ledframe::glowLevel;
+using ledframe::lighten;
 using ledframe::ParamKind;
 using ledframe::ParamSpec;
 
@@ -72,24 +75,6 @@ constexpr uint8_t kSmearFade = 32;        // the same with smear
 const CRGB kStartDot(255, 255, 255);      // white
 const CRGB kEndDot(0x2F, 0x4F, 0x4F);     // dark slate gray
 
-// Glow level for the LEDs by the squared distance from a line: entry i is for
-// d^2/r^2 = i/256, (1 - i/256)^2 * 255. Perceived brightness falls off as 1 - d^2/r^2
-// and is squared for the LEDs (docs/ADDING_EFFECT.md, section 5).
-struct GlowTable {
-  uint8_t level[256];
-};
-
-constexpr GlowTable makeGlowTable() {
-  GlowTable table{};
-  for (int i = 0; i < 256; ++i) {
-    const float perceived = 1.0f - static_cast<float>(i) / 256.0f;
-    table.level[i] = static_cast<uint8_t>(perceived * perceived * 255.0f + 0.5f);
-  }
-  return table;
-}
-
-constexpr GlowTable kGlow = makeGlowTable();
-
 struct Point {
   float x;
   float y;
@@ -105,22 +90,6 @@ float swing(uint32_t timeMs, uint32_t bpm, uint8_t phase, int length) {
   const uint16_t angle = static_cast<uint16_t>(beat16 + (static_cast<uint32_t>(phase) << 8));
   const int32_t wave = static_cast<int32_t>(sin16(angle)) + 32768;  // 1 .. 65535
   return static_cast<float>(wave) * static_cast<float>(length - 1) / 65535.0f;
-}
-
-// Lightens a pixel to weight/256 of a color, channel by channel. A line drawn again
-// every step then keeps its own glow profile instead of adding up to full light around
-// it, and crossing lines still mix (red and blue give magenta).
-//
-// The helpers are inline and work on single channels: the esp32dev firmware is built
-// with -Og, which does not inline small functions on its own, and a call with CRGB
-// copies per pixel doubled the time of a step.
-inline void lighten(CRGB& pixel, const CRGB& color, uint8_t weight) {
-  const uint8_t r = scale8(color.r, weight);
-  const uint8_t g = scale8(color.g, weight);
-  const uint8_t b = scale8(color.b, weight);
-  pixel.r = pixel.r > r ? pixel.r : r;
-  pixel.g = pixel.g > g ? pixel.g : g;
-  pixel.b = pixel.b > b ? pixel.b : b;
 }
 
 inline int clampIndex(float value, int size) {
@@ -195,10 +164,8 @@ void drawSoftLine(Canvas& canvas, Point a, Point b, const CRGB& color, float rad
       if (distance2 >= radius2) {
         continue;
       }
-      // Through int: float to int is one instruction, float to unsigned is a call. The
-      // product may round up to 256 just below the radius.
-      const int index = static_cast<int>(distance2 * glowScale);
-      uint8_t weight = kGlow.level[index < 255 ? index : 255];
+      // Through int: float to int is one instruction, float to unsigned is a call.
+      uint8_t weight = glowLevel(static_cast<int>(distance2 * glowScale));
       if (gradient) {
         weight = scale8(weight, static_cast<uint8_t>(static_cast<int>(t * t * 255.0f)));
       }

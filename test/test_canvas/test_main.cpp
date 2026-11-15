@@ -1,6 +1,7 @@
 #include <unity.h>
 
 #include "render/Canvas.h"
+#include "render/SoftDraw.h"
 
 using ledframe::Canvas;
 
@@ -156,6 +157,46 @@ void test_blur_stays_within_size() {
   expectColor(CRGB::White, canvas.at(3, 1));  // full pixels stay full when smeared
 }
 
+void test_soft_dot_is_full_at_the_point() {
+  TEST_ASSERT_TRUE(canvas.resize(5, 5));
+  ledframe::drawSoftDot(canvas, 2.0f, 2.0f, CRGB(200, 100, 0), 1.2f);
+  expectColor(CRGB(200, 100, 0), canvas.at(2, 2));
+  const CRGB side = canvas.at(1, 2);
+  TEST_ASSERT_TRUE(side.r > 0 && side.r < 100);  // faint edge at 1 pixel of 1.2
+  expectColor(side, canvas.at(3, 2));            // symmetric
+  expectColor(side, canvas.at(2, 1));
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(1, 1).r);  // the diagonal is beyond the radius
+  TEST_ASSERT_EQUAL_UINT8(0, canvas.at(0, 2).r);
+}
+
+void test_soft_dot_between_pixels_lights_both() {
+  TEST_ASSERT_TRUE(canvas.resize(5, 5));
+  ledframe::drawSoftDot(canvas, 1.5f, 2.0f, CRGB(0, 0, 200), 1.0f);
+  TEST_ASSERT_TRUE(canvas.at(1, 2).b > 0);
+  expectColor(canvas.at(1, 2), canvas.at(2, 2));
+  TEST_ASSERT_TRUE(canvas.at(1, 2).b < 200);
+}
+
+void test_soft_dot_lightens_and_stays_within_the_canvas() {
+  TEST_ASSERT_TRUE(canvas.resize(3, 2));
+  canvas.data()[6] = CRGB::Blue;  // just past the canvas
+  canvas.at(0, 0) = CRGB(0, 255, 0);
+  ledframe::drawSoftDot(canvas, -0.5f, -0.5f, CRGB(255, 0, 0), 2.0f);  // mostly outside
+  TEST_ASSERT_TRUE(canvas.at(0, 0).r > 0);
+  TEST_ASSERT_EQUAL_UINT8(255, canvas.at(0, 0).g);  // lightening never darkens
+  expectColor(CRGB::Blue, canvas.data()[6]);
+  ledframe::drawSoftDot(canvas, 50.0f, -20.0f, CRGB::White, 1.5f);  // far outside
+  expectColor(CRGB::Blue, canvas.data()[6]);
+}
+
+void test_glow_level_falls_off_to_zero() {
+  TEST_ASSERT_EQUAL_UINT8(255, ledframe::glowLevel(0));
+  TEST_ASSERT_TRUE(ledframe::glowLevel(128) < 128);  // half the radius squared
+  TEST_ASSERT_TRUE(ledframe::glowLevel(128) > ledframe::glowLevel(200));
+  TEST_ASSERT_EQUAL_UINT8(ledframe::glowLevel(255), ledframe::glowLevel(256));  // rounding
+  TEST_ASSERT_TRUE(ledframe::glowLevel(255) <= 1);
+}
+
 int main() {
   UNITY_BEGIN();
   RUN_TEST(test_default_canvas_is_empty);
@@ -169,5 +210,9 @@ int main() {
   RUN_TEST(test_blur_spreads_light_to_neighbors);
   RUN_TEST(test_blur_with_smear_keeps_the_pixel);
   RUN_TEST(test_blur_stays_within_size);
+  RUN_TEST(test_soft_dot_is_full_at_the_point);
+  RUN_TEST(test_soft_dot_between_pixels_lights_both);
+  RUN_TEST(test_soft_dot_lightens_and_stays_within_the_canvas);
+  RUN_TEST(test_glow_level_falls_off_to_zero);
   return UNITY_END();
 }
