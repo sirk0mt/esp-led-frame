@@ -2,8 +2,6 @@
 
 Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812B) na ESP32. Sterowanie z przeglądarki w telefonie albo komputerze, bez aplikacji i bez internetu.
 
-Wersja firmware: **2.3.4** (`src/core/Version.h`). Wersja 2 jest napisana od nowa i nie czyta ustawień wersji 1.
-
 ## Spis treści
 
 1. [Funkcje](#funkcje)
@@ -21,7 +19,7 @@ Wersja firmware: **2.3.4** (`src/core/Version.h`). Wersja 2 jest napisana od now
 
 ## Funkcje
 
-- **17 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
+- **18 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
 - **Interfejs WWW wbudowany w firmware:**
   - włącznik i jasność w górnym pasku;
   - karty **Effects** (kafelki efektów, ustawienia efektu, podgląd na żywo), **Presets** i **Device** (ustawienia urządzenia);
@@ -61,6 +59,7 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `swirl` | Swirl | spirala z palety obracająca się wokół środka | Speed, Twist, Direction, Palette |
 | `noise` | Noise | plamy unoszące się jak wosk w lampie lava | Speed, Scale, Palette |
 | `ripples` | Ripples | krople wpadające do wody i rozchodzące się kręgi | Density, Damping, Palette |
+| `colored-bursts` | Colored bursts | wachlarz miękkich, kolorowych linii z jednego punktu, które płynnie kołyszą się po matrycy i zostawiają gasnące smugi | Speed, Lines, Width, Blur, Gradient, Smear, Dots, Palette |
 | `galaxy` | Galaxy | losowe rozbłyski, które powoli gasną | Density, Fade, Colors (losowe albo z palety), Palette |
 | `twinkle` | Twinkle | gwiazdy, które łagodnie zapalają się i gasną | Density, Speed, Palette, Background |
 | `starfield` | Starfield | gwiazdy wylatujące od środka (warp) | Speed, Density, Colors (kolor albo losowe), Color |
@@ -70,6 +69,8 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `paint` | Paint | obraz rysowany palcem albo myszą | narzędzia rysowania w UI |
 
 Palety: `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `cloud` i `custom` (gradient czerwień → zieleń → błękit). Zakresy i wartości domyślne ustawień podaje `GET /api/effects` ([docs/API.md](docs/API.md#get-apieffects)), a ich znaczenie opisuje komentarz na początku pliku efektu w `src/effects/builtin/`.
+
+`colored-bursts` to efekt „Colored Bursts” z projektu [WLED](https://github.com/wled/WLED) (autor ldirko, zmiany Andrew Tuline) napisany od nowa dla tego firmware, z tymi samymi ustawieniami. Linie są wygładzone i mają miękką poświatę o szerokości **Width**, a ich końce przesuwają się o ułamki piksela, więc na małej matrycy nie skaczą od piksela do piksela.
 
 Obraz `paint` jest zapisywany osobno i zostaje po zmianie efektu i po restarcie.
 
