@@ -46,6 +46,7 @@ Każdy plik nagłówkowy zaczyna się komentarzem, który opisuje zadanie moduł
 | `EffectEngine` | aktywny efekt, parametry wszystkich efektów, przejścia, harmonogram klatek, statystyki. Nie zna FreeRTOS ani sprzętu |
 | `EffectRegistry` | lista efektów, które rejestrują się same makrem `REGISTER_EFFECT` |
 | `Canvas`, `Layout` | płótno logiczne (wiersz po wierszu od lewego górnego rogu) i odwzorowanie na fizyczną kolejność diod |
+| `SoftDraw` | miękkie punkty w ułamkach piksela i rozjaśnianie pikseli dla efektów, które przesuwają kształty płynnie |
 | `OutputMapping`, `LedOutput` | kolejność kolorów, układ, jasność, limit prądu i wysłanie klatki przez FastLED |
 | `Palettes`, `Gamma` | palety i korekcja kolorów wybranych na ekranie |
 | `State`, `Config`, `Presets`, `Schedule` | dane zapisywane w plikach, z serializacją JSON jako czystymi funkcjami |
@@ -241,6 +242,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.4.0 | efekt `colored-bursts` przeniesiony z WLED (Colored Bursts): linie z palety rozchodzące się z jednego punktu, ze smugami, rozmyciem i opcjami Gradient, Smear i Dots. W odróżnieniu od WLED linie są wygładzone, z miękką poświatą (Width) i końcami w ułamkach piksela, więc na małej matrycy płynnie suną zamiast skakać |
 | 2.5.0 | efekt `black-hole` przeniesiony z WLED (Black Hole): gwiazdy z palety albo w jednym kolorze krążące po elipsach wokół białego środka, ze smugami i opcjonalnym rozmyciem. W odróżnieniu od WLED gwiazdy są miękkimi punktami (Size) w ułamkach piksela, a ich fazy rosną płynnie, więc na małej matrycy suną zamiast skakać |
 | 2.6.0 | efekt `distortion-waves` przeniesiony z WLED (Distortion Waves): fale RGB zniekształcone kręgami od trzech wędrujących środków, w kolorach RGB albo z palety, z opcjami Scale, Zoom i Alt. W odróżnieniu od WLED Speed zmienia tempo całego obrazu, a czas i kąty są liczone dokładniej, więc przy małej prędkości obraz płynie zamiast skakać. `Canvas::blur()`: rozmycie z `colored-bursts` i `black-hole` przeniesione do płótna |
+| 2.7.0 | efekt `drift` przeniesiony z WLED (Drift): spiralne ramię kolorowych punktów, które zwija się i rozwija wokół środka, z opcjami Twin, Blur i Smear. W odróżnieniu od WLED punkty są miękkie (Size), w ułamkach piksela, a kąty liczone dokładnie, więc na małej matrycy suną zamiast skakać. `render/SoftDraw.h`: miękkie punkty i rozjaśnianie z `colored-bursts` i `black-hole` we wspólnym module |
 
 ### Gałęzie i wydania
 

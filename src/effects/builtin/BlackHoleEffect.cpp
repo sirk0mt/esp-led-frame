@@ -41,10 +41,12 @@
 #include <cmath>
 
 #include "effects/EffectRegistry.h"
+#include "render/SoftDraw.h"
 
 namespace {
 
 using ledframe::Canvas;
+using ledframe::drawSoftDot;
 using ledframe::Effect;
 using ledframe::FrameContext;
 using ledframe::ParamKind;
@@ -86,24 +88,6 @@ constexpr int kInnerStars = 4;
 constexpr int kSmearBelowPixels = 100;  // WLED smears the blur on matrices this small
 const CRGB kCenter(255, 255, 255);
 
-// Dot level for the LEDs by the squared distance from a star: entry i is for
-// d^2/r^2 = i/256, (1 - i/256)^2 * 255. Perceived brightness falls off as 1 - d^2/r^2
-// and is squared for the LEDs (docs/ADDING_EFFECT.md, section 5).
-struct GlowTable {
-  uint8_t level[256];
-};
-
-constexpr GlowTable makeGlowTable() {
-  GlowTable table{};
-  for (int i = 0; i < 256; ++i) {
-    const float perceived = 1.0f - static_cast<float>(i) / 256.0f;
-    table.level[i] = static_cast<uint8_t>(perceived * perceived * 255.0f + 0.5f);
-  }
-  return table;
-}
-
-constexpr GlowTable kGlow = makeGlowTable();
-
 // Sine wave over low..high (pixel centers) with the given rate, as FastLED beatsin16 but
 // on the step clock and in fractions of a pixel. phase is in 1/65536 turns. The beat is
 // 64-bit: timeMs * bpm * 256 * 280 overflows 32 bits after a few seconds; only its low
@@ -115,51 +99,6 @@ float swing(uint32_t timeMs, uint32_t bpm, uint16_t phase, int low, int high) {
   const int32_t wave = static_cast<int32_t>(sin16(angle)) + 32768;  // 1 .. 65535
   return static_cast<float>(low) +
          static_cast<float>(wave) * static_cast<float>(high - low) / 65535.0f;
-}
-
-// Lightens a pixel to weight/256 of a color, channel by channel, so a star drawn again
-// every step keeps its own soft edge. The helpers are inline and work on single
-// channels: the esp32dev firmware is built with -Og, which does not inline small
-// functions on its own.
-inline void lighten(CRGB& pixel, const CRGB& color, uint8_t weight) {
-  const uint8_t r = scale8(color.r, weight);
-  const uint8_t g = scale8(color.g, weight);
-  const uint8_t b = scale8(color.b, weight);
-  pixel.r = pixel.r > r ? pixel.r : r;
-  pixel.g = pixel.g > g ? pixel.g : g;
-  pixel.b = pixel.b > b ? pixel.b : b;
-}
-
-inline int clampIndex(int value, int size) {
-  return value < 0 ? 0 : (value >= size ? size - 1 : value);
-}
-
-// Draws a soft dot at (x, y): every pixel within radius gets the color at
-// (1 - d^2/r^2)^2 of it, d being its distance from the dot.
-void drawDot(Canvas& canvas, float x, float y, const CRGB& color, float radius) {
-  const int width = canvas.width();
-  const float radius2 = radius * radius;
-  const float glowScale = 256.0f / radius2;  // d^2 to an index of kGlow
-  // Through int: float to int is one instruction, float to unsigned is a call.
-  const int left = clampIndex(static_cast<int>(std::floor(x - radius)), width);
-  const int right = clampIndex(static_cast<int>(std::ceil(x + radius)), width);
-  const int top = clampIndex(static_cast<int>(std::floor(y - radius)), canvas.height());
-  const int bottom = clampIndex(static_cast<int>(std::ceil(y + radius)), canvas.height());
-  for (int py = top; py <= bottom; ++py) {
-    const float dy = static_cast<float>(py) - y;
-    const float dy2 = dy * dy;
-    CRGB* row = canvas.data() + py * width;
-    for (int px = left; px <= right; ++px) {
-      const float dx = static_cast<float>(px) - x;
-      const float distance2 = dx * dx + dy2;
-      if (distance2 >= radius2) {
-        continue;
-      }
-      // The product may round up to 256 just below the radius.
-      const int index = static_cast<int>(distance2 * glowScale);
-      lighten(row[px], color, kGlow.level[index < 255 ? index : 255]);
-    }
-  }
 }
 
 class BlackHoleEffect : public Effect {
@@ -206,8 +145,8 @@ class BlackHoleEffect : public Effect {
       const CRGB color =
           oneColor ? userColor
                    : ColorFromPalette(ctx.palette, static_cast<uint8_t>(i * 32), 255, LINEARBLEND);
-      drawDot(canvas, swing(stepTimeMs_, outerX, phaseX, 0, width - 1),
-              swing(stepTimeMs_, outerY, phaseY, 0, height - 1), color, radius);
+      drawSoftDot(canvas, swing(stepTimeMs_, outerX, phaseX, 0, width - 1),
+                  swing(stepTimeMs_, outerY, phaseY, 0, height - 1), color, radius);
     }
 
     const uint32_t innerX = static_cast<uint32_t>(ctx.params[kInnerX]);
@@ -220,9 +159,9 @@ class BlackHoleEffect : public Effect {
           oneColor
               ? userColor
               : ColorFromPalette(ctx.palette, static_cast<uint8_t>(255 - i * 64), 255, LINEARBLEND);
-      drawDot(canvas, swing(stepTimeMs_, innerX, phaseX, width / 4, width - 1 - width / 4),
-              swing(stepTimeMs_, innerY, phaseY, height / 4, height - 1 - height / 4), color,
-              radius);
+      drawSoftDot(canvas, swing(stepTimeMs_, innerX, phaseX, width / 4, width - 1 - width / 4),
+                  swing(stepTimeMs_, innerY, phaseY, height / 4, height - 1 - height / 4), color,
+                  radius);
     }
 
     // The center stands still, so it is drawn sharp, at full white: the pixel in the
