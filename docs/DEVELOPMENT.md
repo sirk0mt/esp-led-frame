@@ -239,6 +239,7 @@ Wersja firmware jest w `src/core/Version.h` i w teście `test_core`. Numeracja w
 | 2.3.3 | poprawka bezpieczeństwa: ochrona przed DNS rebinding. Urządzenie odpowiada tylko pod swoimi nazwami (adres IP, `localhost`, nazwa urządzenia z domeną lokalną, np. `ledframe.local`, `ledframe.lan`), a pod każdą inną nazwą w nagłówku `Host` daje `403`, więc strona, której domena wskazuje urządzenie, nie odczyta ani nie zmieni jego ustawień |
 | 2.3.4 | poprawka migotania: zapis plików (stan, presety, konfiguracja, obraz `paint`) i stanu firmware czeka na przerwę między klatkami, więc nie psuje klatki wysyłanej do diod. W pomiarze 93 uszkodzone klatki na 115 zapisów przed poprawką, 0 po niej. Diagnostyczne środowisko `esp32dev-ledcheck` liczy uszkodzone klatki |
 | 2.4.0 | efekt `colored-bursts` przeniesiony z WLED (Colored Bursts): linie z palety rozchodzące się z jednego punktu, ze smugami, rozmyciem i opcjami Gradient, Smear i Dots. W odróżnieniu od WLED linie są wygładzone, z miękką poświatą (Width) i końcami w ułamkach piksela, więc na małej matrycy płynnie suną zamiast skakać |
+| 2.5.0 | efekt `black-hole` przeniesiony z WLED (Black Hole): gwiazdy z palety albo w jednym kolorze krążące po elipsach wokół białego środka, ze smugami i opcjonalnym rozmyciem. W odróżnieniu od WLED gwiazdy są miękkimi punktami (Size) w ułamkach piksela, a ich fazy rosną płynnie, więc na małej matrycy suną zamiast skakać |
 
 ### Gałęzie i wydania
 

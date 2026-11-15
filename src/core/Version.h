@@ -14,7 +14,7 @@
 
 namespace ledframe {
 
-inline constexpr char kVersion[] = "2.4.0";
+inline constexpr char kVersion[] = "2.5.0";
 inline constexpr char kBuildDate[] = __DATE__ " " __TIME__;
 inline constexpr char kFirmwareVariant[] = LEDFRAME_VARIANT;
 // GitHub repository "owner/name" with the releases of ci.yml (job "release").

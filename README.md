@@ -19,7 +19,7 @@ Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812
 
 ## Funkcje
 
-- **18 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
+- **19 efektów** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
 - **Interfejs WWW wbudowany w firmware:**
   - włącznik i jasność w górnym pasku;
   - karty **Effects** (kafelki efektów, ustawienia efektu, podgląd na żywo), **Presets** i **Device** (ustawienia urządzenia);
@@ -61,6 +61,7 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `ripples` | Ripples | krople wpadające do wody i rozchodzące się kręgi | Density, Damping, Palette |
 | `colored-bursts` | Colored bursts | wachlarz miękkich, kolorowych linii z jednego punktu, które płynnie kołyszą się po matrycy i zostawiają gasnące smugi | Speed, Lines, Width, Blur, Gradient, Smear, Dots, Palette |
 | `galaxy` | Galaxy | losowe rozbłyski, które powoli gasną | Density, Fade, Colors (losowe albo z palety), Palette |
+| `black-hole` | Black hole | kolorowe gwiazdy krążące po elipsach wokół białego środka, ze smugami | Fade, Outer X freq, Outer Y freq, Inner X freq, Inner Y freq, Size, Colors (paleta albo kolor), Color, Blur, Palette |
 | `twinkle` | Twinkle | gwiazdy, które łagodnie zapalają się i gasną | Density, Speed, Palette, Background |
 | `starfield` | Starfield | gwiazdy wylatujące od środka (warp) | Speed, Density, Colors (kolor albo losowe), Color |
 | `color-flow` | Color flow | cała matryca w jednym, płynnie dryfującym kolorze | Speed, Max step |
@@ -71,6 +72,8 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 Palety: `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `cloud` i `custom` (gradient czerwień → zieleń → błękit). Zakresy i wartości domyślne ustawień podaje `GET /api/effects` ([docs/API.md](docs/API.md#get-apieffects)), a ich znaczenie opisuje komentarz na początku pliku efektu w `src/effects/builtin/`.
 
 `colored-bursts` to efekt „Colored Bursts” z projektu [WLED](https://github.com/wled/WLED) (autor ldirko, zmiany Andrew Tuline) napisany od nowa dla tego firmware, z tymi samymi ustawieniami. Linie są wygładzone i mają miękką poświatę o szerokości **Width**, a ich końce przesuwają się o ułamki piksela, więc na małej matrycy nie skaczą od piksela do piksela.
+
+`black-hole` to efekt „Black Hole” z WLED (autor Stepko, zmiany Andrew Tuline), również napisany od nowa, z ustawieniami jak w WLED. Opcji „Solid” odpowiada **Colors** = `color`. Gwiazdy przesuwają się o ułamki piksela i są miękkimi punktami o promieniu **Size** (nowe ustawienie), więc na małej matrycy płynnie suną zamiast skakać.
 
 Obraz `paint` jest zapisywany osobno i zostaje po zmianie efektu i po restarcie.
 
