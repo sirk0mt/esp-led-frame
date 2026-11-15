@@ -24,6 +24,9 @@
 //   speed    how fast the stars fly out
 //   density  new stars per second on average
 //   colors   color: every star in the color parameter; random: a random hue per star
+// A random color is taken from the rainbow palette once, when the star is born: read
+// every frame, the palette in flash cost up to 1.8 ms a frame with 20 stars per second,
+// depending on where the build placed it (docs/ADDING_EFFECT.md, section 5).
 //   color    star color for colors = color (default: white with a touch of blue)
 // Randomness comes from FastLED random8() and random16(); App seeds them at start.
 #include <lib8tion.h>
@@ -83,6 +86,7 @@ struct Star {
   uint16_t age;       // steps since birth, stops at 65535
   uint8_t hue;        // rainbow hue for colors = random
   bool alive;
+  CRGB rainbow;  // the color of hue, for colors = random
 };
 
 class StarfieldEffect : public Effect {
@@ -134,9 +138,7 @@ class StarfieldEffect : public Effect {
     for (const Star& star : stars_) {
       if (star.alive) {
         // Rainbow palette colors are made for LEDs: no user color correction.
-        draw(canvas, star,
-             randomColors ? ColorFromPalette(RainbowColors_p, star.hue, 255, LINEARBLEND) : color,
-             fadeInSteps, frameNoise);
+        draw(canvas, star, randomColors ? star.rainbow : color, fadeInSteps, frameNoise);
       }
     }
     return true;
@@ -163,6 +165,7 @@ class StarfieldEffect : public Effect {
           star.age = 0;
           // Drawn in both color modes, so switching them keeps the same star paths.
           star.hue = random8();
+          star.rainbow = ColorFromPalette(RainbowColors_p, star.hue, 255, LINEARBLEND);
           star.alive = true;
           break;  // All slots taken: this star is skipped.
         }

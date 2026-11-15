@@ -223,6 +223,8 @@ Dostępne palety to `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `clou
 
 **Losowa barwa bez parametru `Palette`:** `ColorFromPalette(RainbowColors_p, hue, 255, LINEARBLEND)` daje barwę tęczy gotową dla diod, bez korekcji jak kolor użytkownika (`rain` i `starfield` z `colors = random`). `RainbowColors_p` wymaga `#include <colorpalettes.h>` **po** `#include "effects/EffectRegistry.h"`, bo nagłówek potrzebuje typów FastLED (`CHSV`), a postawiony pierwszy daje w testach natywnych błędy w `fl/gfx/fill.h`. Konwersji `CHSV` → `CRGB` nie używaj, bo nie wiadomo, czy linkuje się w testach.
 
+**Palety FastLED (`RainbowColors_p` i inne `*_p`) nie czytaj w każdej klatce.** Leżą we flash (PROGMEM), a `ColorFromPalette` z taką paletą czyta ją przy każdym wywołaniu. Czas tych odczytów zależy od tego, gdzie kompilacja ułoży kod i dane w pamięci podręcznej flash, więc dowolna zmiana firmware może go zwielokrotnić: `starfield` z `colors = random` i 20 gwiazdami na sekundę potrzebował po dodaniu niezwiązanego efektu 2,2 ms na klatkę, a z kolorem policzonym raz 0,49 ms. Kolor obiektu (gwiazdy, kropli) policz raz, gdy obiekt powstaje, i trzymaj go w jego strukturze (`starfield`, `rain`). Gdy kolor musi się zmieniać w czasie, skopiuj paletę raz do `CRGBPalette16` w polu klasy, tak jak `ctx.palette`, którą `render/Palettes.cpp` kopiuje do RAM przy starcie.
+
 **Funkcje FastLED:** można używać typów i funkcji matematycznych (`CRGB`, `CHSV`, `ColorFromPalette`, `scale8`, `qadd8`, `qsub8`, `sin8`, `beatsin8`, `nblend`, `random8`, `random16`). Nie używaj obiektu `FastLED` ani funkcji, które piszą do diod.
 
 **Losowość:**
