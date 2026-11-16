@@ -142,7 +142,7 @@ REGISTER_EFFECT_WITH_WIDGET(Class, "id", "Name", order, flags, kParams, "widget"
 
 - **`id`:** stały identyfikator efektu w API i w zapisie, według tych samych zasad co `id` parametru. Musi być unikalny.
 - **`Name`:** nazwa na kafelku.
-- **`order`:** kolejność kafelków, rosnąco. Obecne efekty to `solid` 10, `candle` 12, `breathe` 15, `rainbow` 50, `plasma` 52, `distortion-waves` 53, `metaballs` 54, `radial-rainbow` 55, `swirl` 56, `noise` 57, `ripples` 58, `colored-bursts` 59, `galaxy` 60, `drift` 61, `black-hole` 62, `twinkle` 65, `fireworks-1d` 66, `starfield` 67, `color-flow` 70, `rain` 72, `fire` 75, `paint` 80. Wybierz wolną liczbę.
+- **`order`:** kolejność kafelków, rosnąco. Obecne efekty to `solid` 10, `candle` 12, `breathe` 15, `rainbow` 50, `hiphotic` 51, `plasma` 52, `distortion-waves` 53, `metaballs` 54, `radial-rainbow` 55, `swirl` 56, `noise` 57, `ripples` 58, `colored-bursts` 59, `galaxy` 60, `drift` 61, `black-hole` 62, `twinkle` 65, `fireworks-1d` 66, `starfield` 67, `color-flow` 70, `rain` 72, `fire` 75, `paint` 80. Wybierz wolną liczbę.
 - **`kParams`:** tablica `ParamSpec` albo `nullptr` dla efektu bez parametrów.
 - **Klasa** musi mieć konstruktor domyślny i nazwę bez przestrzeni nazw.
 - **Rozmiar obiektu:** silnik trzyma efekty w dwóch stałych slotach po `kEffectSlotSize` bajtów (`effects/Effect.h`), a nie na stercie, więc utworzenie efektu nigdy nie alokuje pamięci i nie może się nie udać z jej braku. Slot ma 2 B na diodę i 64 B zapasu, czyli 2112 B przy `MAX_LEDS = 1024`. Najwięcej zajmuje `radial-rainbow`: `uint16_t` na diodę. Za duża klasa nie kompiluje się, a `static_assert` z `REGISTER_EFFECT` mówi, co zrobić.
