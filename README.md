@@ -19,7 +19,7 @@ Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812
 
 ## Funkcje
 
-- **23 efekty** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
+- **24 efekty** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
 - **Interfejs WWW wbudowany w firmware:**
   - włącznik i jasność w górnym pasku;
   - karty **Effects** (kafelki efektów, ustawienia efektu, podgląd na żywo), **Presets** i **Device** (ustawienia urządzenia);
@@ -65,6 +65,7 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `galaxy` | Galaxy | losowe rozbłyski, które powoli gasną | Density, Fade, Colors (losowe albo z palety), Palette |
 | `drift` | Drift | spiralne ramię kolorowych punktów, które zwija się i rozwija wokół środka | Rotation speed, Blur, Twin, Smear, Size, Palette |
 | `black-hole` | Black hole | kolorowe gwiazdy krążące po elipsach wokół białego środka, ze smugami | Fade, Outer X freq, Outer Y freq, Inner X freq, Inner Y freq, Size, Colors (paleta albo kolor), Color, Blur, Palette |
+| `octopus` | Octopus | falujące ramiona światła wokół środka, w kolorach palety układających się w pierścienie | Speed, Legs, Leg size, Offset X, Offset Y, Palette |
 | `twinkle` | Twinkle | gwiazdy, które łagodnie zapalają się i gasną | Density, Speed, Palette, Background |
 | `fireworks-1d` | Fireworks 1D | race wznoszące się z dołu, które wybuchają okrągłymi kulami iskier o losowej sile; na taśmie lecą wzdłuż niej | Gravity, Firing side (tylko taśma), Colors (paleta albo kolor), Color, Size, Palette |
 | `starfield` | Starfield | gwiazdy wylatujące od środka (warp) | Speed, Density, Colors (kolor albo losowe), Color |
@@ -86,6 +87,8 @@ Palety: `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `cloud` i `custom
 `fireworks-1d` powstał na podstawie efektu „Fireworks 1D” z WLED (na podstawie [1D Fireworks](http://www.anirama.com/1000leds/1d-fireworks/), wersja 2D blazoncek), w klasycznej wersji (nowszy WLED zastępuje go wersją na systemie cząsteczek). Lot racy i ustawienia są jak w WLED, ale wybuch jest bliższy prawdziwym fajerwerkom: iskry rozlatują się równomiernie we wszystkie strony, z losową siłą wybuchu, hamowane przez opór powietrza i opadające, w jednym kolorze na wybuch, a kilka rac może wybuchać naraz. Na matrycy race lecą z dołu do góry, a na taśmie wzdłuż niej, z końca wybranego przez **Firing side**. Raca i iskry są miękkimi punktami o promieniu **Size** (nowe ustawienie), więc na małej matrycy suną zamiast skakać.
 
 `hiphotic` to efekt „Hiphotic” z WLED (autor ldirko, zmiany Andrew Tuline), również napisany od nowa. **Speed** to tempo w procentach najszybszego ustawienia WLED (w WLED suwak działa odwrotnie: większa wartość zwalnia; jego domyślnemu ustawieniu odpowiada 11), a 0 zatrzymuje obraz. Kąty i pozycja w palecie są liczone dokładniej niż w WLED, więc przy małej prędkości kolory płyną zamiast zmieniać się skokami.
+
+`octopus` to efekt „Octopus” z WLED (autorzy Stepko i Sutaburosu, przeniesienie do WLED blazoncek), również napisany od nowa, z ustawieniami jak w WLED. **Speed** liczy się w ćwiartkach kroku WLED (domyślne 20 to domyślne tempo WLED), a 0 zatrzymuje obraz. **Leg size** (nowe ustawienie) zmienia szerokość ramion: 50 daje obraz jak w WLED, mniejsze wartości węższe ramiona z ciemnymi przerwami, a większe grubsze. Fazy i pozycja w palecie są liczone dokładniej niż w WLED, więc przy małej prędkości obraz płynie zamiast zmieniać się skokami.
 
 Obraz `paint` jest zapisywany osobno i zostaje po zmianie efektu i po restarcie.
 
