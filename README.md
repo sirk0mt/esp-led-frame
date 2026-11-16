@@ -19,7 +19,7 @@ Sterownik ramki z obrazem podświetlonym matrycą adresowalnych diod LED (WS2812
 
 ## Funkcje
 
-- **22 efekty** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
+- **23 efekty** z ustawieniami (lista niżej). Każdy efekt pamięta swoje ustawienia, a przejścia między efektami są płynne.
 - **Interfejs WWW wbudowany w firmware:**
   - włącznik i jasność w górnym pasku;
   - karty **Effects** (kafelki efektów, ustawienia efektu, podgląd na żywo), **Presets** i **Device** (ustawienia urządzenia);
@@ -53,6 +53,7 @@ Kolejność jak w UI. Efekty z paletą mają ustawienie **Palette** z własną, 
 | `candle` | Candle | ciepłe, spokojne migotanie jak płomień świecy | Intensity, Speed, Color |
 | `breathe` | Breathe | jeden kolor, który powoli jaśnieje i ciemnieje | Colors (kolor albo paleta), Color, Period, Min level, Palette |
 | `rainbow` | Rainbow | przesuwający się gradient z palety pod wybranym kątem | Speed, Angle, Density, Palette |
+| `hiphotic` | Hiphotic | pasma palety wyginane w płynące, pulsujące kształty przez zagnieżdżone fale sinusoidalne | Speed, X scale, Y scale, Palette |
 | `plasma` | Plasma | nakładające się fale sinusoidalne (klasyczna plazma) | Speed, Scale, Palette |
 | `distortion-waves` | Distortion waves | czerwone, zielone i niebieskie fale zniekształcone kręgami rozchodzącymi się od trzech wędrujących środków | Speed, Scale, Zoom, Alt, Colors (RGB, paleta według barwy albo według jasności), Palette |
 | `metaballs` | Metaballs | miękkie plamy, które łączą się i rozdzielają | Speed, Count, Palette |
@@ -83,6 +84,8 @@ Palety: `rainbow`, `party`, `ocean`, `forest`, `lava`, `heat`, `cloud` i `custom
 `drift` to efekt „Drift” z WLED (autor Stepko, zmiany Andrew Tuline), również napisany od nowa, z ustawieniami jak w WLED. Punkty przesuwają się o ułamki piksela i są miękkimi punktami o promieniu **Size** (nowe ustawienie), więc na małej matrycy płynnie suną zamiast skakać.
 
 `fireworks-1d` powstał na podstawie efektu „Fireworks 1D” z WLED (na podstawie [1D Fireworks](http://www.anirama.com/1000leds/1d-fireworks/), wersja 2D blazoncek), w klasycznej wersji (nowszy WLED zastępuje go wersją na systemie cząsteczek). Lot racy i ustawienia są jak w WLED, ale wybuch jest bliższy prawdziwym fajerwerkom: iskry rozlatują się równomiernie we wszystkie strony, z losową siłą wybuchu, hamowane przez opór powietrza i opadające, w jednym kolorze na wybuch, a kilka rac może wybuchać naraz. Na matrycy race lecą z dołu do góry, a na taśmie wzdłuż niej, z końca wybranego przez **Firing side**. Raca i iskry są miękkimi punktami o promieniu **Size** (nowe ustawienie), więc na małej matrycy suną zamiast skakać.
+
+`hiphotic` to efekt „Hiphotic” z WLED (autor ldirko, zmiany Andrew Tuline), również napisany od nowa. **Speed** to tempo w procentach najszybszego ustawienia WLED (w WLED suwak działa odwrotnie: większa wartość zwalnia; jego domyślnemu ustawieniu odpowiada 11), a 0 zatrzymuje obraz. Kąty i pozycja w palecie są liczone dokładniej niż w WLED, więc przy małej prędkości kolory płyną zamiast zmieniać się skokami.
 
 Obraz `paint` jest zapisywany osobno i zostaje po zmianie efektu i po restarcie.
 
